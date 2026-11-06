@@ -107,7 +107,10 @@ fun VideoScreen(
     FullscreenEffect(fullscreen && !LocalPipMode.current)
     BackHandler(fullscreen) { fullscreen = false }
     val saved by vm.savedFlow.collectAsStateWithLifecycle()
-    if (details is LoadState.Success) AutoPipEffect(vm.player, playback)
+    // The page's video may already be playing (the mini player sent it back here): draw it at once, details or not.
+    val pageItemId = (details as? LoadState.Success)?.data?.item?.let { "web:" + it.url } ?: "web:$url"
+    val playingThis = playback.current?.id == pageItemId
+    if (details is LoadState.Success || playingThis) AutoPipEffect(vm.player, playback)
     // Back closes the video; only the picture-in-picture button sends it to the floating window.
     fun leave(toPip: Boolean = false) {
         if (toPip) { onPip(); return }
@@ -146,7 +149,7 @@ fun VideoScreen(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
             Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black)) {
-                if (details is LoadState.Loading) PlayerLoading(previewThumbnail)
+                if (details is LoadState.Loading && !playingThis) PlayerLoading(previewThumbnail)
             }
             when (val d = details) {
                 is LoadState.Loading -> VideoPageSkeleton(previewTitle, Modifier.fillMaxWidth().weight(1f))
@@ -178,9 +181,18 @@ fun VideoScreen(
                                     vm.toggleSaved()
                                     Toast.makeText(context, if (saved) "Removed from Watch later" else "Saved to Watch later", Toast.LENGTH_SHORT).show()
                                 }
-                                WatchAction(QtIcons.Headphones, if (playback.audioOnly) "Listening" else "Listen", selected = playback.audioOnly) {
-                                    vm.playInBackground()
-                                    Toast.makeText(context, "Playing audio in background", Toast.LENGTH_SHORT).show()
+                                WatchAction(
+                                    if (playback.audioOnly) QtIcons.Videocam else QtIcons.Headphones,
+                                    if (playback.audioOnly) "Watch" else "Listen",
+                                    selected = playback.audioOnly,
+                                ) {
+                                    val listening = playback.audioOnly
+                                    vm.toggleBackground()
+                                    Toast.makeText(
+                                        context,
+                                        if (listening) "Video back on" else "Listening in the background",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
                                 }
                                 WatchAction(QtIcons.Share, "Share") {
                                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
@@ -252,7 +264,7 @@ fun VideoScreen(
                 }
             }
         }
-        if (details is LoadState.Success) {
+        if (details is LoadState.Success || playingThis) {
             Box(
                 Modifier.align(Alignment.TopCenter).background(Color.Black).then(
                     if (fullscreen) Modifier.fillMaxSize()

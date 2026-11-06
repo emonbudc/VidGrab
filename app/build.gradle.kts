@@ -54,6 +54,8 @@ android {
             optimization {
                 enable = true
             }
+            // Drop resources nothing references, together with the code R8 removes.
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfigs.findByName("release")?.let { signingConfig = it }
         }
@@ -79,9 +81,22 @@ android {
     }
 
     packaging {
-        resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/DEPENDENCIES")
+        resources.excludes += setOf(
+            "/META-INF/{AL2.0,LGPL2.1}",
+            "META-INF/DEPENDENCIES",
+            "META-INF/LICENSE*",
+            "META-INF/NOTICE*",
+            "META-INF/*.kotlin_module",
+            "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
+        )
         // yt-dlp's Python runtime is unpacked from native libs at first launch.
         jniLibs.useLegacyPackaging = true
+    }
+
+    // Keep the dependency blob out of the APK; it's only metadata for the Play Console.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 }
 

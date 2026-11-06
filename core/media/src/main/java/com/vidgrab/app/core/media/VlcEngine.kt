@@ -40,11 +40,13 @@ class VlcEngine private constructor(private val context: Context) {
     private var libVlc: LibVLC? = null
     private var player: MediaPlayer? = null
     private var currentMedia: Media? = null
+    private var currentItem: PlayItem? = null
     private var currentFd: ParcelFileDescriptor? = null
     private var subtitleFile: File? = null
     private var audioOnly = false
     private var attached: VLCVideoLayout? = null
     private var activeEqualizer: MediaPlayer.Equalizer? = null
+    private var videoRetry = 0
 
     val currentTimeMs: Long get() = _snapshot.value.timeMs.coerceAtLeast(0)
     val currentLengthMs: Long get() = _snapshot.value.lengthMs.coerceAtLeast(0)
@@ -52,8 +54,10 @@ class VlcEngine private constructor(private val context: Context) {
     fun play(item: PlayItem, startMs: Long, speed: Float, audioOnly: Boolean) {
         val p = ensurePlayer()
         this.audioOnly = audioOnly
+        videoRetry++
         pause()
         releaseCurrentMedia()
+        currentItem = null
         _snapshot.value = VlcSnapshot(speed = speed, timeMs = startMs.coerceAtLeast(0))
 
         val uri = Uri.parse(item.uri)
@@ -73,6 +77,7 @@ class VlcEngine private constructor(private val context: Context) {
             media.addSlave(IMedia.Slave(IMedia.Slave.Type.Audio, SLAVE_PRIORITY, it))
         }
         currentMedia = media
+        currentItem = item
         p.setMedia(media)
         p.setRate(speed)
         activeEqualizer?.let { p.setEqualizer(it) }
@@ -96,8 +101,10 @@ class VlcEngine private constructor(private val context: Context) {
     }
 
     fun stop() {
+        videoRetry++
         player?.stop()
         releaseCurrentMedia()
+        currentItem = null
         _snapshot.value = VlcSnapshot()
     }
 
@@ -120,9 +127,26 @@ class VlcEngine private constructor(private val context: Context) {
 
     fun setAudioOnly(on: Boolean) {
         audioOnly = on
-        player?.setVideoTrackEnabled(!on && attached != null)
-        if (!on) updateVideoSize()
-        _snapshot.value = _snapshot.value.copy(hasVideo = !on && _snapshot.value.hasVideo)
+        val p = player
+        if (p == null) {
+            if (on) _snapshot.value = _snapshot.value.copy(hasVideo = false)
+            return
+        }
+        p.setVideoTrackEnabled(!on)
+        if (on) {
+            _snapshot.value = _snapshot.value.copy(hasVideo = false)
+            return
+        }
+        updateVideoSize()
+        // Some decoders drop the video output for good when its track is switched off: if the picture doesn't come
+        // back shortly after the switch, start the same stream again at the same moment.
+        val item = currentItem ?: return
+        val token = ++videoRetry
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            if (token != videoRetry || audioOnly || player !== p) return@postDelayed
+            val track = runCatching { p.currentVideoTrack }.getOrNull()
+            if (track == null && attached != null) play(item, currentTimeMs, _snapshot.value.speed, false)
+        }, 800)
     }
 
     /** Enables or disables the video track as the screen and the audio-only mode require. */
@@ -179,12 +203,14 @@ class VlcEngine private constructor(private val context: Context) {
     }
 
     fun release() {
+        videoRetry++
         runCatching { player?.setEventListener(null) }
         runCatching { player?.detachViews() }
         attached = null
         runCatching { player?.release() }
         player = null
         releaseCurrentMedia()
+        currentItem = null
         subtitleFile?.delete()
         subtitleFile = null
         libVlc?.release()
