@@ -1,5 +1,6 @@
 package com.vidgrab.app.feature.library
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vidgrab.app.core.data.LibraryRepository
@@ -127,7 +128,7 @@ class LibraryViewModel(
 
 fun DownloadTask.toPlayItem() = PlayItem(
     id = "dl:$id",
-    uri = File(filePath).toURI().toString(),
+    uri = Uri.fromFile(File(filePath)).toString(),
     title = title,
     artist = sourceHost.orEmpty(),
     artwork = thumbnail,

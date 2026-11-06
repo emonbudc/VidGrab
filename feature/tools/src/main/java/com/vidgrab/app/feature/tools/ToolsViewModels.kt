@@ -60,7 +60,7 @@ class VaultViewModel(
     fun play(task: DownloadTask) {
         val list = items.value.filter { it.type == task.type }
         player.play(list.map {
-            PlayItem("dl:${it.id}", File(it.filePath).toURI().toString(), it.title, it.sourceHost.orEmpty(), it.thumbnail, it.type == ContentType.VIDEO)
+            PlayItem("dl:${it.id}", Uri.fromFile(File(it.filePath)).toString(), it.title, it.sourceHost.orEmpty(), it.thumbnail, it.type == ContentType.VIDEO)
         }, list.indexOf(task).coerceAtLeast(0))
     }
 }

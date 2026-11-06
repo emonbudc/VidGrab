@@ -1,5 +1,6 @@
 package com.vidgrab.app.core.data
 
+import android.net.Uri
 import com.vidgrab.app.core.database.DeletedHistoryDao
 import com.vidgrab.app.core.database.DeletedHistoryEntity
 import com.vidgrab.app.core.database.DownloadDao
@@ -114,7 +115,7 @@ internal class LibraryRepositoryImpl(
             }.getOrDefault(-1)
             dao.insert(
                 com.vidgrab.app.core.database.DownloadEntity(
-                    title = title, pageUrl = null, sourceHost = null, thumbnail = null, url = f.toURI().toString(), audioUrl = null,
+                    title = title, pageUrl = null, sourceHost = null, thumbnail = null, url = Uri.fromFile(f).toString(), audioUrl = null,
                     filePath = f.absolutePath, mimeType = mime, type = com.vidgrab.app.core.model.ContentType.fromMime(mime), quality = q,
                     totalBytes = f.length(), downloadedBytes = f.length(), audioTotalBytes = -1, audioDownloadedBytes = 0,
                     status = com.vidgrab.app.core.model.DownloadStatus.COMPLETED, error = null, durationSec = duration,
