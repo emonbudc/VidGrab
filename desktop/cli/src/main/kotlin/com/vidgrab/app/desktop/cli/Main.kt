@@ -1,0 +1,262 @@
+package com.vidgrab.app.desktop.cli
+
+import com.vidgrab.app.core.extractor.FacebookReader
+import com.vidgrab.app.core.extractor.HlsClient
+import com.vidgrab.app.core.extractor.NewPipeMediaExtractor
+import com.vidgrab.app.core.extractor.StreamResolver
+import com.vidgrab.app.core.extractor.WebMediaFinder
+import com.vidgrab.app.core.model.DownloadOption
+import com.vidgrab.app.core.model.FormatKind
+import com.vidgrab.app.core.model.SearchFilter
+import com.vidgrab.app.core.model.StreamProtocol
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
+import java.io.File
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
+
+const val VERSION = "0.1.0"
+
+fun main(args: Array<String>): Unit = runBlocking {
+    if (args.isEmpty() || args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
+        printUsage()
+        return@runBlocking
+    }
+    try {
+        val app = CliApp()
+        when (args[0]) {
+            "search" -> app.search(args.drop(1))
+            "info" -> app.info(args.drop(1))
+            "download" -> app.download(args.drop(1))
+            "version", "--version" -> println("VidGrab CLI $VERSION")
+            else -> {
+                System.err.println("unknown command: ${args[0]}")
+                printUsage()
+                exitProcess(2)
+            }
+        }
+    } catch (e: Exception) {
+        System.err.println("error: ${e.message ?: e.javaClass.simpleName}")
+        exitProcess(1)
+    }
+}
+
+private fun printUsage() {
+    println(
+        """
+        VidGrab CLI $VERSION
+        Desktop prototype: NewPipe extractor + web media resolver + downloader.
+
+        usage:
+          vidgrab-cli search <query>
+          vidgrab-cli info <url>
+          vidgrab-cli download <url> [options]
+
+        download options:
+          -a, --audio            pick the best audio-only stream
+          -q, --quality <height> cap video height (e.g. 1080)
+          -o, --out <dir>        output directory (default: current)
+              --tools <dir>      directory containing the ffmpeg binary
+
+        ffmpeg is required for muxing separated audio/video tracks and for HLS.
+        """.trimIndent()
+    )
+}
+
+private data class Resolved(
+    val title: String,
+    val options: List<DownloadOption>,
+    val headers: Map<String, String>,
+)
+
+private class CliApp {
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .followRedirects(true)
+        .build()
+
+    private val extractor = NewPipeMediaExtractor(client)
+    private val web = WebMediaFinder(client)
+    private val resolver = StreamResolver(client, HlsClient(client))
+    private val facebook = FacebookReader(client)
+
+    suspend fun search(args: List<String>) {
+        val query = args.joinToString(" ").trim()
+        if (query.isEmpty()) error("usage: search <query>")
+        val page = extractor.search(query, SearchFilter.ALL)
+        if (page.items.isEmpty()) {
+            println("no results")
+            return
+        }
+        page.items.forEach { item ->
+            val meta = buildList {
+                if (item.durationSec > 0) add(humanDuration(item.durationSec))
+                if (item.uploader.isNotBlank()) add(item.uploader)
+                if (item.viewCount >= 0) add("${humanCount(item.viewCount)} views")
+            }.joinToString(" · ")
+            println(item.title)
+            println("  ${item.url}${if (meta.isNotEmpty()) "  ($meta)" else ""}")
+        }
+    }
+
+    suspend fun info(args: List<String>) {
+        val url = args.firstOrNull() ?: error("usage: info <url>")
+        val resolved = resolve(url)
+        println(resolved.title)
+        if (resolved.options.isEmpty()) {
+            println("  no downloadable formats exposed")
+            return
+        }
+        resolved.options.forEachIndexed { index, option ->
+            println("  [${index + 1}] ${describe(option)}")
+        }
+    }
+
+    suspend fun download(args: List<String>) {
+        var url: String? = null
+        var audio = false
+        var quality = 0
+        var outDir = File(System.getProperty("user.dir"))
+        var tools: File? = null
+        var index = 0
+        while (index < args.size) {
+            when (val arg = args[index]) {
+                "-a", "--audio" -> audio = true
+                "-q", "--quality" -> quality = args.getOrNull(++index)?.toIntOrNull()
+                    ?: error("--quality needs a number, e.g. 1080")
+                "-o", "--out" -> outDir = File(args.getOrNull(++index) ?: error("--out needs a path"))
+                "--tools" -> tools = File(args.getOrNull(++index) ?: error("--tools needs a path"))
+                else -> {
+                    if (arg.startsWith("-")) error("unknown flag: $arg") else url = arg
+                }
+            }
+            index++
+        }
+        val targetUrl = url ?: error("usage: download <url> [--audio] [--quality 1080] [--out dir] [--tools dir]")
+        val resolved = resolve(targetUrl)
+        val option = choose(resolved.options, audio, quality) ?: error("no downloadable format found")
+
+        println(resolved.title)
+        println("  ${describe(option)}")
+        if (option.audioUrl != null) println("  video and audio are separate tracks; merging with ffmpeg")
+
+        val downloader = MediaDownloader(client, tools)
+        var lastUpdate = 0L
+        val file = downloader.download(option, resolved.title, outDir, resolved.headers) { done, total ->
+            val now = System.currentTimeMillis()
+            if (now - lastUpdate >= 200) {
+                lastUpdate = now
+                printProgress(done, total)
+            }
+        }
+        println()
+        println("saved: ${file.absolutePath}")
+    }
+
+    private suspend fun resolve(url: String): Resolved {
+        if (extractor.canHandle(url)) {
+            val details = extractor.details(url)
+            val options = details.options.ifEmpty {
+                buildList {
+                    details.playbackUrl?.let {
+                        val mime = details.playbackMime ?: "video/mp4"
+                        add(
+                            DownloadOption(
+                                id = "progressive",
+                                kind = FormatKind.VIDEO,
+                                title = "Video",
+                                info = "",
+                                ext = WebMediaFinder.extFor(mime),
+                                mimeType = mime,
+                                url = it,
+                            )
+                        )
+                    }
+                    details.hlsUrl?.let {
+                        add(
+                            DownloadOption(
+                                id = "hls",
+                                kind = FormatKind.VIDEO,
+                                title = "HLS",
+                                info = "",
+                                ext = "mp4",
+                                mimeType = "video/mp4",
+                                url = it,
+                                protocol = StreamProtocol.HLS,
+                            )
+                        )
+                    }
+                }
+            }
+            return Resolved(details.item.title, options, emptyMap())
+        }
+
+        if (FacebookReader.isFacebook(url)) {
+            facebook.extract(url)?.let { return Resolved(it.title, it.options, it.headers) }
+        }
+
+        val page = web.find(url) ?: error("couldn't load that page or find media on it")
+        val result = resolver.resolveWithReport(page.candidates, page.headers, page.durationSec)
+        if (result.options.isEmpty()) {
+            error("no downloadable media found (${result.report.take(3).joinToString("; ")})")
+        }
+        return Resolved(page.title.ifBlank { url }, result.options, page.headers)
+    }
+
+    private fun choose(options: List<DownloadOption>, audio: Boolean, quality: Int): DownloadOption? {
+        if (audio) {
+            return options.filter { it.kind == FormatKind.AUDIO }.maxByOrNull { it.bitrate }
+                ?: options.filter { it.extractAudio }.maxByOrNull { it.height }
+        }
+        val videos = options.filter { it.kind == FormatKind.VIDEO && !it.extractAudio }
+        if (videos.isEmpty()) return options.maxByOrNull { it.height }
+        if (quality > 0) {
+            return videos.filter { it.height in 1..quality }.maxByOrNull { it.height }
+                ?: videos.minByOrNull { it.height }
+        }
+        return videos.maxByOrNull { it.height }
+    }
+}
+
+private fun describe(option: DownloadOption): String {
+    val quality = when {
+        option.height > 0 -> "${option.height}p"
+        option.bitrate > 0 -> "${option.bitrate} kbps"
+        else -> option.title
+    }
+    val size = if (option.totalSize > 0) " · ${humanBytes(option.totalSize)}" else ""
+    val merge = if (option.audioUrl != null) " · needs merge" else ""
+    val audioOnly = if (option.extractAudio) " · audio only" else ""
+    return "$quality · ${option.ext} · ${option.mimeType}$size$merge$audioOnly"
+}
+
+internal fun humanBytes(bytes: Long): String = when {
+    bytes < 0 -> "?"
+    bytes < 1024 -> "$bytes B"
+    bytes < 1024 * 1024 -> "%.1f KB".format(Locale.ROOT, bytes / 1024.0)
+    bytes < 1024L * 1024 * 1024 -> "%.1f MB".format(Locale.ROOT, bytes / (1024.0 * 1024))
+    else -> "%.2f GB".format(Locale.ROOT, bytes / (1024.0 * 1024 * 1024))
+}
+
+internal fun humanDuration(seconds: Long): String {
+    val h = seconds / 3600
+    val m = seconds % 3600 / 60
+    val s = seconds % 60
+    return if (h > 0) "%d:%02d:%02d".format(Locale.ROOT, h, m, s) else "%d:%02d".format(Locale.ROOT, m, s)
+}
+
+private fun humanCount(value: Long): String = when {
+    value >= 1_000_000_000 -> "%.1fB".format(Locale.ROOT, value / 1_000_000_000.0)
+    value >= 1_000_000 -> "%.1fM".format(Locale.ROOT, value / 1_000_000.0)
+    value >= 1_000 -> "%.1fK".format(Locale.ROOT, value / 1_000.0)
+    else -> value.toString()
+}
+
+private fun printProgress(done: Long, total: Long) {
+    val percent = if (total > 0) "%.1f%%".format(Locale.ROOT, done * 100.0 / total) else humanBytes(done)
+    val size = if (total > 0) "${humanBytes(done)} / ${humanBytes(total)}" else humanBytes(done)
+    print("\r  $percent  $size      ")
+    System.out.flush()
+}
