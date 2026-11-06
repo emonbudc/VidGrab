@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.unit.IntOffset
-import com.vidgrab.app.core.designsystem.IconTile
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.ui.BrandTile
 import com.vidgrab.app.core.ui.FeedSkeleton
@@ -302,19 +301,6 @@ private fun DiscoverTab(
                     }
                 }
             }
-            item(key = "features") {
-                DiscoverHeader("Do more with VidGrab", QtIcons.Bolt, null)
-                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        FeatureTile("Share to download", "From YouTube, Facebook, TikTok…", QtIcons.Share, Color(0xFF2FCB7A), Modifier.weight(1f)) { actions.openHowTo("YOUTUBE") }
-                        FeatureTile("Browse any site", "Videos are detected automatically", QtIcons.Public, Color(0xFF4C8DFF), Modifier.weight(1f), actions.openSites)
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        FeatureTile("Private vault", "Hide files behind a PIN", QtIcons.Lock, Color(0xFFFF5C93), Modifier.weight(1f), actions.openVault)
-                        FeatureTile("WhatsApp status", "Save statuses you've viewed", QtIcons.Downloading, Color(0xFF25D366), Modifier.weight(1f)) { actions.openHowTo("WHATSAPP") }
-                    }
-                }
-            }
         }
     }
 }
@@ -383,24 +369,6 @@ private fun TrendingCarousel(items: List<MediaItem>, loading: Boolean, onOpen: (
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun FeatureTile(
-    title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color,
-    modifier: Modifier, onClick: () -> Unit,
-) {
-    Column(
-        modifier.clip(RoundedCornerShape(22.dp))
-            .background(Brush.linearGradient(listOf(tint.copy(alpha = 0.16f), MaterialTheme.colorScheme.surfaceContainerLow)))
-            .border(1.dp, tint.copy(alpha = 0.18f), RoundedCornerShape(22.dp))
-            .pressable(scaleDown = 0.96f, onClick = onClick).padding(16.dp),
-    ) {
-        IconTile(icon, tint = tint, size = 42.dp)
-        Text(title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 14.dp))
-        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2,
-            modifier = Modifier.padding(top = 2.dp))
     }
 }
 
