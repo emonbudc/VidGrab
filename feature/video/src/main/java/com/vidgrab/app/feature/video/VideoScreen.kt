@@ -186,6 +186,10 @@ fun VideoScreen(
                                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
                                         .putExtra(Intent.EXTRA_TEXT, v.item.url), "Share"))
                                 }
+                                WatchAction(QtIcons.PictureInPicture, "Picture-in-picture") {
+                                    vm.player.setAudioOnly(false)
+                                    leave(toPip = true)
+                                }
                                 WatchAction(QtIcons.MoreHoriz, "More") { showAbout = true }
                             }
                         }
@@ -258,7 +262,7 @@ fun VideoScreen(
                 VideoPlayerBox(
                     vm.player, playback, Modifier.fillMaxSize(), fullscreen = fullscreen,
                     onToggleFullscreen = { fullscreen = !fullscreen }, onCollapse = if (fullscreen) { { fullscreen = false } } else null,
-                    showPrevNext = false, onRetry = vm::retry, options = playerOptions, onPip = { leave(toPip = true) },
+                    showPrevNext = false, onRetry = vm::retry, options = playerOptions, onPip = { vm.player.setAudioOnly(false); leave(toPip = true) },
                     quality = qualityMenu, autoplay = appSettings.autoplayNext, onAutoplayChange = onAutoplay, onNext = nextVideo, upNext = upNext,
                 )
             }

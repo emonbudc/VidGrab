@@ -146,6 +146,7 @@ fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var clip by remember { mutableStateOf<String?>(null) }
     val focused = androidx.compose.ui.platform.LocalWindowInfo.current.isWindowFocused
+    val showTrending by vm.showTrending.collectAsStateWithLifecycle()
     LaunchedEffect(focused) {
         if (!focused) return@LaunchedEffect
         clip = readClipboardUrl(context)
@@ -159,7 +160,6 @@ fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
     val activeTask by vm.activeTask.collectAsStateWithLifecycle()
     val activeCount by vm.activeCount.collectAsStateWithLifecycle()
     val savedCount by vm.savedCount.collectAsStateWithLifecycle()
-    val showTrending by vm.showTrending.collectAsStateWithLifecycle()
 
     LaunchedEffect(pager.currentPage) {
         when (pager.currentPage) {

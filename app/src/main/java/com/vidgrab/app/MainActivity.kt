@@ -108,7 +108,8 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         // Left the app from a video without picture-in-picture: pause it unless Settings → Player → Background play is on.
-        if (!isChangingConfigurations && !PipState.floating.value && PipState.videoOnScreen.value && !player.prefs.backgroundPlay) player.pause()
+        if (!isChangingConfigurations && !PipState.floating.value && PipState.videoOnScreen.value &&
+            !player.state.value.audioOnly && !player.prefs.backgroundPlay) player.pause()
     }
 
     override fun onNewIntent(intent: Intent) {

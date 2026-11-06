@@ -78,7 +78,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
 
     if (fullscreen || inPip) {
         VideoPlayerBox(controller, state, Modifier.fillMaxSize(), fullscreen = true, onToggleFullscreen = { fullscreen = false },
-            overlayControls = !inPip, onPip = { leave(toPip = true) })
+            overlayControls = !inPip, onPip = { if (state.audioOnly) controller.setAudioOnly(false); leave(toPip = true) })
         return
     }
     val showVideo = current.isVideo && !state.audioOnly
