@@ -82,7 +82,7 @@ class FloatingPlayerActivity : ComponentActivity() {
             LaunchedEffect(recall) { if (recall != recallAtStart) { keepPlaying = true; finishAndRemoveTask() } }
             // Nothing left to play (stopped from the notification): close the window.
             LaunchedEffect(state.current) { if (state.current == null && entered) { keepPlaying = true; finishAndRemoveTask() } }
-            // Until it is in its window the activity draws nothing, so the app underneath stays as it is.
+            // The window stays black until the system puts it in the picture-in-picture frame.
             if (inPip) CompositionLocalProvider(LocalPipMode provides true, LocalFloatingPlayer provides true) {
                 Box(Modifier.fillMaxSize().background(Color.Black)) {
                     VideoPlayerBox(player, state, Modifier.fillMaxSize(), fullscreen = true, showPrevNext = false, overlayControls = false)
@@ -95,15 +95,23 @@ class FloatingPlayerActivity : ComponentActivity() {
         super.onResume()
         if (entered) return
         entered = true
-        window.decorView.post {
-            val s = player.state.value
-            val ok = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                runCatching { enterPictureInPictureMode(pipParams(this, s.videoRatio(), s.isPlaying, autoEnter = false)) }.getOrDefault(false)
-            if (!ok) {
-                Toast.makeText(this, "Picture-in-picture isn't available", Toast.LENGTH_SHORT).show()
-                keepPlaying = true
-                finishAndRemoveTask()
-            }
+        window.decorView.post { enterPip(0) }
+    }
+
+    /** The window is sometimes not ready on the first frame; retry before giving up. */
+    private fun enterPip(attempt: Int) {
+        if (isFinishing || isDestroyed) return
+        val s = player.state.value
+        val ok = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            runCatching { enterPictureInPictureMode(pipParams(this, s.videoRatio(), s.isPlaying, autoEnter = false)) }.getOrDefault(false)
+        if (!ok && attempt < 4) {
+            window.decorView.postDelayed({ enterPip(attempt + 1) }, 150L * (attempt + 1))
+            return
+        }
+        if (!ok) {
+            Toast.makeText(this, "Picture-in-picture isn't available", Toast.LENGTH_SHORT).show()
+            keepPlaying = true
+            finishAndRemoveTask()
         }
     }
 
