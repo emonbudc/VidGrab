@@ -39,8 +39,6 @@ class VideoViewModel(
     private val _comments = MutableStateFlow(CommentsUi())
     val comments: StateFlow<CommentsUi> = _comments
     private var url: String? = null
-    var backgroundMode = false
-        private set
     private val pageUrl = MutableStateFlow<String?>(null)
     /** Whether this video is in Watch later. One flow for the screen's lifetime, following the loaded URL. */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -58,7 +56,8 @@ class VideoViewModel(
             if (r is LoadState.Success) {
                 // The video's own URL, not the link it was opened from (youtu.be/…?si=…), so it matches what was saved.
                 pageUrl.value = r.data.item.url
-                play(r.data, audioOnly = false)
+                // Coming back from the mini player: this video is already playing (maybe in listen mode); keep it going.
+                if (force || player.state.value.current?.id != "web:" + r.data.item.url) play(r.data, audioOnly = false)
                 loadComments()
             }
         }
@@ -112,9 +111,26 @@ class VideoViewModel(
     /** Switches to audio-only so playback continues after leaving the screen. */
     fun playInBackground() {
         val d = (details.value as? LoadState.Success)?.data ?: return
-        backgroundMode = true
         val st = player.state.value
         if (st.current?.id == "web:" + d.item.url) player.setAudioOnly(true) else play(d, audioOnly = true)
+    }
+
+    /** The Listen chip: audio-only on, or back to the video when already listening. */
+    fun toggleBackground() {
+        val d = (details.value as? LoadState.Success)?.data ?: return
+        if (player.state.value.audioOnly) {
+            val st = player.state.value
+            val same = st.current?.id == "web:" + d.item.url
+            // An item started as audio carries an audio-only stream; the video must be loaded again for the picture.
+            if (same && st.current?.isVideo == true) player.setAudioOnly(false)
+            else {
+                val speed = st.speed
+                play(d, audioOnly = false, at = player.currentPositionMs)
+                player.setSpeed(speed)
+            }
+        } else {
+            playInBackground()
+        }
     }
 
     /** The quality the Auto choice is playing, e.g. "Auto (720p)". */
@@ -146,10 +162,7 @@ class VideoViewModel(
     }
 
     override fun onCleared() {
-        val d = (details.value as? LoadState.Success)?.data
-        // Not while it plays in the floating window: closing this page shouldn't close that.
-        if (!backgroundMode && !player.prefs.backgroundPlay && !com.vidgrab.app.core.playerui.PipState.floating.value &&
-            d != null && player.state.value.current?.id == "web:" + d.item.url) player.stop()
+        // Leaving the page keeps the video in the mini player, like the downloaded player.
         super.onCleared()
     }
 }

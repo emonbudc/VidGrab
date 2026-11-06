@@ -288,7 +288,16 @@ fun AppNavHost(nav: NavHostController) {
                 .onSizeChanged { overlayHeight = with(density) { it.height.toDp() } },
         ) {
             if (miniVisible) MiniPlayer(onExpand = {
-                if (galleryId != null) GalleryPlayerActivity.start(context, galleryId) else nav.navigate(PlayerRoute) { launchSingleTop = true }
+                val now = playing.current
+                val web = now?.id?.takeIf { it.startsWith("web:") }?.removePrefix("web:")
+                when {
+                    galleryId != null -> GalleryPlayerActivity.start(context, galleryId)
+                    // An online video goes back to its own page, like a gallery video goes back to its player.
+                    now != null && web != null -> nav.navigate(
+                        VideoRoute(web, now.title.ifBlank { null }, now.artwork),
+                    ) { launchSingleTop = true }
+                    else -> nav.navigate(PlayerRoute) { launchSingleTop = true }
+                }
             })
             if (onTab && !barHidden.value) {
                 FloatingNavBar(
