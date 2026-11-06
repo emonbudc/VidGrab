@@ -57,9 +57,22 @@ jobs:
           zip -r "vidgrab-cli-${GITHUB_RUN_NUMBER}.zip" vidgrab-cli
           ls -la
 
-      - name: Upload artifact
+      - name: Upload CLI artifact
         uses: actions/upload-artifact@v4
         with:
           name: vidgrab-cli-${{ github.run_number }}
           path: desktop/cli/build/install/vidgrab-cli-*.zip
+          retention-days: 14
+
+      - name: Package extension
+        run: |
+          cd desktop/extension
+          zip -r "$RUNNER_TEMP/vidgrab-extension.zip" .
+          ls -la "$RUNNER_TEMP/vidgrab-extension.zip"
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vidgrab-extension-${{ github.run_number }}
+          path: ${{ runner.temp }}/vidgrab-extension.zip
           retention-days: 14

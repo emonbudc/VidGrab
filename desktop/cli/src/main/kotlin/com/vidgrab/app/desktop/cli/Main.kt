@@ -1,18 +1,11 @@
 package com.vidgrab.app.desktop.cli
 
-import com.vidgrab.app.core.extractor.FacebookReader
-import com.vidgrab.app.core.extractor.HlsClient
-import com.vidgrab.app.core.extractor.NewPipeMediaExtractor
-import com.vidgrab.app.core.extractor.StreamResolver
-import com.vidgrab.app.core.extractor.WebMediaFinder
 import com.vidgrab.app.core.model.DownloadOption
-import com.vidgrab.app.core.model.FormatKind
-import com.vidgrab.app.core.model.SearchFilter
-import com.vidgrab.app.core.model.StreamProtocol
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import java.io.File
 import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
@@ -23,12 +16,19 @@ fun main(args: Array<String>): Unit = runBlocking {
         printUsage()
         return@runBlocking
     }
+    val client = OkHttpClient.Builder()
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .followRedirects(true)
+        .build()
+    val engine = MediaEngine(client)
     try {
-        val app = CliApp()
+        val app = CliApp(engine)
         when (args[0]) {
             "search" -> app.search(args.drop(1))
             "info" -> app.info(args.drop(1))
             "download" -> app.download(args.drop(1))
+            "serve" -> runServe(engine, args.drop(1))
             "version", "--version" -> println("VidGrab CLI $VERSION")
             else -> {
                 System.err.println("unknown command: ${args[0]}")
@@ -46,12 +46,13 @@ private fun printUsage() {
     println(
         """
         VidGrab CLI $VERSION
-        Desktop prototype: NewPipe extractor + web media resolver + downloader.
+        Desktop prototype: NewPipe extractor + web media resolver + downloader + browser bridge.
 
         usage:
           vidgrab-cli search <query>
           vidgrab-cli info <url>
           vidgrab-cli download <url> [options]
+          vidgrab-cli serve [options]
 
         download options:
           -a, --audio            pick the best audio-only stream
@@ -59,33 +60,49 @@ private fun printUsage() {
           -o, --out <dir>        output directory (default: current)
               --tools <dir>      directory containing the ffmpeg binary
 
+        serve options:
+              --port <port>      loopback port for the browser extension (default 37821)
+              --token <token>    shared token; generated when omitted
+              --out <dir>        output directory (default: ~/Downloads/VidGrab)
+              --tools <dir>      directory containing the ffmpeg binary
+          -a, --audio            default to audio-only downloads
+          -q, --quality <height> default video height cap
+
         ffmpeg is required for muxing separated audio/video tracks and for HLS.
         """.trimIndent()
     )
 }
 
-private data class Resolved(
-    val title: String,
-    val options: List<DownloadOption>,
-    val headers: Map<String, String>,
-)
+private suspend fun runServe(engine: MediaEngine, args: List<String>) {
+    var port = 37821
+    var token = System.getenv("VIDGRAB_TOKEN").orEmpty()
+    var outDir = File(System.getProperty("user.home"), "Downloads/VidGrab")
+    var tools: File? = null
+    var audio = false
+    var quality = 0
+    var index = 0
+    while (index < args.size) {
+        when (val arg = args[index]) {
+            "--port" -> port = args.getOrNull(++index)?.toIntOrNull() ?: error("--port needs a number")
+            "--token" -> token = args.getOrNull(++index) ?: error("--token needs a value")
+            "--out" -> outDir = File(args.getOrNull(++index) ?: error("--out needs a path"))
+            "--tools" -> tools = File(args.getOrNull(++index) ?: error("--tools needs a path"))
+            "-a", "--audio" -> audio = true
+            "-q", "--quality" -> quality = args.getOrNull(++index)?.toIntOrNull() ?: error("--quality needs a number")
+            else -> error("unknown flag: $arg")
+        }
+        index++
+    }
+    if (token.isBlank()) token = UUID.randomUUID().toString().replace("-", "").take(24)
+    IpcServer(engine, token, port, outDir, tools, audio, quality).run()
+}
 
-private class CliApp {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .followRedirects(true)
-        .build()
-
-    private val extractor = NewPipeMediaExtractor(client)
-    private val web = WebMediaFinder(client)
-    private val resolver = StreamResolver(client, HlsClient(client))
-    private val facebook = FacebookReader(client)
+private class CliApp(private val engine: MediaEngine) {
 
     suspend fun search(args: List<String>) {
         val query = args.joinToString(" ").trim()
         if (query.isEmpty()) error("usage: search <query>")
-        val page = extractor.search(query, SearchFilter.ALL)
+        val page = engine.search(query)
         if (page.items.isEmpty()) {
             println("no results")
             return
@@ -103,7 +120,7 @@ private class CliApp {
 
     suspend fun info(args: List<String>) {
         val url = args.firstOrNull() ?: error("usage: info <url>")
-        val resolved = resolve(url)
+        val resolved = engine.resolve(url)
         println(resolved.title)
         if (resolved.options.isEmpty()) {
             println("  no downloadable formats exposed")
@@ -135,16 +152,15 @@ private class CliApp {
             index++
         }
         val targetUrl = url ?: error("usage: download <url> [--audio] [--quality 1080] [--out dir] [--tools dir]")
-        val resolved = resolve(targetUrl)
-        val option = choose(resolved.options, audio, quality) ?: error("no downloadable format found")
+        val resolved = engine.resolve(targetUrl)
+        val option = engine.choose(resolved.options, audio, quality) ?: error("no downloadable format found")
 
         println(resolved.title)
         println("  ${describe(option)}")
         if (option.audioUrl != null) println("  video and audio are separate tracks; merging with ffmpeg")
 
-        val downloader = MediaDownloader(client, tools)
         var lastUpdate = 0L
-        val file = downloader.download(option, resolved.title, outDir, resolved.headers) { done, total ->
+        val file = engine.download(option, resolved.title, outDir, resolved.headers, tools) { done, total ->
             val now = System.currentTimeMillis()
             if (now - lastUpdate >= 200) {
                 lastUpdate = now
@@ -154,73 +170,9 @@ private class CliApp {
         println()
         println("saved: ${file.absolutePath}")
     }
-
-    private suspend fun resolve(url: String): Resolved {
-        if (extractor.canHandle(url)) {
-            val details = extractor.details(url)
-            val options = details.options.ifEmpty {
-                buildList {
-                    details.playbackUrl?.let {
-                        val mime = details.playbackMime ?: "video/mp4"
-                        add(
-                            DownloadOption(
-                                id = "progressive",
-                                kind = FormatKind.VIDEO,
-                                title = "Video",
-                                info = "",
-                                ext = WebMediaFinder.extFor(mime),
-                                mimeType = mime,
-                                url = it,
-                            )
-                        )
-                    }
-                    details.hlsUrl?.let {
-                        add(
-                            DownloadOption(
-                                id = "hls",
-                                kind = FormatKind.VIDEO,
-                                title = "HLS",
-                                info = "",
-                                ext = "mp4",
-                                mimeType = "video/mp4",
-                                url = it,
-                                protocol = StreamProtocol.HLS,
-                            )
-                        )
-                    }
-                }
-            }
-            return Resolved(details.item.title, options, emptyMap())
-        }
-
-        if (FacebookReader.isFacebook(url)) {
-            facebook.extract(url)?.let { return Resolved(it.title, it.options, it.headers) }
-        }
-
-        val page = web.find(url) ?: error("couldn't load that page or find media on it")
-        val result = resolver.resolveWithReport(page.candidates, page.headers, page.durationSec)
-        if (result.options.isEmpty()) {
-            error("no downloadable media found (${result.report.take(3).joinToString("; ")})")
-        }
-        return Resolved(page.title.ifBlank { url }, result.options, page.headers)
-    }
-
-    private fun choose(options: List<DownloadOption>, audio: Boolean, quality: Int): DownloadOption? {
-        if (audio) {
-            return options.filter { it.kind == FormatKind.AUDIO }.maxByOrNull { it.bitrate }
-                ?: options.filter { it.extractAudio }.maxByOrNull { it.height }
-        }
-        val videos = options.filter { it.kind == FormatKind.VIDEO && !it.extractAudio }
-        if (videos.isEmpty()) return options.maxByOrNull { it.height }
-        if (quality > 0) {
-            return videos.filter { it.height in 1..quality }.maxByOrNull { it.height }
-                ?: videos.minByOrNull { it.height }
-        }
-        return videos.maxByOrNull { it.height }
-    }
 }
 
-private fun describe(option: DownloadOption): String {
+internal fun describe(option: DownloadOption): String {
     val quality = when {
         option.height > 0 -> "${option.height}p"
         option.bitrate > 0 -> "${option.bitrate} kbps"

@@ -27,6 +27,7 @@ kotlin {
 dependencies {
     implementation(libs.okhttp)
     implementation(libs.newpipe.extractor)
+    implementation(libs.org.json)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VidGrab settings</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      max-width: 560px; margin: 40px auto; padding: 0 20px;
+      background: #141218; color: #e6e1e5;
+      font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    p.lead { color: #938f99; margin: 0 0 24px; }
+    form { display: grid; gap: 16px; }
+    label { display: grid; gap: 6px; font-weight: 600; font-size: 13px; }
+    label small { color: #938f99; font-weight: 400; }
+    input, select {
+      width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid #49454f;
+      background: #211f26; color: #e6e1e5; font: inherit;
+    }
+    input[type="checkbox"] { width: auto; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    button {
+      padding: 9px 16px; border: 0; border-radius: 8px; cursor: pointer;
+      background: #d0bcff; color: #1c1b1f; font: 600 13px system-ui, sans-serif;
+    }
+    button.secondary { background: #4a4458; color: #e6e1e5; }
+    #result { color: #938f99; font-size: 13px; }
+    .card { background: #211f26; border-radius: 12px; padding: 18px; }
+    code { background: #2b2930; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>VidGrab</h1>
+  <p class="lead">Connect this extension to the VidGrab desktop app.</p>
+
+  <div class="card">
+    <form id="settings">
+      <label>
+        Port
+        <small>Shown when you run <code>vidgrab-cli serve</code>.</small>
+        <input id="port" type="number" min="1024" max="65535" step="1" required>
+      </label>
+
+      <label>
+        Token
+        <small>Printed by <code>vidgrab-cli serve</code> at startup.</small>
+        <input id="token" type="text" autocomplete="off" spellcheck="false" placeholder="paste the token" required>
+      </label>
+
+      <label>
+        Default quality
+        <select id="quality">
+          <option value="0">Best available</option>
+          <option value="2160">4K (2160p)</option>
+          <option value="1440">2K (1440p)</option>
+          <option value="1080">Full HD (1080p)</option>
+          <option value="720">HD (720p)</option>
+          <option value="480">SD (480p)</option>
+        </select>
+      </label>
+
+      <label class="row">
+        <input id="audio" type="checkbox">
+        Audio only by default
+      </label>
+
+      <div class="actions">
+        <button type="submit">Save</button>
+        <button type="button" class="secondary" id="test">Test connection</button>
+        <span id="result"></span>
+      </div>
+    </form>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
