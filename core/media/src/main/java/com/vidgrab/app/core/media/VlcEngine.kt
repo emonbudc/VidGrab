@@ -197,6 +197,10 @@ class VlcEngine private constructor(private val context: Context) {
             currentFd = fd
             return Media(lib, fd.fileDescriptor)
         }
+        if (uri.scheme == "file") {
+            val path = uri.path
+            if (path != null) return Media(lib, Uri.fromFile(File(Uri.decode(path))))
+        }
         return Media(lib, uri)
     }
 
