@@ -1,5 +1,8 @@
 package com.vidgrab.app.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
@@ -37,9 +42,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.BuildConfig
 import com.vidgrab.app.data.HistoryStore
 import com.vidgrab.app.engine.Engine
+import com.vidgrab.app.engine.EngineState
 import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,17 +56,19 @@ import kotlinx.coroutines.withContext
 fun SettingsScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var ytdlpVersion by remember { mutableStateOf("checking...") }
+    val engineState by Engine.state.collectAsStateWithLifecycle()
+    var ytdlpVersion by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
+    var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         ytdlpVersion = withContext(Dispatchers.IO) {
             runCatching {
                 Engine.await().getOrThrow()
                 YoutubeDL.getInstance().version(context)
-            }.getOrNull() ?: "unknown"
+            }.getOrNull()
         }
     }
 
@@ -83,11 +92,32 @@ fun SettingsScreen() {
                         null -> "Update finished."
                     }
                 },
-                onFailure = { "Update failed: ${it.message?.take(300) ?: it.javaClass.simpleName}" }
+                onFailure = { Engine.describe(it).take(2500) }
             )
             ytdlpVersion = withContext(Dispatchers.IO) {
-                runCatching { YoutubeDL.getInstance().version(context) }.getOrNull() ?: ytdlpVersion
+                runCatching { YoutubeDL.getInstance().version(context) }.getOrNull()
             }
+        }
+    }
+
+    val engineLabel = when (val state = engineState) {
+        EngineState.Idle -> "idle"
+        EngineState.Starting -> "starting (first launch unpacks Python + FFmpeg)"
+        EngineState.Ready -> "ready"
+        is EngineState.Failed -> "failed"
+    }
+
+    val diagnostics = buildString {
+        appendLine("VidGrab ${BuildConfig.VERSION_NAME}")
+        appendLine("engine: $engineLabel")
+        (engineState as? EngineState.Failed)?.let {
+            appendLine("engine error:")
+            appendLine(it.report)
+        }
+        appendLine("yt-dlp: ${ytdlpVersion ?: "bundled (not updated yet)"}")
+        status?.let {
+            appendLine("last action:")
+            appendLine(it)
         }
     }
 
@@ -115,7 +145,25 @@ fun SettingsScreen() {
         item {
             SettingsCard(title = "Download engine") {
                 InfoRow("App version", BuildConfig.VERSION_NAME)
-                InfoRow("yt-dlp", ytdlpVersion)
+                InfoRow("Engine", engineLabel)
+                InfoRow("yt-dlp", ytdlpVersion ?: "bundled (not updated yet)")
+
+                (engineState as? EngineState.Failed)?.let { failed ->
+                    Text(
+                        "Engine error",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    SelectionContainer {
+                        Text(
+                            failed.report,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
                 Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
@@ -130,7 +178,11 @@ fun SettingsScreen() {
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         } else {
-                            Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.width(18.dp).height(18.dp))
+                            Icon(
+                                Icons.Rounded.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.width(18.dp).height(18.dp)
+                            )
                         }
                         Spacer(Modifier.width(6.dp))
                         Text("Update stable")
@@ -144,12 +196,32 @@ fun SettingsScreen() {
                     }
                 }
                 status?.let {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    SelectionContainer {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (it.contains("failed") || it.contains("Exception")) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                }
+                OutlinedButton(
+                    onClick = {
+                        copyToClipboard(context, diagnostics)
+                        copied = true
+                    },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.width(18.dp).height(18.dp)
                     )
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (copied) "Copied" else "Copy diagnostics")
                 }
             }
         }
@@ -174,7 +246,11 @@ fun SettingsScreen() {
                 )
                 Spacer(Modifier.height(4.dp))
                 TextButton(onClick = { confirmClear = true }) {
-                    Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.width(18.dp).height(18.dp))
+                    Icon(
+                        Icons.Rounded.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.width(18.dp).height(18.dp)
+                    )
                     Spacer(Modifier.width(6.dp))
                     Text("Clear download list")
                 }
@@ -210,6 +286,11 @@ fun SettingsScreen() {
             }
         )
     }
+}
+
+private fun copyToClipboard(context: Context, text: String) {
+    val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    manager.setPrimaryClip(ClipData.newPlainText("VidGrab diagnostics", text))
 }
 
 @Composable

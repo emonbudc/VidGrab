@@ -1,5 +1,10 @@
 -keep class com.yausername.** { *; }
 -keep class com.fasterxml.jackson.** { *; }
+-keep class org.apache.commons.compress.** { *; }
 -dontwarn com.fasterxml.jackson.**
+-dontwarn org.tukaani.xz.**
+-dontwarn org.brotli.**
+-dontwarn com.github.luben.zstd.**
+-dontwarn org.objectweb.asm.**
 -keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
 -keep class org.apache.commons.io.** { *; }
