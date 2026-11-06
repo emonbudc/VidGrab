@@ -1,0 +1,5 @@
+-keep class com.yausername.** { *; }
+-keep class com.fasterxml.jackson.** { *; }
+-dontwarn com.fasterxml.jackson.**
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
+-keep class org.apache.commons.io.** { *; }
