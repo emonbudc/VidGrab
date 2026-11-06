@@ -91,6 +91,10 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             QtIconButton(QtIcons.ExpandMore, "Collapse", { leave() })
             Text(if (state.queue.size > 1) "${state.index + 1} / ${state.queue.size}" else "", Modifier.weight(1f),
                 style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (current.isVideo) QtIconButton(QtIcons.PictureInPicture, "Picture-in-picture", {
+                if (state.audioOnly) controller.setAudioOnly(false)
+                leave(toPip = true)
+            }, container = MaterialTheme.colorScheme.surfaceContainerHigh)
         }
         Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
             if (showVideo) {
