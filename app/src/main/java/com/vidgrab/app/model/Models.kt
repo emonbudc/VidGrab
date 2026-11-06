@@ -16,18 +16,18 @@ data class VideoInfoUi(
     val webpageUrl: String
 )
 
-enum class DownloadPhase { PREPARING, DOWNLOADING, FINISHED, FAILED, CANCELLED }
+enum class TaskStatus { QUEUED, PREPARING, DOWNLOADING, PAUSED, FAILED }
 
-data class ActiveDownload(
+data class DownloadTask(
+    val id: String,
+    val url: String,
     val title: String?,
     val quality: Quality,
-    val phase: DownloadPhase,
+    val status: TaskStatus,
     val progress: Float = 0f,
     val etaSeconds: Long = 0L,
     val error: String? = null,
-    val savedName: String? = null,
-    val savedUri: String? = null,
-    val mimeType: String? = null
+    val createdAt: Long = System.currentTimeMillis()
 )
 
 data class HistoryEntry(

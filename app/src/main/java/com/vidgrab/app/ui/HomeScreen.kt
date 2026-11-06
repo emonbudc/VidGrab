@@ -15,17 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Error
-import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -35,11 +34,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,15 +56,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.vidgrab.app.download.DownloadBus
+import com.vidgrab.app.data.DownloadRepository
 import com.vidgrab.app.download.DownloadService
-import com.vidgrab.app.model.ActiveDownload
-import com.vidgrab.app.model.DownloadPhase
 import com.vidgrab.app.model.Quality
 import com.vidgrab.app.model.VideoInfoUi
 import com.vidgrab.app.util.extractUrl
 import com.vidgrab.app.util.formatDuration
-import com.vidgrab.app.util.formatEta
 import com.vidgrab.app.util.isHttpUrl
 
 @Composable
@@ -77,7 +71,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val ui by viewModel.ui.collectAsStateWithLifecycle()
-    val active by DownloadBus.state.collectAsStateWithLifecycle()
+    val tasks by DownloadRepository.tasks.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var clipboardLink by remember { mutableStateOf<String?>(null) }
 
@@ -148,11 +142,8 @@ fun HomeScreen(
         ui.info?.let { info ->
             item { VideoCard(info = info, selected = ui.selected, onSelect = viewModel::selectQuality) }
             item {
-                val busy = active?.phase == DownloadPhase.PREPARING ||
-                    active?.phase == DownloadPhase.DOWNLOADING
                 Button(
                     onClick = { viewModel.download(ui.selected) },
-                    enabled = !busy,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(14.dp)
                 ) {
@@ -163,13 +154,20 @@ fun HomeScreen(
             }
         }
 
-        active?.let { download ->
+        if (tasks.isNotEmpty()) {
             item {
-                DownloadStatusCard(
-                    download = download,
-                    onCancel = { DownloadService.cancel(context) },
-                    onOpen = { uri, mime -> openMedia(context, uri, mime) },
-                    onDismiss = { DownloadBus.update(null) }
+                Text(
+                    "In progress",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            items(tasks, key = { it.id }) { task ->
+                DownloadTaskCard(
+                    task = task,
+                    onPause = { DownloadService.pause(context, task.id) },
+                    onResume = { DownloadService.resume(context, task.id) },
+                    onCancel = { DownloadService.cancel(context, task.id) }
                 )
             }
         }
@@ -300,90 +298,6 @@ private fun VideoCard(
                             label = { Text(quality.label) }
                         )
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DownloadStatusCard(
-    download: ActiveDownload,
-    onCancel: () -> Unit,
-    onOpen: (String, String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = when (download.phase) {
-                DownloadPhase.FINISHED -> MaterialTheme.colorScheme.primaryContainer
-                DownloadPhase.FAILED -> MaterialTheme.colorScheme.errorContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            }
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            when (download.phase) {
-                DownloadPhase.PREPARING -> {
-                    Text("Preparing engine...", fontWeight = FontWeight.SemiBold)
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    TextButton(onClick = onCancel) { Text("Cancel") }
-                }
-                DownloadPhase.DOWNLOADING -> {
-                    val percent = download.progress.toInt().coerceIn(0, 100)
-                    Text("Downloading  $percent%", fontWeight = FontWeight.SemiBold)
-                    LinearProgressIndicator(
-                        progress = { download.progress / 100f },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    val eta = formatEta(download.etaSeconds)
-                    Text(
-                        if (eta.isEmpty()) "Working..." else "About $eta left",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    TextButton(onClick = onCancel) { Text("Cancel") }
-                }
-                DownloadPhase.FINISHED -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.CheckCircle, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Saved to Downloads/VidGrab", fontWeight = FontWeight.SemiBold)
-                    }
-                    download.savedName?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
-                            onClick = {
-                                download.savedUri?.let { uri ->
-                                    onOpen(uri, download.mimeType ?: "video/mp4")
-                                }
-                            }
-                        ) {
-                            Icon(Icons.Rounded.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Open")
-                        }
-                        TextButton(onClick = onDismiss) { Text("Dismiss") }
-                    }
-                }
-                DownloadPhase.FAILED -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Error, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Download failed", fontWeight = FontWeight.SemiBold)
-                    }
-                    Text(
-                        download.error ?: "Unknown error",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    TextButton(onClick = onDismiss) { Text("Dismiss") }
-                }
-                DownloadPhase.CANCELLED -> {
-                    Text("Download cancelled", fontWeight = FontWeight.SemiBold)
-                    TextButton(onClick = onDismiss) { Text("Dismiss") }
                 }
             }
         }

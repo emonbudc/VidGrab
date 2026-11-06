@@ -39,7 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vidgrab.app.data.DownloadRepository
 import com.vidgrab.app.data.HistoryStore
+import com.vidgrab.app.download.DownloadService
 import com.vidgrab.app.model.HistoryEntry
 import com.vidgrab.app.util.formatBytes
 import java.io.File
@@ -50,8 +52,14 @@ import java.util.Locale
 @Composable
 fun DownloadsScreen() {
     val entries by HistoryStore.entries.collectAsStateWithLifecycle()
+    val tasks by DownloadRepository.tasks.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var pendingDelete by remember { mutableStateOf<HistoryEntry?>(null) }
+
+    val subtitle = buildList {
+        if (tasks.isNotEmpty()) add("${tasks.size} in progress")
+        if (entries.isNotEmpty()) add("${entries.size} downloaded")
+    }.joinToString("  ·  ").ifEmpty { "Nothing saved yet" }
 
     Column(Modifier.fillMaxSize()) {
         Row(
@@ -68,7 +76,7 @@ fun DownloadsScreen() {
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    if (entries.isEmpty()) "Nothing saved yet" else "${entries.size} saved",
+                    subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -78,40 +86,66 @@ fun DownloadsScreen() {
             }
         }
 
-        if (entries.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    Icons.Rounded.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.size(12.dp))
-                Text(
-                    "Grab your first video from the Grab tab.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            return@Column
-        }
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            items(entries, key = { it.id }) { entry ->
-                HistoryCard(
-                    entry = entry,
-                    onOpen = { openMedia(context, entry.uri, entry.mimeType) },
-                    onShare = { shareMedia(context, entry.uri, entry.mimeType, entry.title) },
-                    onDelete = { pendingDelete = entry }
+            if (tasks.isNotEmpty()) {
+                item {
+                    Text(
+                        "Downloading",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                items(tasks, key = { it.id }) { task ->
+                    DownloadTaskCard(
+                        task = task,
+                        onPause = { DownloadService.pause(context, task.id) },
+                        onResume = { DownloadService.resume(context, task.id) },
+                        onCancel = { DownloadService.cancel(context, task.id) }
+                    )
+                }
+            }
+
+            item {
+                Text(
+                    "Downloaded",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
                 )
+            }
+
+            if (entries.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Download,
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            "Grab your first video from the Grab tab.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                items(entries, key = { it.id }) { entry ->
+                    HistoryCard(
+                        entry = entry,
+                        onOpen = { openMedia(context, entry.uri, entry.mimeType) },
+                        onShare = { shareMedia(context, entry.uri, entry.mimeType, entry.title) },
+                        onDelete = { pendingDelete = entry }
+                    )
+                }
             }
         }
     }
@@ -164,6 +198,7 @@ private fun HistoryCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     val details = buildList {
+                        add("Downloaded")
                         add(entry.quality)
                         formatBytes(entry.sizeBytes).takeIf { it.isNotEmpty() }?.let { add(it) }
                         add(formatDate(entry.timestamp))

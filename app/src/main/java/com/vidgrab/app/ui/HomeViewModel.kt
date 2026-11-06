@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.vidgrab.app.data.DownloadRepository
 import com.vidgrab.app.download.DownloadService
 import com.vidgrab.app.engine.Engine
 import com.vidgrab.app.engine.YtDlpUpdater
@@ -118,7 +119,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val state = _ui.value
         val url = state.url.trim()
         if (url.isBlank()) return
-        DownloadService.start(getApplication(), url, state.info?.title, quality)
+        val app = getApplication<Application>()
+        val task = DownloadRepository.enqueue(app, url, state.info?.title, quality)
+        DownloadService.startTask(app, task.id)
     }
 
     private fun messageOf(t: Throwable): String {
