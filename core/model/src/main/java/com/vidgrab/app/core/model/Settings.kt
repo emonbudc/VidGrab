@@ -13,7 +13,7 @@ enum class VideoEndMode(val label: String) {
 }
 
 data class AppSettings(
-    val themeMode: ThemeMode = ThemeMode.DARK,
+    val themeMode: ThemeMode = ThemeMode.LIGHT,
     val accent: ThemeAccent = ThemeAccent.OCEAN,
     /** Pure black backgrounds in dark mode (saves battery on OLED screens). */
     val amoled: Boolean = false,
