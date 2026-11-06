@@ -43,9 +43,20 @@ data class NowPlaying(
 
 /** The foreground service that keeps libVLC playback alive in the background and on the lock screen. */
 class PlaybackService : Service() {
+    /** Set by [PlayerController] so notification and lock-screen buttons can drive the queue. */
+    interface Commands {
+        fun play()
+        fun pause()
+        fun next()
+        fun previous()
+        fun stop()
+        fun seekTo(ms: Long)
+    }
+
     private val engine by lazy { VlcEngine.get(this) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var session: MediaSessionCompat? = null
+    private var contentIntent: PendingIntent? = null
     private var lastRendered: String? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var audioManager: AudioManager? = null
@@ -77,11 +88,10 @@ class PlaybackService : Service() {
         val launch = packageManager.getLaunchIntentForPackage(packageName)!!
             .putExtra("open", "player")
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        contentIntent = PendingIntent.getActivity(this, 7, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val s = MediaSessionCompat(this, "VidGrab").apply {
             setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
-            setSessionActivity(
-                PendingIntent.getActivity(this@PlaybackService, 7, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT),
-            )
+            setSessionActivity(contentIntent)
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlay() { commands?.play() }
                 override fun onPause() { commands?.pause() }
@@ -197,7 +207,7 @@ class PlaybackService : Service() {
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle(info.title.ifBlank { "VidGrab" })
             .setContentText(info.artist.ifBlank { if (state.isBuffering) "Loading…" else "VidGrab" })
-            .setContentIntent(s?.sessionActivity)
+            .setContentIntent(contentIntent)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOnlyAlertOnce(true)
@@ -300,16 +310,6 @@ class PlaybackService : Service() {
         const val ACTION_START = "com.vidgrab.app.action.PLAYBACK_START"
         private const val CHANNEL_ID = "vidgrab_playback"
         private const val NOTIFICATION_ID = 8
-
-        /** Set by [PlayerController] so notification and lock-screen buttons can drive the queue. */
-        interface Commands {
-            fun play()
-            fun pause()
-            fun next()
-            fun previous()
-            fun stop()
-            fun seekTo(ms: Long)
-        }
 
         @Volatile
         var commands: Commands? = null

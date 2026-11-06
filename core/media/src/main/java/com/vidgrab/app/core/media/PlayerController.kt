@@ -105,12 +105,12 @@ class PlayerController(
             }
         }
         PlaybackService.commands = object : PlaybackService.Commands {
-            override fun play() = resume()
-            override fun pause() = pause()
-            override fun next() = next()
-            override fun previous() = previous()
-            override fun stop() = stop()
-            override fun seekTo(ms: Long) = seekTo(ms)
+            override fun play() { this@PlayerController.resume() }
+            override fun pause() { this@PlayerController.pause() }
+            override fun next() { this@PlayerController.next() }
+            override fun previous() { this@PlayerController.previous() }
+            override fun stop() { this@PlayerController.stop() }
+            override fun seekTo(ms: Long) { this@PlayerController.seekTo(ms) }
         }
         scope.launch {
             engine.snapshot.collect { snapshot ->
