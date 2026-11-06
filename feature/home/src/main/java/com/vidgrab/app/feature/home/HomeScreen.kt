@@ -3,6 +3,7 @@ package com.vidgrab.app.feature.home
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -316,7 +317,7 @@ private fun HomeSearchBar(actions: HomeActions, onSearch: (String) -> Unit) {
         cursorBrush = SolidColor(cs.primary),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { submit() }),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, top = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 14.dp),
         decorationBox = { inner ->
             Row(
                 Modifier.fillMaxWidth().height(54.dp).clip(shape)
@@ -364,7 +365,7 @@ private fun ClipboardLinkCard(url: String, onDownload: () -> Unit, onDismiss: ()
     val mint = signalInk(QtColors.LiveMint)
     val shape = RoundedCornerShape(4.dp)
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 18.dp, top = 8.dp).clip(shape)
+        Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 8.dp).clip(shape)
             .background(cs.surfaceContainer).border(1.dp, cs.outlineVariant, shape)
             .padding(9.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -482,7 +483,7 @@ private fun SearchTab(
         }
 
         when {
-            showTrending && feed.loading && feed.items.isEmpty() -> gridItems(4) { GridSkeleton() }
+            showTrending && feed.loading && feed.items.isEmpty() -> items(4) { GridSkeleton() }
 
             showTrending && feed.error != null && feed.items.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
                 InlineError(feed.error.orEmpty()) { vm.loadFeed(false) }
