@@ -3,19 +3,19 @@ package com.vidgrab.app.feature.gallery.player
 import android.app.Application
 import android.content.ContentValues
 import android.content.IntentSender
-import android.media.audiofx.Equalizer
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.Player
 import com.vidgrab.app.core.data.GalleryRepository
 import com.vidgrab.app.core.data.SettingsRepository
 import com.vidgrab.app.core.model.VideoEndMode
 import com.vidgrab.app.core.download.MediaMerger
 import com.vidgrab.app.core.media.PlayItem
 import com.vidgrab.app.core.media.PlayerController
+import com.vidgrab.app.core.media.RepeatMode
+import com.vidgrab.app.core.media.VlcEqualizer
 import com.vidgrab.app.core.model.GalleryMedia
 import com.vidgrab.app.feature.gallery.GallerySections
 import com.vidgrab.app.feature.gallery.uri
@@ -77,7 +77,7 @@ class GalleryPlayerViewModel(
     )
     val ui: StateFlow<GalleryPlayerUi> = _ui.asStateFlow()
     private var timerJob: Job? = null
-    private var equalizer: Equalizer? = null
+    private var equalizer: VlcEqualizer? = null
 
     init {
         repo.load()
@@ -139,9 +139,9 @@ class GalleryPlayerViewModel(
     private fun applyMode(mode: PlayMode) {
         controller.setRepeat(
             when (mode) {
-                PlayMode.REPEAT_ONE -> Player.REPEAT_MODE_ONE
-                PlayMode.AUTOPLAY_OFF -> Player.REPEAT_MODE_OFF
-                else -> Player.REPEAT_MODE_ALL
+                PlayMode.REPEAT_ONE -> RepeatMode.ONE
+                PlayMode.AUTOPLAY_OFF -> RepeatMode.OFF
+                else -> RepeatMode.ALL
             },
         )
         controller.setShuffle(mode == PlayMode.SHUFFLE)
@@ -214,13 +214,8 @@ class GalleryPlayerViewModel(
         }.getOrNull()
     }
 
-    /** The player's equalizer, created on first use and kept while the player is open. */
-    fun equalizer(): Equalizer? {
-        equalizer?.let { return it }
-        val session = controller.audioSessionId
-        if (session == 0) return null
-        return runCatching { Equalizer(0, session) }.getOrNull()?.also { equalizer = it }
-    }
+    /** The player's libVLC equalizer, created on first use and kept while the player is open. */
+    fun equalizer(): VlcEqualizer = equalizer ?: controller.equalizer().also { equalizer = it }
 
     override fun onCleared() {
         equalizer?.release()

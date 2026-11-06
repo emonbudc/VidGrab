@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
-import androidx.media3.common.Player
-import androidx.media3.ui.compose.PlayerSurface
+import com.vidgrab.app.core.media.PlayerController
+import com.vidgrab.app.core.playerui.VlcVideoSurface
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -60,8 +60,8 @@ class VideoZoom {
  * re-places the SurfaceView without recomposing anything.
  */
 @Composable
-fun VideoLayer(player: Player?, aspect: AspectMode, ratio: Float, zoom: VideoZoom, modifier: Modifier = Modifier) {
-    Layout({ PlayerSurface(player = player) }, modifier) { measurables, c ->
+fun VideoLayer(controller: PlayerController, aspect: AspectMode, ratio: Float, zoom: VideoZoom, modifier: Modifier = Modifier) {
+    Layout({ VlcVideoSurface(controller) }, modifier) { measurables, c ->
         val w = c.maxWidth.toFloat()
         val h = c.maxHeight.toFloat()
         val r = if (ratio > 0f) ratio else 16f / 9f

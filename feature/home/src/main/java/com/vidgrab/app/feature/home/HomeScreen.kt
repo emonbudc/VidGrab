@@ -9,21 +9,15 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.unit.IntOffset
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.ui.BrandTile
 import com.vidgrab.app.core.ui.FeedSkeleton
 import com.vidgrab.app.core.ui.TilesSkeleton
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +27,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,7 +36,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.graphics.graphicsLayer
 import com.vidgrab.app.core.designsystem.shimmer
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -50,8 +44,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -65,15 +57,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Urls
-import com.vidgrab.app.core.designsystem.BrandTitle
-import com.vidgrab.app.core.designsystem.LocalQtExtras
 import com.vidgrab.app.core.designsystem.SectionHeader
 import com.vidgrab.app.core.downloadsheet.DownloadSheetController
 import com.vidgrab.app.core.model.ItemKind
@@ -124,76 +116,67 @@ fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
         }
     }
 
-    Column(modifier.fillMaxSize()) {
-        HomeTopBar(actions, vm, sheet, clip)
-        HomeTabs(pager.currentPage + pager.currentPageOffsetFraction) { i -> scope.launch { pager.animateScrollToPage(i) } }
-        HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 0) { page ->
-            when (page) {
-                0 -> DiscoverTab(vm, actions, onDownload = sheet::open, onSeeTrending = { scope.launch { pager.animateScrollToPage(1) } }, onSeeMusic = { scope.launch { pager.animateScrollToPage(2) } })
-                1 -> FeedTab(vm, actions, onDownload = sheet::open)
-                2 -> MusicTab(vm, actions, onDownload = sheet::open)
-                else -> MoreTab(actions)
+    Box(modifier.fillMaxSize()) {
+        Image(
+            painterResource(R.drawable.home_backdrop), contentDescription = null,
+            contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
+        )
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.18f), Color.Black.copy(alpha = 0.90f)))))
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            HomeTabs(pager.currentPage + pager.currentPageOffsetFraction) { i -> scope.launch { pager.animateScrollToPage(i) } }
+            HomeSearch(actions, vm, sheet, clip)
+            HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 0) { page ->
+                when (page) {
+                    0 -> DiscoverTab(vm, actions, onDownload = sheet::open, onSeeTrending = { scope.launch { pager.animateScrollToPage(1) } }, onSeeMusic = { scope.launch { pager.animateScrollToPage(2) } })
+                    1 -> FeedTab(vm, actions, onDownload = sheet::open)
+                    2 -> MusicTab(vm, actions, onDownload = sheet::open)
+                    else -> MoreTab(actions)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun HomeTopBar(actions: HomeActions, vm: HomeViewModel, sheet: DownloadSheetController, clip: String?) {
-    val ex = LocalQtExtras.current
+private fun HomeSearch(actions: HomeActions, vm: HomeViewModel, sheet: DownloadSheetController, clip: String?) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Row(
-            Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(ex.brand),
-                contentAlignment = Alignment.Center,
-            ) { Icon(QtIcons.Download, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp)) }
-            Text(
-                "VidGrab", style = BrandTitle.copy(fontSize = 24.sp), color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(start = 10.dp),
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
-                "Downloader", style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.primaryContainer)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            )
-        }
-        Row(
-            Modifier.fillMaxWidth().padding(top = 12.dp).height(50.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+            Modifier.fillMaxWidth().padding(top = 14.dp).height(54.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.Black.copy(alpha = 0.42f))
+                .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(50))
                 .pressable(scaleDown = 0.985f, onClick = { actions.openSearch("") })
-                .padding(start = 14.dp, end = 6.dp),
+                .padding(start = 18.dp, end = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(QtIcons.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(21.dp))
-            Text("Search videos, music or paste a URL", Modifier.weight(1f).padding(horizontal = 10.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-            Box(Modifier.size(38.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
-                Icon(QtIcons.Search, "Search", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
-            }
+            Icon(QtIcons.Download, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(21.dp))
+            Text(
+                "Search videos, music or paste a link", Modifier.weight(1f).padding(horizontal = 12.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium,
+            )
+            Box(
+                Modifier.size(42.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center,
+            ) { Icon(QtIcons.Search, "Search", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(22.dp)) }
         }
         AnimatedVisibility(clip != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             val url = clip.orEmpty()
             Row(
-                Modifier.padding(top = 10.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                Modifier.padding(top = 10.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                    .background(Color.Black.copy(alpha = 0.55f))
+                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(16.dp))
                     .pressable(scaleDown = 0.98f, onClick = { actions.downloadUrl(url) })
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BrandTile(url, size = 36.dp, label = Urls.host(url) ?: "L")
                 Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-                    Text("Download copied link", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("Download copied link", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                     Text(url, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .75f))
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Box(
-                    Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.primary)
+                    Modifier.size(36.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primary)
                         .pressable(scaleDown = 0.9f, onClick = {
                             if (vm.opensInApp(url)) actions.downloadUrl(url) else sheet.open(Urls.normalize(url))
                         }),
@@ -203,29 +186,33 @@ private fun HomeTopBar(actions: HomeActions, vm: HomeViewModel, sheet: DownloadS
                 }
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(6.dp))
     }
 }
 
-/** Compact category chips that stay in sync with the pager. */
+/** Search / YouTube / Music / More tabs; the active one gets the accent underline. */
 @Composable
 private fun HomeTabs(position: Float, onSelect: (Int) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(26.dp),
+        verticalAlignment = Alignment.Bottom,
     ) {
         tabs.forEachIndexed { i, title ->
             val active = kotlin.math.abs(position - i) < 0.5f
-            Box(
-                Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(9.dp))
-                    .background(if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer)
-                    .pressable(scaleDown = 0.95f, role = androidx.compose.ui.semantics.Role.Tab, onClick = { onSelect(i) }),
-                contentAlignment = Alignment.Center,
+            Column(
+                Modifier.pressable(scaleDown = 0.95f, role = androidx.compose.ui.semantics.Role.Tab, onClick = { onSelect(i) }),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    title, style = MaterialTheme.typography.labelMedium,
+                    title, fontSize = 17.sp,
                     fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                    color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (active) Color.White else Color.White.copy(alpha = 0.62f),
+                    modifier = Modifier.padding(bottom = 7.dp),
+                )
+                Box(
+                    Modifier.width(if (active) 34.dp else 0.dp).height(3.dp)
+                        .clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primary),
                 )
             }
         }

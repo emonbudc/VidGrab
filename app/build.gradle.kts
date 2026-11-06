@@ -82,9 +82,6 @@ android {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/DEPENDENCIES")
         // yt-dlp's Python runtime is unpacked from native libs at first launch.
         jniLibs.useLegacyPackaging = true
-        // FFmpeg's video decoders (nextlib-media3ext) are downloaded on demand, not shipped: see core:media VideoDecoderPack.
-        jniLibs.excludes += listOf("libavcodec.so", "libavutil.so", "libswresample.so", "libswscale.so", "libmedia3ext.so")
-            .map { "**/$it" }
     }
 }
 

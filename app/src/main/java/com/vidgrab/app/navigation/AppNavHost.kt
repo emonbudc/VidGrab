@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -96,11 +95,20 @@ import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
 
 private val tabs = listOf(
-    NavTab(HomeRoute, "Home", QtIcons.Home, QtIcons.HomeFilled),
-    NavTab(LibraryRoute, "Downloads", QtIcons.Download, QtIcons.DownloadDone),
-    NavTab(GalleryRoute, "Gallery", QtIcons.Gallery, QtIcons.GalleryFilled),
+    NavTab(HomeRoute, "Download", QtIcons.Search, QtIcons.SearchFilled),
+    NavTab(GalleryRoute, "Play", QtIcons.PlayCircleOutline, QtIcons.PlayCircle),
     NavTab(SettingsRoute, "Settings", QtIcons.Settings, QtIcons.SettingsFilled),
 )
+
+private fun tabIndexFor(dest: androidx.navigation.NavDestination?): Int = when {
+    dest == null -> -1
+    dest.hierarchy.any {
+        it.hasRoute(HomeRoute::class) || it.hasRoute(LibraryRoute::class) || it.hasRoute(DownloadingRoute::class)
+    } -> 0
+    dest.hierarchy.any { it.hasRoute(GalleryRoute::class) } -> 1
+    dest.hierarchy.any { it.hasRoute(SettingsRoute::class) } -> 2
+    else -> -1
+}
 
 @Composable
 fun AppNavHost(nav: NavHostController) {
@@ -109,7 +117,8 @@ fun AppNavHost(nav: NavHostController) {
     val library = koinInject<LibraryRepository>()
     val backStack by nav.currentBackStackEntryAsState()
     val dest = backStack?.destination
-    val onTab = tabs.any { t -> dest?.hierarchy?.any { it.hasRoute(t.route::class) } == true }
+    val selectedTab = tabIndexFor(dest)
+    val onTab = selectedTab >= 0
     // A gallery video is already on screen (its own player or picture-in-picture); gallery audio reopens that player.
     val playing by koinInject<com.vidgrab.app.core.media.PlayerController>().state.collectAsStateWithLifecycle()
     val galleryId = playing.current?.id?.takeIf { it.startsWith("gallery:") }?.removePrefix("gallery:")?.toLongOrNull()
@@ -185,7 +194,6 @@ fun AppNavHost(nav: NavHostController) {
                         },
                         openVault = { nav.navigate(VaultRoute) },
                     ),
-                    Modifier.statusBarsPadding(),
                 )
             }
             composable<LibraryRoute>(
@@ -322,17 +330,16 @@ fun AppNavHost(nav: NavHostController) {
                 if (galleryId != null) GalleryPlayerActivity.start(context, galleryId) else nav.navigate(PlayerRoute) { launchSingleTop = true }
             })
             if (onTab && !barHidden.value) {
-                val selected = tabs.indexOfFirst { t -> dest?.hierarchy?.any { it.hasRoute(t.route::class) } == true }
                 FloatingNavBar(
-                    tabs, selected,
+                    tabs, selectedTab,
                     onSelect = { i ->
-                        nav.navigate(tabs[i].route) {
+                        if (i != selectedTab || (i == 0 && dest?.hasRoute(HomeRoute::class) != true)) nav.navigate(tabs[i].route) {
                             popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     },
-                    badges = mapOf(1 to activeCount),
+                    badges = mapOf(0 to activeCount),
                 )
             } else if (miniVisible) Spacer(Modifier.navigationBarsPadding().height(8.dp))
         }

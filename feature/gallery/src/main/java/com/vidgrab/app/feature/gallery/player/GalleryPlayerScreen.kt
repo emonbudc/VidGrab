@@ -93,7 +93,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.media.PlayerController
-import com.vidgrab.app.core.media.VideoDecoderPack
 import com.vidgrab.app.core.playerui.PlayerGestureHandler
 import com.vidgrab.app.core.playerui.TapZone
 import com.vidgrab.app.core.playerui.playerGestures
@@ -106,7 +105,6 @@ import com.vidgrab.app.feature.gallery.rememberDeleteAction
 import com.vidgrab.app.core.common.Permissions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.roundToInt
@@ -125,10 +123,8 @@ private val TopBarHeight = 47.dp
 fun GalleryPlayerScreen(mediaId: Long, onBack: () -> Unit) {
     val vm = koinViewModel<GalleryPlayerViewModel>(key = "player-$mediaId") { parametersOf(mediaId) }
     val controller = vm.controller
-    val decoderPack = koinInject<VideoDecoderPack>()
     val ui by vm.ui.collectAsStateWithLifecycle()
     val state by controller.state.collectAsStateWithLifecycle()
-    val player by controller.player.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
@@ -223,7 +219,7 @@ fun GalleryPlayerScreen(mediaId: Long, onBack: () -> Unit) {
     }
 
     if (inPip) {
-        Box(Modifier.fillMaxSize().background(Color.Black)) { VideoLayer(player, AspectMode.FIT, ratio, zoom, Modifier.fillMaxSize()) }
+        Box(Modifier.fillMaxSize().background(Color.Black)) { VideoLayer(controller, AspectMode.FIT, ratio, zoom, Modifier.fillMaxSize()) }
         return
     }
 
@@ -275,10 +271,9 @@ fun GalleryPlayerScreen(mediaId: Long, onBack: () -> Unit) {
         val status = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding()
         val nav = WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues().calculateBottomPadding()
         VideoLayer(
-            player, ui.aspect, ratio, zoom,
+            controller, ui.aspect, ratio, zoom,
             Modifier.fillMaxSize().then(if (fitArea) Modifier.padding(top = status + TopBarHeight, bottom = nav + 36.dp) else Modifier),
         )
-        Subtitles(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = if (controls) 200.dp else 48.dp))
 
         val gestures = rememberGestureHandler(
             controller, state.durationMs, audio, window, zoom, feedback,
@@ -310,20 +305,12 @@ fun GalleryPlayerScreen(mediaId: Long, onBack: () -> Unit) {
             }
         }
         GestureOverlays(feedback, state.durationMs, landscape, zoom, controller.prefs.seekStepSec, controller.prefs.holdSpeed)
-        if ((state.error != null || state.videoUnsupported) && current != null) {
-            // Video the phone can't decode but FFmpeg can: offer the on-demand decoder instead of another app.
-            val decoderStatus by decoderPack.status.collectAsStateWithLifecycle()
-            val needsDecoder = (state.videoUnsupported || state.videoDecodeFailed) && decoderPack.decodes(state.videoMimeType) &&
-                decoderStatus != VideoDecoderPack.Status.Ready && decoderStatus != VideoDecoderPack.Status.Unavailable
+        if (state.error != null && current != null) {
             PlaybackErrorCard(
-                unsupported = state.unsupported || state.videoUnsupported,
-                soundOnly = state.error == null && state.videoUnsupported,
                 hasNext = ui.queue.size > 1,
                 onOpenWith = { GalleryActions.openWith(context, current) },
                 onNext = { controller.next() },
-                decoder = if (needsDecoder) DecoderOffer(decoderStatus, decoderPack.sizeBytes) {
-                    scope.launch { if (decoderPack.install()) controller.reloadCurrent() }
-                } else null,
+                onRetry = { controller.reloadCurrent() },
                 modifier = Modifier.align(Alignment.Center),
             )
         }
@@ -515,18 +502,6 @@ private fun BatteryClock() {
         Icon(QtIcons.Battery, "Battery $level%", tint = Color.White, modifier = Modifier.size(20.dp))
         Text(time.substringBefore(' '), color = Color.White, fontSize = 15.sp)
     }
-}
-
-/** Live subtitle text over the video. */
-@Composable
-private fun Subtitles(controller: PlayerController, modifier: Modifier) {
-    val text by controller.cues.collectAsStateWithLifecycle()
-    if (text.isNotBlank()) Text(
-        text, color = Color.White, fontSize = 17.sp,
-        modifier = modifier.padding(horizontal = 24.dp).clip(RoundedCornerShape(6.dp)).background(Color.Black.copy(alpha = 0.45f))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-    )
 }
 
 /** What the gesture overlays show right now. */
@@ -788,25 +763,18 @@ private class TouchClock {
     fun mark() { at = System.currentTimeMillis() }
 }
 
-/** The on-demand video decoder offered on [PlaybackErrorCard]: its [status], download size and the download action. */
-private class DecoderOffer(val status: VideoDecoderPack.Status, val sizeBytes: Long, val onDownload: () -> Unit)
-
 /**
- * Shown when a file can't play: the phone can't decode its format (HEVC 10-bit, WMV…) or the file is broken. When the
- * video decoder pack can play it ([decoder]), the card offers that download instead of opening another app.
+ * Shown when a file can't play: libVLC reports the file's format is broken or unsupported. The actions let the
+ * viewer try again, open the file in another app, or move on.
  */
 @Composable
 private fun PlaybackErrorCard(
-    unsupported: Boolean,
-    soundOnly: Boolean,
     hasNext: Boolean,
     onOpenWith: () -> Unit,
     onNext: () -> Unit,
-    decoder: DecoderOffer?,
+    onRetry: () -> Unit,
     modifier: Modifier,
 ) {
-    val downloading = decoder?.status as? VideoDecoderPack.Status.Downloading
-    val failed = decoder?.status as? VideoDecoderPack.Status.Failed
     Column(
         modifier.padding(horizontal = 36.dp).clip(RoundedCornerShape(24.dp)).background(SheetColor).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -814,54 +782,29 @@ private fun PlaybackErrorCard(
         Icon(QtIcons.Error, null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(36.dp))
         Spacer(Modifier.height(14.dp))
         Text(
-            when {
-                decoder != null -> "This video needs a decoder"
-                soundOnly -> "This phone can't show this video"
-                unsupported -> "This phone can't play this format"
-                else -> "Can't play this file"
-            },
-            color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            "Can't play this file", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            when {
-                failed != null -> failed.message
-                decoder != null -> "Its video format isn't supported by this phone. Download VidGrab's video decoder " +
-                    "(%.1f MB) once to play it and other videos like it.".format(java.util.Locale.US, decoder.sizeBytes / 1_048_576f)
-                soundOnly -> "Its video uses a codec this phone has no decoder for, so only the sound plays. Another player app may still show it."
-                unsupported -> "Its video or audio uses a codec this phone has no decoder for. Another player app may still open it."
-                else -> "The file may be damaged or still being written."
-            },
+            "The file may be damaged, still being written, or use a format this phone can't handle.",
             color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
-        if (downloading != null) {
-            Spacer(Modifier.height(16.dp))
-            val progress by androidx.compose.animation.core.animateFloatAsState(downloading.progress, label = "decoder")
-            Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f))) {
-                Box(
-                    Modifier.fillMaxWidth(progress).height(4.dp).clip(CircleShape)
-                        .background(com.vidgrab.app.core.designsystem.LocalQtExtras.current.brand),
-                )
-            }
-        }
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             if (hasNext) Box(
                 Modifier.height(42.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f)).pressable(onClick = onNext).padding(horizontal = 18.dp),
                 contentAlignment = Alignment.Center,
             ) { Text("Next video", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium) }
-            val label = when {
-                downloading != null -> "Downloading %d%%".format(java.util.Locale.US, (downloading.progress * 100).roundToInt())
-                failed != null -> "Retry"
-                decoder != null -> "Download"
-                else -> "Open with…"
-            }
+            Box(
+                Modifier.height(42.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f)).pressable(onClick = onRetry).padding(horizontal = 18.dp),
+                contentAlignment = Alignment.Center,
+            ) { Text("Try again", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium) }
             Box(
                 Modifier.height(42.dp).clip(CircleShape).background(com.vidgrab.app.core.designsystem.LocalQtExtras.current.brand)
-                    .pressable(onClick = { if (decoder == null) onOpenWith() else if (downloading == null) decoder.onDownload() })
-                    .padding(horizontal = 18.dp),
+                    .pressable(onClick = onOpenWith).padding(horizontal = 18.dp),
                 contentAlignment = Alignment.Center,
-            ) { Text(label, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+            ) { Text("Open with…", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
         }
     }
 }

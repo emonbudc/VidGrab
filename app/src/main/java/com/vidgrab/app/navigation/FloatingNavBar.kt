@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -44,18 +43,15 @@ fun FloatingNavBar(
     val scheme = MaterialTheme.colorScheme
     val haptic = LocalHapticFeedback.current
     Column(
-        Modifier.fillMaxWidth().background(scheme.surface)
-            .drawBehind {
-                drawLine(scheme.outlineVariant, start = androidx.compose.ui.geometry.Offset.Zero, end = androidx.compose.ui.geometry.Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
-            }
+        Modifier.fillMaxWidth().background(scheme.background.copy(alpha = 0.97f))
             .navigationBarsPadding(),
     ) {
-        Row(Modifier.fillMaxWidth().height(62.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
             tabs.forEachIndexed { i, tab ->
                 val active = i == selected
-                val color = if (active) scheme.primary else scheme.onSurfaceVariant
+                val color = if (active) scheme.onSurface else scheme.onSurfaceVariant
                 Column(
-                    Modifier.weight(1f).height(62.dp)
+                    Modifier.weight(1f).height(64.dp)
                         .pressable(scaleDown = 0.92f, role = Role.Tab, onClick = {
                             if (!active) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             onSelect(i)
@@ -68,21 +64,22 @@ fun FloatingNavBar(
                         Icon(if (active) tab.selectedIcon else tab.icon, null, tint = color, modifier = Modifier.size(25.dp))
                         val count = badges[i] ?: 0
                         if (count > 0) Box(
-                            Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-6).dp).size(16.dp)
-                                .clip(CircleShape).background(scheme.primary),
+                            Modifier.align(Alignment.TopEnd).offset(x = 11.dp, y = (-5).dp)
+                                .size(if (count == 1) 8.dp else 16.dp)
+                                .clip(CircleShape).background(scheme.error),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                if (count > 9) "9+" else "$count", color = scheme.onPrimary,
+                            if (count > 1) Text(
+                                if (count > 9) "9+" else "$count", color = scheme.onError,
                                 fontSize = 9.sp, lineHeight = 9.sp, fontWeight = FontWeight.Bold,
                             )
                         }
                     }
                     Text(
                         tab.label, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        fontSize = 10.5.sp, lineHeight = 13.sp,
+                        fontSize = 11.sp, lineHeight = 13.sp,
                         fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                        modifier = Modifier.padding(top = 4.dp),
+                        modifier = Modifier.padding(top = 5.dp),
                     )
                 }
             }

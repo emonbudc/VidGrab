@@ -35,3 +35,10 @@
 -dontwarn org.brotli.**
 -dontwarn com.github.luben.zstd.**
 -dontwarn org.objectweb.asm.**
+
+# libVLC: JNI entry points and media track/event classes are looked up by name.
+-keep class org.videolan.libvlc.** { *; }
+-keep class org.videolan.libvlc.interfaces.** { *; }
+-keep class org.videolan.R { *; }
+-keep class org.videolan.R$* { *; }
+-dontwarn org.videolan.**

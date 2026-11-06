@@ -1,6 +1,5 @@
 package com.vidgrab.app.feature.gallery.player
 
-import android.media.audiofx.Equalizer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -62,6 +61,7 @@ import com.vidgrab.app.core.designsystem.LocalQtExtras
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.media.PlayerController
+import com.vidgrab.app.core.media.VlcEqualizer
 import com.vidgrab.app.core.model.GalleryMedia
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -337,9 +337,9 @@ fun AudioTrackSheet(controller: PlayerController, onDismiss: () -> Unit, onBack:
     }
 }
 
-/** Android's built-in equalizer on the player's audio session: on/off, presets and per-band levels. */
+/** libVLC's equalizer: on/off, presets and per-band levels. */
 @Composable
-fun EqualizerSheet(eq: Equalizer?, onDismiss: () -> Unit, onBack: (() -> Unit)? = null) {
+fun EqualizerSheet(eq: VlcEqualizer?, onDismiss: () -> Unit, onBack: (() -> Unit)? = null) {
     PlayerSheet(onDismiss) {
         if (eq == null) {
             SheetHeader("Equalizer", onBack)

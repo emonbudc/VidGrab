@@ -47,7 +47,7 @@ CI builds and publishes signed APKs from `main` through `.github/workflows/build
 - [QuickTube](https://github.com/devgalib/QuickTube) by devgalib (GPL-3.0): the app this is based on.
 - [NewPipe Extractor](https://github.com/TeamNewPipe/NewPipeExtractor) (GPL-3.0): YouTube support.
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Unlicense) via [youtubedl-android](https://github.com/yausername/youtubedl-android) (GPL-3.0): site support.
-- AndroidX (Compose, Media3, Room, Navigation, DataStore), Koin, Coil, OkHttp (Apache-2.0).
+- AndroidX (Compose, Room, Navigation, DataStore), libVLC (LGPL-2.1), Koin, Coil, OkHttp (Apache-2.0).
 - Material Symbols (Apache-2.0), Simple Icons (CC0), Plus Jakarta Sans (OFL-1.1).
 
 ## License

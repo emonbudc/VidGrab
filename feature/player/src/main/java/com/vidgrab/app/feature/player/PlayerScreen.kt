@@ -45,7 +45,7 @@ import androidx.compose.ui.draw.shadow
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.pressable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.Player
+import com.vidgrab.app.core.media.RepeatMode
 import coil3.compose.AsyncImage
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.media.PlayerController
@@ -142,11 +142,11 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             if (current.isVideo) QtIconButton(QtIcons.Fullscreen, "Fullscreen", { if (state.audioOnly) controller.setAudioOnly(false); fullscreen = true },
                 container = MaterialTheme.colorScheme.surfaceContainerHigh)
             else QtIconButton(
-                if (state.repeatMode == Player.REPEAT_MODE_ONE) QtIcons.RepeatOne else QtIcons.Repeat, "Repeat",
+                if (state.repeatMode == RepeatMode.ONE) QtIcons.RepeatOne else QtIcons.Repeat, "Repeat",
                 {
-                    controller.setRepeat(when (state.repeatMode) { Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL; Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE; else -> Player.REPEAT_MODE_OFF })
+                    controller.setRepeat(when (state.repeatMode) { RepeatMode.OFF -> RepeatMode.ALL; RepeatMode.ALL -> RepeatMode.ONE; else -> RepeatMode.OFF })
                 },
-                tint = if (state.repeatMode == Player.REPEAT_MODE_OFF) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                tint = if (state.repeatMode == RepeatMode.OFF) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                 container = MaterialTheme.colorScheme.surfaceContainerHigh,
             )
         }

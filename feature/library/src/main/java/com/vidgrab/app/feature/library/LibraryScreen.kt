@@ -10,7 +10,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,10 +27,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,8 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.designsystem.IconTile
-import com.vidgrab.app.core.designsystem.LocalQtExtras
-import com.vidgrab.app.core.designsystem.QtChip
 import com.vidgrab.app.core.designsystem.QtColors
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.icon.QtIcons
@@ -94,6 +92,7 @@ fun LibraryScreen(
     var menuFor by remember { mutableStateOf<DownloadTask?>(null) }
     var renameFor by remember { mutableStateOf<DownloadTask?>(null) }
     var confirmDelete by remember { mutableStateOf<List<Long>?>(null) }
+    var filterOpen by remember { mutableStateOf(false) }
 
     // Re-import files from the download folder; needs media read access after a reinstall (Android 11+).
     val scan = {
@@ -144,12 +143,7 @@ fun LibraryScreen(
                         )
                     }
                 }
-                else -> Row(Modifier.fillMaxWidth().height(64.dp).padding(start = 22.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Library", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-                    QtIconButton(QtIcons.BookmarkBorder, "Watch later", onOpenSaved)
-                    QtIconButton(QtIcons.Search, "Search", { searching = true })
-                    QtIconButton(QtIcons.Checklist, "Select", { selection = emptySet() })
-                }
+                else -> Spacer(Modifier.height(8.dp))
             }
         }
 
@@ -157,19 +151,28 @@ fun LibraryScreen(
             if (ui.active.isNotEmpty() && sel == null && !searching) item {
                 ActiveCard(ui.active.first(), ui.active.size, speeds[ui.active.first().id] ?: 0, onOpenDownloading)
             }
-            if (sel == null) item {
-                LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(LibraryFilter.entries) { f ->
-                        QtChip(
-                            f.label, ui.filter == f, { vm.filter.value = f },
-                            icon = when (f) {
-                                LibraryFilter.ALL -> null
-                                LibraryFilter.VIDEO -> QtIcons.Movie
-                                LibraryFilter.MUSIC -> QtIcons.MusicNote
-                                LibraryFilter.PICTURE -> QtIcons.Image
-                            },
-                        )
+            if (sel == null && ui.done.isNotEmpty()) item(key = "downloaded-header") {
+                Row(
+                    Modifier.fillMaxWidth().padding(start = 20.dp, end = 6.dp, top = 18.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Downloaded", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    QtIconButton(QtIcons.BookmarkBorder, "Watch later", onOpenSaved, size = 38.dp, iconSize = 20.dp)
+                    Box {
+                        QtIconButton(QtIcons.FilterList, "Filter", { filterOpen = true }, size = 38.dp, iconSize = 20.dp)
+                        DropdownMenu(expanded = filterOpen, onDismissRequest = { filterOpen = false }) {
+                            LibraryFilter.entries.forEach { f ->
+                                DropdownMenuItem(
+                                    text = { Text(f.label, fontWeight = if (ui.filter == f) FontWeight.Bold else FontWeight.Normal) },
+                                    onClick = { vm.filter.value = f; filterOpen = false },
+                                )
+                            }
+                        }
                     }
+                    QtIconButton(QtIcons.Search, "Search", { searching = true }, size = 38.dp, iconSize = 20.dp)
+                    QtIconButton(QtIcons.DeleteSweep, "Delete all", {
+                        if (ui.done.isNotEmpty()) confirmDelete = ui.done.map { it.id }
+                    }, size = 38.dp, iconSize = 20.dp)
                 }
             }
             if (ui.loaded && ui.done.isEmpty()) item {
@@ -186,13 +189,6 @@ fun LibraryScreen(
                         }, icon = QtIcons.Search, secondary = true,
                     )
                 }
-            }
-            if (ui.done.isNotEmpty()) item {
-                Text(
-                    "${ui.done.size} file${if (ui.done.size == 1) "" else "s"} · ${Format.bytes(ui.done.sumOf { it.totalBytes.coerceAtLeast(0) })}",
-                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 22.dp, top = 6.dp, bottom = 4.dp),
-                )
             }
             items(ui.done, key = { it.id }) { task ->
                 Box(Modifier.animateItem()) { DoneRow(
@@ -244,47 +240,46 @@ fun LibraryScreen(
     }
 }
 
-/** Thin progress bar with the brand gradient. */
+private val DownloadBlue = Color(0xFF4C8DFF)
+
+/** Thin blue progress bar used for both active downloads and watched progress. */
 @Composable
 fun GradientProgress(progress: Float, modifier: Modifier = Modifier, indeterminate: Boolean = false) {
-    val brand = LocalQtExtras.current.brand
-    Box(modifier.height(6.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
-        if (!indeterminate) Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).clip(RoundedCornerShape(50)).background(brand))
-        else Box(Modifier.fillMaxSize().clip(RoundedCornerShape(50)).background(brand.let { it }).then(Modifier))
+    Box(modifier.height(5.dp).clip(RoundedCornerShape(50)).background(DownloadBlue.copy(alpha = 0.20f))) {
+        if (!indeterminate) Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).clip(RoundedCornerShape(50)).background(DownloadBlue))
+        else Box(Modifier.fillMaxSize().clip(RoundedCornerShape(50)).background(DownloadBlue))
     }
 }
 
 @Composable
 private fun ActiveCard(task: DownloadTask, count: Int, speed: Long, onClick: () -> Unit) {
     Column(
-        Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f), RoundedCornerShape(22.dp))
-            .pressable(scaleDown = 0.98f, onClick = onClick).padding(14.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            .pressable(scaleDown = 0.985f, onClick = onClick).padding(top = 16.dp, bottom = 2.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Downloading", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-            Box(Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
-                Text("$count", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-            }
-            Icon(QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Downloading ($count)", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Icon(QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
         }
-        Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            FileThumb(task, Modifier.width(96.dp).aspectRatio(16f / 9f))
-            Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                Text(task.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                GradientProgress(task.progress, Modifier.fillMaxWidth().padding(vertical = 8.dp))
-                Row {
+        Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            FileThumb(task, Modifier.width(112.dp).aspectRatio(16f / 9f))
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(task.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                GradientProgress(task.progress, Modifier.fillMaxWidth().padding(top = 7.dp))
+                Row(Modifier.padding(top = 5.dp)) {
                     Text(statusText(task, speed), style = MaterialTheme.typography.labelSmall,
-                        color = if (task.status == DownloadStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = when {
+                            task.status == DownloadStatus.FAILED -> MaterialTheme.colorScheme.error
+                            task.status == DownloadStatus.RUNNING -> DownloadBlue
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         modifier = Modifier.weight(1f), maxLines = 1)
-                    Text("${(task.progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text("${(task.progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = DownloadBlue, fontWeight = FontWeight.Bold)
                 }
             }
         }
     }
 }
-
 /** "1.0 / 5.7 GB" (one unit when both share it) so the status line fits small screens. */
 private fun compactProgress(done: Long, total: Long?): String {
     val d = Format.bytes(done)
@@ -336,18 +331,14 @@ private fun DoneRow(task: DownloadTask, watched: Float?, selected: Boolean?, onC
             .padding(start = 16.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        FileThumb(task, Modifier.width(124.dp).aspectRatio(16f / 9f))
+        FileThumb(task, Modifier.width(112.dp).aspectRatio(16f / 9f))
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(task.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text(task.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Row(Modifier.padding(top = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                task.quality?.let {
-                    Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f))
-                            .padding(horizontal = 5.dp, vertical = 1.dp))
-                    Spacer(Modifier.width(8.dp))
-                }
+                Icon(QtIcons.Play, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(11.dp))
+                Spacer(Modifier.width(4.dp))
                 Text(
-                    listOf(if (task.type == ContentType.AUDIO) Format.duration(task.durationSec) else "", Format.bytes(task.totalBytes))
+                    listOf(if (task.durationSec > 0) Format.duration(task.durationSec) else "", Format.bytes(task.totalBytes))
                         .filter { it.isNotBlank() }.joinToString(" · "),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

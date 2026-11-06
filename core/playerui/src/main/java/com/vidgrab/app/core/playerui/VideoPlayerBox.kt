@@ -35,7 +35,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.media3.common.Player
 import com.vidgrab.app.core.designsystem.pressable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,7 +74,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.ui.compose.PlayerSurface
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.media.PlaybackState
 import com.vidgrab.app.core.media.PlayerController
@@ -126,7 +124,6 @@ fun VideoPlayerBox(
     onNext: (() -> Unit)? = null,
     upNext: UpNext? = null,
 ) {
-    val player by controller.player.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var controlsVisible by remember { mutableStateOf(true) }
     var lastInteraction by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -170,8 +167,8 @@ fun VideoPlayerBox(
     BoxWithConstraints(modifier.background(Color.Black), contentAlignment = Alignment.Center) {
         if (!state.audioOnly) {
             val fitWide = maxWidth / maxHeight < ratio
-            PlayerSurface(
-                player = player,
+            VlcVideoSurface(
+                controller = controller,
                 modifier = Modifier.then(if (fitWide) Modifier.fillMaxWidth() else Modifier.fillMaxSize().padding(0.dp))
                     .aspectRatio(ratio, matchHeightConstraintsFirst = !fitWide),
             )

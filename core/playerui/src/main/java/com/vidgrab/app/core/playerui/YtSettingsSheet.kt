@@ -38,7 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.Player
+import com.vidgrab.app.core.media.RepeatMode
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.media.PlaybackState
@@ -126,9 +126,9 @@ internal fun YtSettingsSheet(
                     }
                     Page.MORE -> {
                         Header("Additional settings") { page = Page.MAIN }
-                        val looping = state.repeatMode == Player.REPEAT_MODE_ONE
+                        val looping = state.repeatMode == RepeatMode.ONE
                         ToggleItem(QtIcons.RepeatOne, "Loop video", looping) {
-                            controller.setRepeat(if (looping) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE)
+                            controller.setRepeat(if (looping) RepeatMode.OFF else RepeatMode.ONE)
                         }
                         if (onPip != null) NavItem(QtIcons.PictureInPicture, "Picture-in-picture", null) { onDismiss(); onPip() }
                         extra.forEach { o -> NavItem(o.icon, o.label, null, selected = o.selected) { o.onClick() } }

@@ -13,8 +13,8 @@ enum class VideoEndMode(val label: String) {
 }
 
 data class AppSettings(
-    val themeMode: ThemeMode = ThemeMode.LIGHT,
-    val accent: ThemeAccent = ThemeAccent.ORANGE,
+    val themeMode: ThemeMode = ThemeMode.DARK,
+    val accent: ThemeAccent = ThemeAccent.GOLD,
     /** Pure black backgrounds in dark mode (saves battery on OLED screens). */
     val amoled: Boolean = false,
     /** Wallpaper-based colours on Android 12+. */

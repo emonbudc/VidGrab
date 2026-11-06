@@ -3,32 +3,21 @@ package com.vidgrab.app.feature.settings
 import com.vidgrab.app.core.designsystem.LocalBottomBarHeight
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vidgrab.app.core.designsystem.LocalQtExtras
-import com.vidgrab.app.core.designsystem.QtCard
 import com.vidgrab.app.core.designsystem.icon.BrandIcons
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
@@ -51,13 +40,6 @@ class SettingsActions(
     val about: () -> Unit,
 )
 
-private val Blue = Color(0xFF4C8DFF)
-private val Orange = Color(0xFFFF8A3D)
-private val Purple = Color(0xFF9B7BFF)
-private val Green = Color(0xFF2FCB7A)
-private val Pink = Color(0xFFFF5C93)
-private val Teal = Color(0xFF1FC8C8)
-private val Amber = Color(0xFFFFB020)
 
 @Composable
 fun SettingsScreen(actions: SettingsActions) {
@@ -78,23 +60,22 @@ fun SettingsScreen(actions: SettingsActions) {
     }
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomBarHeight.current)) {
         item {
-            Text("Settings", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 24.dp, top = 18.dp, bottom = 6.dp))
+            Text("Settings", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 6.dp))
         }
-        item { AppearanceBanner(onClick = actions.theme) }
         item { GroupLabel("General") }
         item {
-            QtCard {
-                NavRow(QtIcons.Download, "Download settings", "Path, speed limit, tasks", tint = Blue, onClick = actions.downloadSettings)
+            Column {
+                NavRow(QtIcons.Download, "Download settings", "Path, speed limit, tasks", onClick = actions.downloadSettings)
                 RowDivider()
-                NavRow(QtIcons.PlayCircle, "Player", "Resume, history, gestures, picture-in-picture", tint = Green, onClick = actions.playerSettings)
+                NavRow(QtIcons.PlayCircle, "Player", "Resume, history, gestures, picture-in-picture", onClick = actions.playerSettings)
                 RowDivider()
-                NavRow(QtIcons.Notifications, "Notification settings", tint = Orange, onClick = actions.notificationSettings)
+                NavRow(QtIcons.Notifications, "Notification settings", onClick = actions.notificationSettings)
                 RowDivider()
-                NavRow(QtIcons.Palette, "Appearance", trailing = when (s.themeMode) {
+                NavRow(QtIcons.Palette, "Theme", trailing = when (s.themeMode) {
                     ThemeMode.SYSTEM -> "System"; ThemeMode.LIGHT -> "Light"; ThemeMode.DARK -> "Dark"
-                }, tint = Purple, onClick = actions.theme)
+                }, onClick = actions.theme)
                 RowDivider()
-                NavRow(QtIcons.Public, "Content region", trailing = s.contentRegion.ifBlank { "Auto" }, tint = Teal, onClick = actions.region)
+                NavRow(QtIcons.Public, "Content region", trailing = s.contentRegion.ifBlank { "Auto" }, onClick = actions.region)
                 RowDivider()
                 SwitchRow("Trending on home", "Show trending videos on the Download tab", s.showTrending, QtIcons.TrendingUp) { v ->
                     vm.update { it.copy(showTrending = v) }
@@ -103,29 +84,29 @@ fun SettingsScreen(actions: SettingsActions) {
         }
         item { GroupLabel("Download tools") }
         item {
-            QtCard {
-                NavRow(QtIcons.RestoreFromTrash, "Recover deleted files", trailing = if (trash > 0) "$trash" else null, tint = Green, onClick = actions.recycleBin)
+            Column {
+                NavRow(QtIcons.RestoreFromTrash, "Recover deleted files", trailing = if (trash > 0) "$trash" else null, onClick = actions.recycleBin)
                 RowDivider()
-                NavRow(QtIcons.History, "Deleted downloads", "Download again anything no longer on this phone", tint = Blue, onClick = actions.deletedHistory)
+                NavRow(QtIcons.History, "Deleted downloads", "Download again anything no longer on this phone", onClick = actions.deletedHistory)
                 RowDivider()
-                NavRow(BrandIcons.WhatsApp, "WhatsApp status saver", tint = Color(0xFF25D366), onClick = actions.statusSaver)
+                NavRow(BrandIcons.WhatsApp, "WhatsApp status saver", onClick = actions.statusSaver)
                 RowDivider()
-                NavRow(QtIcons.Lock, "Vault", "Hide private files behind a PIN", tint = Pink, onClick = actions.vault)
+                NavRow(QtIcons.Lock, "Vault", "Hide private files behind a PIN", onClick = actions.vault)
             }
         }
         item { GroupLabel("Phone clean") }
         item {
-            QtCard {
-                NavRow(QtIcons.CleaningServices, "Storage clean", "Temporary files, cache and leftovers", tint = Teal, onClick = actions.storageClean)
+            Column {
+                NavRow(QtIcons.CleaningServices, "Storage clean", "Temporary files, cache and leftovers", onClick = actions.storageClean)
                 RowDivider()
-                NavRow(QtIcons.FolderZip, "Large files clean", "Find big videos, music and photos", tint = Amber, onClick = actions.largeFiles)
+                NavRow(QtIcons.FolderZip, "Large files clean", "Find big videos, music and photos", onClick = actions.largeFiles)
                 RowDivider()
-                NavRow(QtIcons.Apps, "App uninstaller", tint = Purple, onClick = actions.appManager)
+                NavRow(QtIcons.Apps, "App uninstaller", onClick = actions.appManager)
             }
         }
         item { GroupLabel("Privacy") }
         item {
-            QtCard {
+            Column {
                 SwitchRow(
                     "Share crash reports & usage", "Anonymous: never URLs, titles, searches or files. See PRIVACY.md",
                     s.analyticsEnabled, QtIcons.Shield,
@@ -134,40 +115,21 @@ fun SettingsScreen(actions: SettingsActions) {
         }
         item { GroupLabel("Info") }
         item {
-            QtCard {
-                NavRow(QtIcons.Feedback, "Feedback", tint = Orange) {
+            Column {
+                NavRow(QtIcons.Feedback, "Feedback") {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/emonbudc/VidGrab/issues")))
                 }
                 RowDivider()
-                NavRow(QtIcons.Share, "Share VidGrab", tint = Green) {
+                NavRow(QtIcons.Share, "Share VidGrab") {
                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(
                         Intent.EXTRA_TEXT, "Download videos and music with VidGrab: https://github.com/emonbudc/VidGrab",
                     ), "Share VidGrab"))
                 }
                 RowDivider()
-                NavRow(QtIcons.Downloading, "Check for updates", updateSummary, tint = Teal) { updates.checkOrShow() }
+                NavRow(QtIcons.Downloading, "Check for updates", updateSummary) { updates.checkOrShow() }
                 RowDivider()
-                NavRow(QtIcons.Info, "About", trailing = "v" + appVersion(context), tint = Blue, onClick = actions.about)
+                NavRow(QtIcons.Info, "About", trailing = "v" + appVersion(context), onClick = actions.about)
             }
-        }
-    }
-}
-
-@Composable
-private fun AppearanceBanner(onClick: () -> Unit) {
-    val ex = LocalQtExtras.current
-    Row(
-        Modifier.padding(16.dp).fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(ex.brand)
-            .pressable(scaleDown = 0.98f, onClick = onClick).padding(20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text("Make it yours", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
-            Text("Pick a colour theme, dark or light", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f))
-        }
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
-            Icon(QtIcons.Palette, null, tint = MaterialTheme.colorScheme.onPrimary)
         }
     }
 }

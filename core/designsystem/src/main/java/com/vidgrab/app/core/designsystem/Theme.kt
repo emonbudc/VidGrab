@@ -54,7 +54,7 @@ object QtColors {
 private fun onColor(c: Color) = if (c.luminance() > 0.45f) Color(0xFF0B0F14) else Color.White
 
 private fun darkScheme(a: AccentSpec, amoled: Boolean): ColorScheme {
-    val bg = if (amoled) Color.Black else Color(0xFF0C0F14)
+    val bg = if (amoled) Color.Black else Color(0xFF0B0B0C)
     val p = a.dark
     return darkColorScheme(
         primary = p,
@@ -67,18 +67,18 @@ private fun darkScheme(a: AccentSpec, amoled: Boolean): ColorScheme {
         onSecondaryContainer = Color.White,
         tertiary = QtColors.Warning,
         background = bg,
-        onBackground = Color(0xFFEDF1F5),
+        onBackground = Color(0xFFF4F4F5),
         surface = bg,
-        onSurface = Color(0xFFEDF1F5),
-        surfaceVariant = if (amoled) Color(0xFF15181D) else Color(0xFF1B2028),
-        onSurfaceVariant = Color(0xFF98A2AE),
-        surfaceContainerLowest = if (amoled) Color.Black else Color(0xFF090B0F),
-        surfaceContainerLow = if (amoled) Color(0xFF0A0B0D) else Color(0xFF12161C),
-        surfaceContainer = if (amoled) Color(0xFF101214) else Color(0xFF161B22),
-        surfaceContainerHigh = if (amoled) Color(0xFF16181B) else Color(0xFF1D232B),
-        surfaceContainerHighest = if (amoled) Color(0xFF1E2024) else Color(0xFF252C35),
-        outline = Color(0xFF3A434F),
-        outlineVariant = Color(0xFF262D36),
+        onSurface = Color(0xFFF4F4F5),
+        surfaceVariant = if (amoled) Color(0xFF121214) else Color(0xFF17171A),
+        onSurfaceVariant = Color(0xFF9A9AA2),
+        surfaceContainerLowest = if (amoled) Color.Black else Color(0xFF080809),
+        surfaceContainerLow = if (amoled) Color(0xFF0A0A0B) else Color(0xFF111113),
+        surfaceContainer = if (amoled) Color(0xFF101012) else Color(0xFF17171A),
+        surfaceContainerHigh = if (amoled) Color(0xFF151517) else Color(0xFF1D1D21),
+        surfaceContainerHighest = if (amoled) Color(0xFF1C1C1F) else Color(0xFF26262B),
+        outline = Color(0xFF3B3B42),
+        outlineVariant = Color(0xFF262629),
         error = QtColors.Coral,
         scrim = Color.Black,
     )
@@ -154,7 +154,7 @@ val BrandTitle = TextStyle(fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, 
 @Composable
 fun VidGrabTheme(
     darkTheme: Boolean,
-    accent: ThemeAccent = ThemeAccent.ORANGE,
+    accent: ThemeAccent = ThemeAccent.GOLD,
     amoled: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
