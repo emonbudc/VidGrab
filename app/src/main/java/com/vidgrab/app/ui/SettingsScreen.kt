@@ -47,6 +47,7 @@ import com.vidgrab.app.BuildConfig
 import com.vidgrab.app.data.HistoryStore
 import com.vidgrab.app.engine.Engine
 import com.vidgrab.app.engine.EngineState
+import com.vidgrab.app.engine.YtDlpUpdater
 import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -72,25 +73,21 @@ fun SettingsScreen() {
         }
     }
 
-    fun updateEngine(channel: YoutubeDL.UpdateChannel) {
+    fun updateEngine(channel: YtDlpUpdater.Channel) {
         if (busy) return
         busy = true
-        status = "Updating yt-dlp..."
+        status = "Downloading latest yt-dlp..."
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     Engine.await().getOrThrow()
-                    YoutubeDL.getInstance().updateYoutubeDL(context.applicationContext, channel)
+                    YtDlpUpdater.update(context.applicationContext, channel)
                 }
             }
             busy = false
             status = result.fold(
-                onSuccess = { updateStatus ->
-                    when (updateStatus) {
-                        YoutubeDL.UpdateStatus.DONE -> "yt-dlp updated."
-                        YoutubeDL.UpdateStatus.ALREADY_UP_TO_DATE -> "yt-dlp is already up to date."
-                        null -> "Update finished."
-                    }
+                onSuccess = { updateResult ->
+                    "yt-dlp updated to ${updateResult.version ?: "the latest release"}."
                 },
                 onFailure = { Engine.describe(it).take(2500) }
             )
@@ -167,7 +164,7 @@ fun SettingsScreen() {
                 Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
-                        onClick = { updateEngine(YoutubeDL.UpdateChannel.STABLE) },
+                        onClick = { updateEngine(YtDlpUpdater.Channel.STABLE) },
                         enabled = !busy,
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -188,7 +185,7 @@ fun SettingsScreen() {
                         Text("Update stable")
                     }
                     OutlinedButton(
-                        onClick = { updateEngine(YoutubeDL.UpdateChannel.NIGHTLY) },
+                        onClick = { updateEngine(YtDlpUpdater.Channel.NIGHTLY) },
                         enabled = !busy,
                         shape = RoundedCornerShape(12.dp)
                     ) {

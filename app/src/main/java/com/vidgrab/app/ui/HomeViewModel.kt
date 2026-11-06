@@ -1,14 +1,17 @@
 package com.vidgrab.app.ui
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.vidgrab.app.download.DownloadService
 import com.vidgrab.app.engine.Engine
+import com.vidgrab.app.engine.YtDlpUpdater
 import com.vidgrab.app.model.Quality
 import com.vidgrab.app.model.VideoInfoUi
 import com.vidgrab.app.util.isHttpUrl
 import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.mapper.VideoInfo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -62,24 +66,52 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 Engine.await().getOrThrow()
                 val info = withContext(Dispatchers.IO) { YoutubeDL.getInstance().getInfo(url) }
-                val title = info.title ?: info.fulltitle ?: url
-                _ui.update {
-                    it.copy(
-                        loading = false,
-                        info = VideoInfoUi(
-                            title = title,
-                            thumbnail = info.thumbnail,
-                            durationSeconds = info.duration,
-                            uploader = info.uploader,
-                            webpageUrl = info.webpageUrl ?: url
-                        )
-                    )
-                }
+                showInfo(info, url)
             } catch (t: Throwable) {
                 if (t is CancellationException) return@launch
-                _ui.update { it.copy(loading = false, error = messageOf(t)) }
+                var finalError = t
+                if (shouldTryEngineUpdate()) {
+                    val updated = withTimeoutOrNull(45_000) {
+                        runCatching {
+                            YtDlpUpdater.update(getApplication(), YtDlpUpdater.Channel.STABLE)
+                        }.getOrNull()
+                    }
+                    if (updated != null) {
+                        try {
+                            val info = withContext(Dispatchers.IO) { YoutubeDL.getInstance().getInfo(url) }
+                            showInfo(info, url)
+                            return@launch
+                        } catch (again: Throwable) {
+                            if (again is CancellationException) return@launch
+                            finalError = again
+                        }
+                    }
+                }
+                _ui.update { it.copy(loading = false, error = messageOf(finalError)) }
             }
         }
+    }
+
+    private fun showInfo(info: VideoInfo, url: String) {
+        val title = info.title ?: info.fulltitle ?: url
+        _ui.update {
+            it.copy(
+                loading = false,
+                info = VideoInfoUi(
+                    title = title,
+                    thumbnail = info.thumbnail,
+                    durationSeconds = info.duration,
+                    uploader = info.uploader,
+                    webpageUrl = info.webpageUrl ?: url
+                )
+            )
+        }
+    }
+
+    private fun shouldTryEngineUpdate(): Boolean {
+        val prefs = getApplication<Application>()
+            .getSharedPreferences("youtubedl-android", Context.MODE_PRIVATE)
+        return prefs.getString("dlpVersion", null) == null
     }
 
     fun download(quality: Quality) {
