@@ -81,7 +81,7 @@ private fun VaultContent(vm: VaultViewModel, onOpenPlayer: () -> Unit) {
             listOf("Video", "Music", "Photo").forEachIndexed { i, t -> Tab(tab == i, { tab = i }, text = { Text(t) }) }
         }
         val list = items.filter { it.type == types[tab] || (tab == 2 && it.type == ContentType.OTHER) }
-        if (list.isEmpty()) EmptyBox("Keep your private files here", "Files in Vault won't be seen in Play tab.\nUse “Lock into Vault” from a file's menu.",
+        if (list.isEmpty()) EmptyBox("Keep your private files here", "Files in Vault won't be seen in Downloads.\nUse “Lock into Vault” from a file's menu.",
             Modifier.fillMaxSize(), QtIcons.Lock)
         else LazyColumn(Modifier.fillMaxSize()) {
             items(list, key = { it.id }) { t ->
@@ -94,7 +94,8 @@ private fun VaultContent(vm: VaultViewModel, onOpenPlayer: () -> Unit) {
                     TaskThumb(t, Modifier.width(110.dp).aspectRatio(16f / 9f))
                     Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                         Text(t.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text(Format.bytes(t.totalBytes), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(Format.bytes(t.totalBytes), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     QtIconButton(QtIcons.LockOpen, "Move out of vault", { vm.unlockItems(listOf(t.id)) })
                 }
@@ -105,7 +106,7 @@ private fun VaultContent(vm: VaultViewModel, onOpenPlayer: () -> Unit) {
         AlertDialog(
             onDismissRequest = { menu = null },
             title = { Text(t.title, maxLines = 2) },
-            text = { Text("Move this file back to the Play tab, or delete it?") },
+            text = { Text("Move this file back to Downloads, or delete it?") },
             confirmButton = { TextButton(onClick = { vm.unlockItems(listOf(t.id)); menu = null }) { Text("Unlock") } },
             dismissButton = {
                 TextButton(onClick = { vm.delete(listOf(t.id)); menu = null }) {

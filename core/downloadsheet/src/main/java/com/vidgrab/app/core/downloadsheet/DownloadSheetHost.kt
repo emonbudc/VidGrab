@@ -45,13 +45,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.designsystem.Badge
 import com.vidgrab.app.core.designsystem.PillButton
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.pressable
-import androidx.compose.foundation.shape.CircleShape
 import com.vidgrab.app.core.model.DownloadOption
 import com.vidgrab.app.core.model.FormatKind
 import com.vidgrab.app.core.ui.CornerLabel
@@ -158,7 +158,12 @@ fun DownloadSheetHost(
         onDownloadStarted()
     }
 
-    ModalBottomSheet(onDismissRequest = controller::dismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+    ModalBottomSheet(
+        onDismissRequest = controller::dismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp)) {
             AnimatedContent(showAll, label = "formats") { all ->
                 Column(Modifier.fillMaxWidth()) {
@@ -275,24 +280,24 @@ private fun SheetSkeleton(caption: String?) {
     val bone = MaterialTheme.colorScheme.surfaceContainerHighest
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.width(104.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)).background(bone).shimmer())
+            Box(Modifier.width(104.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(4.dp)).background(bone).shimmer())
             Column(Modifier.padding(start = 14.dp).weight(1f)) {
-                Box(Modifier.fillMaxWidth(0.9f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(bone).shimmer())
-                Box(Modifier.padding(top = 8.dp).fillMaxWidth(0.6f).height(14.dp).clip(RoundedCornerShape(7.dp)).background(bone).shimmer())
+                Box(Modifier.fillMaxWidth(0.9f).height(14.dp).clip(RoundedCornerShape(2.dp)).background(bone).shimmer())
+                Box(Modifier.padding(top = 8.dp).fillMaxWidth(0.6f).height(14.dp).clip(RoundedCornerShape(2.dp)).background(bone).shimmer())
             }
         }
         Spacer(Modifier.height(18.dp))
         repeat(4) { i ->
             Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(bone).shimmer())
-                Box(Modifier.padding(start = 14.dp).width(if (i % 2 == 0) 120.dp else 150.dp).height(13.dp).clip(RoundedCornerShape(7.dp)).background(bone).shimmer())
+                Box(Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)).background(bone).shimmer())
+                Box(Modifier.padding(start = 14.dp).width(if (i % 2 == 0) 120.dp else 150.dp).height(13.dp).clip(RoundedCornerShape(2.dp)).background(bone).shimmer())
                 Spacer(Modifier.weight(1f))
-                Box(Modifier.width(48.dp).height(12.dp).clip(RoundedCornerShape(6.dp)).background(bone).shimmer())
-                Box(Modifier.padding(start = 14.dp).size(20.dp).clip(CircleShape).background(bone).shimmer())
+                Box(Modifier.width(48.dp).height(12.dp).clip(RoundedCornerShape(2.dp)).background(bone).shimmer())
+                Box(Modifier.padding(start = 14.dp).size(20.dp).clip(RoundedCornerShape(4.dp)).background(bone).shimmer())
             }
         }
         Spacer(Modifier.height(10.dp))
-        Box(Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(24.dp)).background(bone).shimmer())
+        Box(Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(4.dp)).background(bone).shimmer())
         caption?.let {
             Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
@@ -332,7 +337,7 @@ private fun TechDetails(report: List<String>) {
     val context = LocalContext.current
     Column(Modifier.padding(horizontal = 20.dp).fillMaxWidth()) {
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).pressable(onClick = { open = !open }).padding(10.dp),
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).pressable(onClick = { open = !open }).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(QtIcons.Info, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -344,11 +349,11 @@ private fun TechDetails(report: List<String>) {
             Text(
                 text, style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
             )
             Text(
                 "Copy details", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(8.dp)).pressable(onClick = {
+                modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(4.dp)).pressable(onClick = {
                     clipboard.setPrimaryClip(android.content.ClipData.newPlainText("VidGrab details", text))
                     Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
                 }).padding(8.dp),
@@ -360,13 +365,14 @@ private fun TechDetails(report: List<String>) {
 @Composable
 private fun Header(ui: SheetUi, onCut: (() -> Unit)? = null, cutting: Boolean = false) {
     Row(Modifier.padding(start = 20.dp, end = if (onCut != null) 8.dp else 20.dp, top = 2.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Thumbnail(ui.thumbnail, Modifier.width(104.dp).aspectRatio(16f / 9f), corner = 12) { CornerLabel(Format.duration(ui.durationSec)) }
+        Thumbnail(ui.thumbnail, Modifier.width(104.dp).aspectRatio(16f / 9f), corner = 4) { CornerLabel(Format.duration(ui.durationSec)) }
         Column(Modifier.padding(start = 14.dp).weight(1f)) {
             Text(ui.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2,
                 overflow = TextOverflow.Ellipsis)
             ui.pageUrl?.let { u ->
                 com.vidgrab.app.core.common.Urls.host(u)?.removePrefix("www.")?.let { host ->
-                    Text(host, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Text(host.uppercase(), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                        letterSpacing = 0.4.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 3.dp))
                 }
             }
@@ -384,8 +390,9 @@ private fun Header(ui: SheetUi, onCut: (() -> Unit)? = null, cutting: Boolean = 
 @Composable
 private fun SectionLabel(text: String) {
     Text(
-        text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, top = 10.dp, bottom = 2.dp),
+        text.uppercase(), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+        letterSpacing = 1.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(start = 18.dp, top = 10.dp, bottom = 2.dp),
     )
 }
 
@@ -409,7 +416,7 @@ private fun OptionRow(o: DownloadOption, detailed: Boolean, selected: Boolean, o
             .heightIn(min = if (detailed) 58.dp else 50.dp).padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(tint.copy(alpha = 0.13f)), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)).background(tint.copy(alpha = 0.13f)), contentAlignment = Alignment.Center) {
             Icon(if (audio) QtIcons.MusicNote else QtIcons.PlayCircle, null, tint = tint, modifier = Modifier.size(18.dp))
         }
         Column(Modifier.weight(1f).padding(start = 14.dp)) {
@@ -422,12 +429,15 @@ private fun OptionRow(o: DownloadOption, detailed: Boolean, selected: Boolean, o
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         val size = o.shownSize()
-        Text(if (size > 0) (if (o.extractAudio) "~" else "") + Format.bytes(size) else "", style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 12.dp))
+        Text(
+            if (size > 0) (if (o.extractAudio) "~" else "") + Format.bytes(size) else "",
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 12.dp),
+        )
         // Radio mark: filled with a check when chosen.
         Box(
-            Modifier.size(20.dp).clip(CircleShape).background(if (selected) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent)
-                .then(if (selected) Modifier else Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape)),
+            Modifier.size(20.dp).clip(RoundedCornerShape(4.dp)).background(if (selected) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent)
+                .then(if (selected) Modifier else Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))),
             contentAlignment = Alignment.Center,
         ) {
             if (selected) Icon(QtIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
@@ -442,7 +452,7 @@ private fun ItemRow(o: DownloadOption, checked: Boolean, onToggle: () -> Unit) {
         Modifier.fillMaxWidth().pressable(scaleDown = 0.99f, haptic = true, onClick = onToggle).padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Thumbnail(o.thumbnail, Modifier.size(56.dp), corner = 10) {
+        Thumbnail(o.thumbnail, Modifier.size(56.dp), corner = 4) {
             if (o.kind == FormatKind.VIDEO) Icon(QtIcons.PlayCircle, null, tint = androidx.compose.ui.graphics.Color.White,
                 modifier = Modifier.align(Alignment.Center).size(22.dp))
         }
@@ -451,8 +461,8 @@ private fun ItemRow(o: DownloadOption, checked: Boolean, onToggle: () -> Unit) {
             Text(o.info, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Box(
-            Modifier.size(22.dp).clip(RoundedCornerShape(6.dp)).background(if (checked) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent)
-                .then(if (checked) Modifier else Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))),
+            Modifier.size(22.dp).clip(RoundedCornerShape(4.dp)).background(if (checked) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent)
+                .then(if (checked) Modifier else Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))),
             contentAlignment = Alignment.Center,
         ) { if (checked) Icon(QtIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp)) }
     }
@@ -469,7 +479,7 @@ private fun AlreadyDownloadedDialog(
     val done = task.status == com.vidgrab.app.core.model.DownloadStatus.COMPLETED
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         androidx.compose.material3.Surface(
-            shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp,
+            shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp,
         ) {
             Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(if (done) "Already downloaded" else "Already downloading", style = MaterialTheme.typography.titleMedium,
@@ -478,11 +488,11 @@ private fun AlreadyDownloadedDialog(
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp))
                 Row(
-                    Modifier.padding(top = 16.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                    Modifier.padding(top = 16.dp).fillMaxWidth().clip(RoundedCornerShape(4.dp))
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Thumbnail(task.thumbnail, Modifier.width(88.dp).aspectRatio(16f / 9f), corner = 10)
+                    Thumbnail(task.thumbnail, Modifier.width(88.dp).aspectRatio(16f / 9f), corner = 4)
                     Column(Modifier.padding(start = 12.dp).weight(1f)) {
                         Text(task.title + (task.quality?.let { " ($it)" } ?: ""), style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -490,7 +500,7 @@ private fun AlreadyDownloadedDialog(
                             task.durationSec.takeIf { it > 0 }?.let { Format.duration(it) },
                             task.totalBytes.takeIf { it > 0 }?.let { Format.bytes(it) },
                         ).joinToString("  ·  ")
-                        if (meta.isNotEmpty()) Text(meta, style = MaterialTheme.typography.labelSmall,
+                        if (meta.isNotEmpty()) Text(meta, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
@@ -511,7 +521,7 @@ private fun AlreadyDownloadedDialog(
 private fun CutPanel(range: LongRange, durationMs: Long, onChange: (LongRange) -> Unit, onClose: () -> Unit) {
     val minLen = minOf(1000L, durationMs)
     Column(
-        Modifier.padding(horizontal = 20.dp, vertical = 4.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp))
+        Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth().clip(RoundedCornerShape(4.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

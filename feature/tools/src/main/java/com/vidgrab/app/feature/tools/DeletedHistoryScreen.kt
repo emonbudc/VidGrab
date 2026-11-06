@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -197,13 +197,13 @@ fun DeletedHistoryScreen(onBack: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Box(
-                                Modifier.size(24.dp).clip(CircleShape)
-                                    .border(2.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
+                                Modifier.size(22.dp).clip(RoundedCornerShape(4.dp))
+                                    .border(2.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
                                     .background(if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background),
                                 contentAlignment = Alignment.Center,
                             ) { if (on) Icon(QtIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp)) }
                             Box(
-                                Modifier.padding(start = 14.dp).width(96.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp))
+                                Modifier.padding(start = 14.dp).width(96.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(4.dp))
                                     .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -219,12 +219,13 @@ fun DeletedHistoryScreen(onBack: () -> Unit) {
                                 Text(
                                     listOfNotNull(Format.duration(d.durationSec), Format.bytes(d.sizeBytes), Urls.host(d.pageUrl ?: d.url))
                                         .filter { it.isNotBlank() && it != "--" }.joinToString("  ·  "),
-                                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp),
                                 )
                                 // Files found on the phone (not downloaded here) have no web address to fetch again.
                                 if (d.pageUrl != null || d.url.startsWith("http")) Row(
-                                    Modifier.padding(top = 8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f))
+                                    Modifier.padding(top = 8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f))
                                         .pressable(scaleDown = 0.94f, onClick = { downloadAgain(d) }).padding(horizontal = 12.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {

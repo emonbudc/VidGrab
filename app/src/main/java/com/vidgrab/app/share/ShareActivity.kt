@@ -103,7 +103,7 @@ class ShareActivity : ComponentActivity() {
         return true
     }
 
-    /** "Open" in the "already downloaded" dialog: VidGrab's Play tab (or Downloading, if still in progress). */
+    /** "Open" in the "already downloaded" dialog: VidGrab's Downloads tab (or Downloading, if still in progress). */
     private fun openDownload(task: com.vidgrab.app.core.model.DownloadTask) {
         val done = task.status == com.vidgrab.app.core.model.DownloadStatus.COMPLETED
         startActivity(
