@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,7 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.common.LoadState
-import com.vidgrab.app.core.designsystem.PillButton
+import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.designsystem.SectionHeader
 import com.vidgrab.app.core.downloadsheet.DownloadSheetController
 import com.vidgrab.app.core.model.Comment
@@ -155,55 +156,86 @@ fun VideoScreen(
                     val comments by vm.comments.collectAsStateWithLifecycle()
                     LazyColumn(Modifier.weight(1f), contentPadding = WindowInsets.navigationBars.asPaddingValues()) {
                         item {
-                            Row(Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp), verticalAlignment = Alignment.Top) {
-                                Avatar(v.item.uploaderAvatar, 36, Modifier.clickable { v.item.uploaderUrl?.let(onChannel) })
-                                Column(Modifier.weight(1f).padding(horizontal = 12.dp).clickable { showAbout = true }) {
-                                    Text(v.item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                    Text(
-                                        listOf(v.item.uploader, Format.views(v.item.viewCount), v.uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString(" · "),
-                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(top = 4.dp),
-                                    )
-                                }
+                            Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp).clickable { showAbout = true }) {
+                                Text(v.item.title, style = MaterialTheme.typography.titleLarge, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                                Text(
+                                    listOf(Format.views(v.item.viewCount), v.uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString("  ·  "),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 7.dp),
+                                )
                             }
                         }
                         item {
-                            Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                PillButton(
-                                    "Download", { sheet.open(v.item.url, v.item) }, Modifier.weight(1f), icon = QtIcons.Download,
-                                    enabled = !v.item.isLive,
-                                )
-                                QtIconButton(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, "Watch later", {
+                            Row(
+                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 14.dp),
+                                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                            ) {
+                                WatchAction(QtIcons.Download, "Download", filled = true, enabled = !v.item.isLive) {
+                                    sheet.open(v.item.url, v.item)
+                                }
+                                WatchAction(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, if (saved) "Saved" else "Watch later", selected = saved) {
                                     vm.toggleSaved()
                                     Toast.makeText(context, if (saved) "Removed from Watch later" else "Saved to Watch later", Toast.LENGTH_SHORT).show()
-                                }, container = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.padding(start = 12.dp),
-                                    tint = if (saved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                                QtIconButton(QtIcons.Headphones, "Play in background", {
+                                }
+                                WatchAction(QtIcons.Headphones, if (playback.audioOnly) "Listening" else "Listen", selected = playback.audioOnly) {
                                     vm.playInBackground()
                                     Toast.makeText(context, "Playing audio in background", Toast.LENGTH_SHORT).show()
-                                }, container = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.padding(start = 8.dp))
-                                QtIconButton(QtIcons.MoreVert, "More", { showAbout = true }, container = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    modifier = Modifier.padding(start = 8.dp))
+                                }
+                                WatchAction(QtIcons.Share, "Share") {
+                                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
+                                        .putExtra(Intent.EXTRA_TEXT, v.item.url), "Share"))
+                                }
+                                WatchAction(QtIcons.MoreHoriz, "More") { showAbout = true }
+                            }
+                        }
+                        item {
+                            Row(
+                                Modifier.fillMaxWidth().clickable { v.item.uploaderUrl?.let(onChannel) }.padding(horizontal = 16.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Avatar(v.item.uploaderAvatar, 40)
+                                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                                    Text(v.item.uploader, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        if (v.subscriberCount >= 0) "${Format.count(v.subscriberCount)} subscribers" else "YouTube channel",
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp),
+                                    )
+                                }
+                                Icon(QtIcons.ChevronRight, "Open channel", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         item {
                             Column(
-                                Modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(4.dp))
+                                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).clip(RoundedCornerShape(4.dp))
                                     .background(MaterialTheme.colorScheme.surfaceContainer)
                                     .clickable { showComments = true }.padding(14.dp),
                             ) {
-                                Text("Comments", style = MaterialTheme.typography.titleSmall)
-                                val first = comments.items.firstOrNull()
-                                if (first != null) Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Avatar(first.authorAvatar, 24)
-                                    Text(first.text, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.padding(start = 10.dp))
-                                } else Text(
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("COMMENTS", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp,
+                                        letterSpacing = 1.1.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                                    Text("VIEW ALL", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                        color = MaterialTheme.colorScheme.primary)
+                                }
+                                val preview = comments.items.take(2)
+                                if (preview.isEmpty()) Text(
                                     if (comments.loading) "Loading…" else comments.error?.let { "Comments unavailable" } ?: "No comments",
                                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 6.dp),
+                                    modifier = Modifier.padding(top = 8.dp),
                                 )
+                                preview.forEach { c ->
+                                    Row(Modifier.padding(top = 10.dp)) {
+                                        Avatar(c.authorAvatar, 26)
+                                        Column(Modifier.padding(start = 10.dp)) {
+                                            Text(c.author, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(c.text, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall,
+                                                modifier = Modifier.padding(top = 2.dp))
+                                        }
+                                    }
+                                }
                             }
                         }
                         item { SectionHeader("Up next") }
@@ -225,7 +257,7 @@ fun VideoScreen(
             ) {
                 VideoPlayerBox(
                     vm.player, playback, Modifier.fillMaxSize(), fullscreen = fullscreen,
-                    onToggleFullscreen = { fullscreen = !fullscreen }, onCollapse = { if (fullscreen) fullscreen = false else leave() },
+                    onToggleFullscreen = { fullscreen = !fullscreen }, onCollapse = if (fullscreen) { { fullscreen = false } } else null,
                     showPrevNext = false, onRetry = vm::retry, options = playerOptions, onPip = { leave(toPip = true) },
                     quality = qualityMenu, autoplay = appSettings.autoplayNext, onAutoplayChange = onAutoplay, onNext = nextVideo, upNext = upNext,
                 )
@@ -236,6 +268,38 @@ fun VideoScreen(
                 Icon(QtIcons.ArrowBack, "Back", tint = Color.White)
             }
         }
+    }
+}
+
+@Composable
+private fun WatchAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    filled: Boolean = false,
+    selected: Boolean = false,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val cs = MaterialTheme.colorScheme
+    val background = when {
+        !enabled -> cs.surfaceContainerHigh
+        filled -> cs.primary
+        selected -> cs.primary.copy(alpha = 0.14f)
+        else -> cs.surfaceContainerHigh
+    }
+    val content = when {
+        !enabled -> cs.onSurfaceVariant.copy(alpha = 0.5f)
+        filled -> cs.onPrimary
+        selected -> cs.primary
+        else -> cs.onSurface
+    }
+    Row(
+        Modifier.height(42.dp).clip(RoundedCornerShape(4.dp)).background(background)
+            .pressable(enabled = enabled, scaleDown = 0.94f, onClick = onClick).padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, tint = content, modifier = Modifier.size(18.dp))
+        Text(label, color = content, style = MaterialTheme.typography.labelLarge, maxLines = 1, modifier = Modifier.padding(start = 7.dp))
     }
 }
 

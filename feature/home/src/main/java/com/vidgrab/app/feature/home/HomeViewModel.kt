@@ -11,6 +11,8 @@ import com.vidgrab.app.core.model.MediaSection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -34,9 +36,11 @@ data class MusicUi(
 class HomeViewModel(
     private val media: MediaRepository,
     library: com.vidgrab.app.core.data.LibraryRepository,
-    settings: com.vidgrab.app.core.data.SettingsRepository,
+    private val settings: com.vidgrab.app.core.data.SettingsRepository,
     private val history: SearchHistoryRepository,
 ) : ViewModel() {
+    private var feedLoadedAt = 0L
+
     /** Settings → Trending on home (off by default). */
     val showTrending = settings.settings.map { it.showTrending }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
@@ -85,15 +89,30 @@ class HomeViewModel(
     private val _music = MutableStateFlow(MusicUi())
     val music: StateFlow<MusicUi> = _music
 
-    fun ensureFeed() {
-        if (_feed.value.items.isEmpty() && !_feed.value.loading) loadFeed(false)
+    init {
+        viewModelScope.launch {
+            settings.settings.map { it.contentRegion }.distinctUntilChanged().drop(1).collect {
+                if (_feed.value.items.isNotEmpty()) loadFeed(refresh = true)
+                if (_music.value.sections.isNotEmpty()) loadMusic()
+            }
+        }
+    }
+
+    fun ensureFeed(force: Boolean = false) {
+        val s = _feed.value
+        if (s.loading || s.refreshing) return
+        val stale = android.os.SystemClock.elapsedRealtime() - feedLoadedAt > FEED_MAX_AGE_MS
+        if (s.items.isEmpty() || force || stale) loadFeed(refresh = s.items.isNotEmpty())
     }
 
     fun loadFeed(refresh: Boolean) {
         _feed.update { it.copy(loading = !refresh, refreshing = refresh, error = null) }
         viewModelScope.launch {
-            runCatching { media.trending() }
-                .onSuccess { p -> _feed.value = FeedUi(items = p.items.distinctBy { it.url }, nextPage = p.nextPage) }
+            runCatching { media.discover() }
+                .onSuccess { p ->
+                    feedLoadedAt = android.os.SystemClock.elapsedRealtime()
+                    _feed.value = FeedUi(items = p.items.distinctBy { it.url }, nextPage = p.nextPage)
+                }
                 .onFailure { e -> _feed.update { it.copy(loading = false, refreshing = false, error = e.message ?: "Error") } }
         }
     }
@@ -103,7 +122,7 @@ class HomeViewModel(
         if (s.loadingMore || s.nextPage == null) return
         _feed.update { it.copy(loadingMore = true) }
         viewModelScope.launch {
-            runCatching { media.trending(s.nextPage) }
+            runCatching { media.discover(s.nextPage) }
                 .onSuccess { p -> _feed.update { it.copy(items = (it.items + p.items).distinctBy { i -> i.url }, nextPage = p.nextPage, loadingMore = false) } }
                 .onFailure { _feed.update { it.copy(loadingMore = false, nextPage = null) } }
         }
@@ -111,6 +130,10 @@ class HomeViewModel(
 
     fun ensureMusic() {
         if (_music.value.sections.isEmpty() && !_music.value.loading) loadMusic()
+    }
+
+    private companion object {
+        const val FEED_MAX_AGE_MS = 2L * 60 * 1000
     }
 
     fun loadMusic() {

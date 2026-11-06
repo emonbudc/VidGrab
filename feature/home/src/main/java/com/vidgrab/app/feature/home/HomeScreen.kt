@@ -146,7 +146,15 @@ fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var clip by remember { mutableStateOf<String?>(null) }
     val focused = androidx.compose.ui.platform.LocalWindowInfo.current.isWindowFocused
-    LaunchedEffect(focused) { if (focused) clip = readClipboardUrl(context) }
+    LaunchedEffect(focused) {
+        if (!focused) return@LaunchedEffect
+        clip = readClipboardUrl(context)
+        when (pager.currentPage) {
+            0 -> if (showTrending) vm.ensureFeed()
+            1 -> vm.ensureFeed()
+            2 -> vm.ensureMusic()
+        }
+    }
 
     val activeTask by vm.activeTask.collectAsStateWithLifecycle()
     val activeCount by vm.activeCount.collectAsStateWithLifecycle()
@@ -985,6 +993,31 @@ private fun FeedTab(vm: HomeViewModel, actions: HomeActions, onDownload: (MediaI
                 state = state,
                 contentPadding = PaddingValues(top = 8.dp, bottom = 20.dp + LocalBottomBarHeight.current),
             ) {
+                item {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "RANDOM MIX",
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                fontSize = 9.sp,
+                                letterSpacing = 1.1.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                "Fresh picks from different searches",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        QtIconButton(
+                            QtIcons.Shuffle, "Shuffle videos", { vm.loadFeed(refresh = true) },
+                            container = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        )
+                    }
+                }
                 items(ui.items, key = { it.url }) { item ->
                     Box(Modifier.animateItem()) {
                         VideoFeedCard(

@@ -160,6 +160,36 @@ class NewPipeMediaExtractor(
         Page(mixed.distinctBy { it.url }, if (next.isEmpty()) null else MultiPage(next))
     }
 
+    private data class DiscoverCursor(val queries: List<String>, val pages: Map<String, NpPage>)
+
+    override suspend fun discover(page: Any?): Page<MediaItem> = coroutineScope {
+        val cursor = page as? DiscoverCursor
+        val queries = cursor?.queries ?: DISCOVER_QUERIES.shuffled().take(DISCOVER_QUERIES_PER_PAGE)
+        val results = queries.map { query ->
+            async {
+                runCatching {
+                    val handler = yt.searchQHFactory.fromQuery(query, listOf(YoutubeSearchQueryHandlerFactory.VIDEOS), "")
+                    val previous = cursor?.pages?.get(query)
+                    if (previous == null) {
+                        val info = io { SearchInfo.getInfo(yt, handler) }
+                        Triple(query, info.relatedItems.mapNotNull { it.toItem() }, info.nextPage)
+                    } else {
+                        val more = io { SearchInfo.getMoreItems(yt, handler, previous) }
+                        Triple(query, more.items.mapNotNull { it.toItem() }, more.nextPage)
+                    }
+                }.getOrNull()
+            }
+        }.awaitAll().filterNotNull()
+        if (queries.isEmpty() || (page == null && results.isEmpty())) error("Couldn't load videos")
+        val lists = results.map { (_, items, _) -> items.filter { it.kind == ItemKind.VIDEO && !it.isShort } }
+        val mixed = buildList {
+            var i = 0
+            while (lists.any { i < it.size }) { lists.forEach { l -> l.getOrNull(i)?.let(::add) }; i++ }
+        }
+        val next = results.mapNotNull { (query, _, np) -> np?.let { query to it } }.toMap()
+        Page(mixed.distinctBy { it.url }, if (next.isEmpty()) null else DiscoverCursor(queries, next))
+    }
+
     override suspend fun musicHome(): List<MediaSection> = coroutineScope {
         val queries = listOf(
             "Top hits" to SearchFilter.MUSIC,
@@ -426,6 +456,20 @@ class NewPipeMediaExtractor(
     }
 
     private companion object {
+        /** Broad topics; the feed picks a few at random so it never repeats yesterday's kiosk order. */
+        val DISCOVER_QUERIES = listOf(
+            "new music", "gaming highlights", "tech review", "movie trailer", "football skills",
+            "cooking recipes", "science explained", "travel vlog", "comedy sketch", "documentary",
+            "space facts", "car review", "fitness workout", "art process", "street food",
+            "wildlife", "history explained", "diy build", "photography tips", "stand up comedy",
+            "anime edit", "bollywood songs", "lofi beats", "live concert", "product design",
+            "coding tutorial", "nature 4k", "urban exploration", "sports highlights", "news explainer",
+            "magic tricks", "guitar cover", "dance choreography", "makeup tutorial", "home workout",
+            "language learning", "book review", "podcast clip", "drone footage", "slow motion",
+            "kinetic sand", "woodworking", "mechanical keyboard", "retro gaming", "movie analysis",
+            "celebrity interview", "street interview", "experiment", "restoration", "miniature cooking",
+        )
+        const val DISCOVER_QUERIES_PER_PAGE = 3
         val NATIVE_HOSTS = listOf("youtube.com", "youtu.be", "soundcloud.com", "bandcamp.com", "media.ccc.de")
     }
 }
