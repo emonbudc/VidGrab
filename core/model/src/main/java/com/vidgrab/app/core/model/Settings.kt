@@ -4,7 +4,7 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 /** Accent palettes the user can pick in Settings → Appearance. */
 enum class ThemeAccent(val label: String) {
-    MINT("Mint"), OCEAN("Ocean"), VIOLET("Violet"), SUNSET("Sunset"), ROSE("Rose"), LIME("Lime"), GOLD("Gold")
+    ORANGE("Orange"), MINT("Mint"), OCEAN("Ocean"), VIOLET("Violet"), SUNSET("Sunset"), ROSE("Rose"), LIME("Lime"), GOLD("Gold")
 }
 
 /** What the player does when a video ends (Settings → Player, and the player's own mode menu). */
@@ -13,8 +13,8 @@ enum class VideoEndMode(val label: String) {
 }
 
 data class AppSettings(
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val accent: ThemeAccent = ThemeAccent.MINT,
+    val themeMode: ThemeMode = ThemeMode.LIGHT,
+    val accent: ThemeAccent = ThemeAccent.ORANGE,
     /** Pure black backgrounds in dark mode (saves battery on OLED screens). */
     val amoled: Boolean = false,
     /** Wallpaper-based colours on Android 12+. */

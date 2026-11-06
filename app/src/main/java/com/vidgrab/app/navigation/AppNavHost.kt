@@ -96,8 +96,8 @@ import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
 
 private val tabs = listOf(
-    NavTab(HomeRoute, "Download", QtIcons.Download, QtIcons.Download),
-    NavTab(LibraryRoute, "Play", QtIcons.PlayCircleOutline, QtIcons.PlayCircle),
+    NavTab(HomeRoute, "Home", QtIcons.Home, QtIcons.HomeFilled),
+    NavTab(LibraryRoute, "Downloads", QtIcons.Download, QtIcons.DownloadDone),
     NavTab(GalleryRoute, "Gallery", QtIcons.Gallery, QtIcons.GalleryFilled),
     NavTab(SettingsRoute, "Settings", QtIcons.Settings, QtIcons.SettingsFilled),
 )

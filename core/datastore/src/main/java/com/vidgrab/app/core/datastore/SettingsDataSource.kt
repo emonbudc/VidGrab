@@ -112,8 +112,8 @@ class SettingsDataSource(private val context: Context) {
     }
 
     private fun settingsFrom(p: Preferences) = AppSettings(
-        themeMode = p[K.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
-        accent = p[K.accent]?.let { runCatching { ThemeAccent.valueOf(it) }.getOrNull() } ?: ThemeAccent.MINT,
+        themeMode = p[K.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.LIGHT,
+        accent = p[K.accent]?.let { runCatching { ThemeAccent.valueOf(it) }.getOrNull() } ?: ThemeAccent.ORANGE,
         amoled = p[K.amoled] ?: false,
         dynamicColor = p[K.dynamic] ?: false,
         downloadDir = p[K.dir] ?: defaultDownloadDir,

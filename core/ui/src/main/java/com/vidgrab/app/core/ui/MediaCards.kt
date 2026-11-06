@@ -40,7 +40,7 @@ import com.vidgrab.app.core.model.MediaItem
 fun Thumbnail(
     url: String?,
     modifier: Modifier = Modifier,
-    corner: Int = 14,
+    corner: Int = 8,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     Box(modifier.clip(RoundedCornerShape(corner.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
@@ -54,7 +54,7 @@ fun Thumbnail(
 fun BoxScope.CornerLabel(text: String, modifier: Modifier = Modifier, live: Boolean = false) {
     if (text.isBlank()) return
     Row(
-        modifier.align(Alignment.BottomEnd).padding(7.dp).clip(RoundedCornerShape(6.dp))
+        modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(4.dp))
             .background(if (live) Color(0xFFE5243B) else Color.Black.copy(alpha = 0.72f)).padding(horizontal = 6.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -89,22 +89,22 @@ fun DownloadIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     QtIconButton(
         QtIcons.Download, "Download", onClick, modifier,
         tint = MaterialTheme.colorScheme.primary,
-        container = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-        size = 40.dp, iconSize = 21.dp,
+        container = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+        size = 34.dp, iconSize = 18.dp,
     )
 }
 
 /** Full-width feed card: large thumbnail, avatar, title and a quick download button. */
 @Composable
 fun VideoFeedCard(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, onChannel: (() -> Unit)? = null) {
-    Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.985f, role = null, onClick = onClick).padding(bottom = 18.dp)) {
-        Thumbnail(item.thumbnail, Modifier.padding(horizontal = 16.dp).fillMaxWidth().aspectRatio(16f / 9f), corner = 20) {
+    Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.985f, role = null, onClick = onClick).padding(bottom = 14.dp)) {
+        Thumbnail(item.thumbnail, Modifier.padding(horizontal = 12.dp).fillMaxWidth().aspectRatio(16f / 9f), corner = 8) {
             CornerLabel(if (item.isLive) "LIVE" else Format.duration(item.durationSec), live = item.isLive)
         }
-        Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp), verticalAlignment = Alignment.Top) {
-            Avatar(item.uploaderAvatar, 38, Modifier.then(if (onChannel != null) Modifier.pressable(scaleDown = 0.9f, onClick = onChannel) else Modifier))
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(item.title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Row(Modifier.padding(start = 12.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
+            Avatar(item.uploaderAvatar, 32, Modifier.then(if (onChannel != null) Modifier.pressable(scaleDown = 0.9f, onClick = onChannel) else Modifier))
+            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+                Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
                     item.subtitle(), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -125,13 +125,13 @@ fun MediaRow(
     onMore: (() -> Unit)? = null,
 ) {
     Row(
-        Modifier.fillMaxWidth().pressable(scaleDown = 0.98f, role = null, onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
+        Modifier.fillMaxWidth().pressable(scaleDown = 0.98f, role = null, onClick = onClick).padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (item.kind == ItemKind.CHANNEL) {
-            Box(Modifier.width(148.dp), contentAlignment = Alignment.Center) { Avatar(item.thumbnail, 76) }
+            Box(Modifier.width(132.dp), contentAlignment = Alignment.Center) { Avatar(item.thumbnail, 70) }
         } else {
-            Thumbnail(item.thumbnail, Modifier.width(148.dp).aspectRatio(16f / 9f), corner = 14) {
+            Thumbnail(item.thumbnail, Modifier.width(132.dp).aspectRatio(16f / 9f), corner = 8) {
                 when (item.kind) {
                     ItemKind.PLAYLIST -> Box(
                         Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.38f).height(200.dp)
@@ -147,7 +147,7 @@ fun MediaRow(
                 }
             }
         }
-        Column(Modifier.weight(1f).padding(start = 14.dp, end = 4.dp)) {
+        Column(Modifier.weight(1f).padding(start = 10.dp, end = 4.dp)) {
             Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
                 item.subtitle(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -163,7 +163,7 @@ fun MediaRow(
 @Composable
 fun MediaTile(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.width(160.dp).pressable(scaleDown = 0.96f, role = null, onClick = onClick)) {
-        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f), corner = 18) {
+        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f), corner = 10) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent, Color.Black.copy(alpha = 0.45f)))))
             if (item.kind == ItemKind.PLAYLIST) Icon(
                 QtIcons.PlaylistPlay, null, tint = Color.White,

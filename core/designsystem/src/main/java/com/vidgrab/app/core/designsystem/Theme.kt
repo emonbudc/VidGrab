@@ -24,8 +24,6 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +33,7 @@ import com.vidgrab.app.core.model.ThemeAccent
 private data class AccentSpec(val dark: Color, val light: Color, val partner: Color)
 
 private val accents = mapOf(
+    ThemeAccent.ORANGE to AccentSpec(Color(0xFFFF6A1A), Color(0xFFFF5200), Color(0xFFFF2D55)),
     ThemeAccent.MINT to AccentSpec(Color(0xFF1DD8B8), Color(0xFF00A38A), Color(0xFF6C8CFF)),
     ThemeAccent.OCEAN to AccentSpec(Color(0xFF5AA9FF), Color(0xFF1B6FE0), Color(0xFF39D5E8)),
     ThemeAccent.VIOLET to AccentSpec(Color(0xFFAE94FF), Color(0xFF6E48E8), Color(0xFFFF7AC6)),
@@ -86,70 +85,63 @@ private fun darkScheme(a: AccentSpec, amoled: Boolean): ColorScheme {
 }
 
 private fun lightScheme(a: AccentSpec): ColorScheme {
-    val bg = Color(0xFFF7F8FA)
+    val bg = Color.White
     val p = a.light
     return lightColorScheme(
         primary = p,
         onPrimary = onColor(p),
-        primaryContainer = p.copy(alpha = 0.13f).compositeOver(Color.White),
-        onPrimaryContainer = p.copy(alpha = 1f).compositeOver(Color.Black).copy(alpha = 1f),
+        primaryContainer = p.copy(alpha = 0.10f).compositeOver(Color.White),
+        onPrimaryContainer = Color.Black.copy(alpha = 0.42f).compositeOver(p),
         secondary = a.partner,
         onSecondary = onColor(a.partner),
-        secondaryContainer = a.partner.copy(alpha = 0.14f).compositeOver(Color.White),
+        secondaryContainer = a.partner.copy(alpha = 0.10f).compositeOver(Color.White),
+        onSecondaryContainer = Color.Black.copy(alpha = 0.42f).compositeOver(a.partner),
         tertiary = Color(0xFFE09400),
         background = bg,
-        onBackground = Color(0xFF12161B),
+        onBackground = Color(0xFF111418),
         surface = bg,
-        onSurface = Color(0xFF12161B),
-        surfaceVariant = Color(0xFFE9EDF1),
-        onSurfaceVariant = Color(0xFF5D6873),
+        onSurface = Color(0xFF111418),
+        surfaceVariant = Color(0xFFF1F3F5),
+        onSurfaceVariant = Color(0xFF6B737C),
         surfaceContainerLowest = Color.White,
-        surfaceContainerLow = Color(0xFFF2F4F7),
-        surfaceContainer = Color(0xFFEDF0F3),
-        surfaceContainerHigh = Color(0xFFE7EBEF),
-        surfaceContainerHighest = Color(0xFFE0E5EA),
-        outline = Color(0xFFC6CDD5),
-        outlineVariant = Color(0xFFE1E6EB),
+        surfaceContainerLow = Color(0xFFF8F9FA),
+        surfaceContainer = Color(0xFFF3F4F6),
+        surfaceContainerHigh = Color(0xFFEEF0F2),
+        surfaceContainerHighest = Color(0xFFE7EAED),
+        outline = Color(0xFFD5D9DE),
+        outlineVariant = Color(0xFFEBEDF0),
         error = Color(0xFFD93F3F),
     )
 }
 
-val Jakarta = FontFamily(
-    Font(R.font.jakarta_400, FontWeight.Normal),
-    Font(R.font.jakarta_500, FontWeight.Medium),
-    Font(R.font.jakarta_600, FontWeight.SemiBold),
-    Font(R.font.jakarta_700, FontWeight.Bold),
-    Font(R.font.jakarta_800, FontWeight.ExtraBold),
-)
-
 private val typography = Typography().let { t ->
     fun TextStyle.j(weight: FontWeight? = null, ls: Float? = null) =
-        copy(fontFamily = Jakarta, fontWeight = weight ?: fontWeight, letterSpacing = ls?.sp ?: letterSpacing)
+        copy(fontWeight = weight ?: fontWeight, letterSpacing = ls?.sp ?: letterSpacing)
     Typography(
-        displayLarge = t.displayLarge.j(FontWeight.ExtraBold, -1f),
-        displayMedium = t.displayMedium.j(FontWeight.ExtraBold, -0.8f),
-        displaySmall = t.displaySmall.j(FontWeight.Bold, -0.5f),
-        headlineLarge = t.headlineLarge.j(FontWeight.Bold, -0.5f),
-        headlineMedium = t.headlineMedium.j(FontWeight.Bold, -0.4f),
-        headlineSmall = t.headlineSmall.j(FontWeight.Bold, -0.3f),
-        titleLarge = t.titleLarge.j(FontWeight.Bold, -0.2f),
-        titleMedium = t.titleMedium.j(FontWeight.SemiBold, -0.1f),
+        displayLarge = t.displayLarge.j(FontWeight.Bold, -0.5f),
+        displayMedium = t.displayMedium.j(FontWeight.Bold, -0.4f),
+        displaySmall = t.displaySmall.j(FontWeight.Bold, -0.2f),
+        headlineLarge = t.headlineLarge.j(FontWeight.Bold, -0.2f),
+        headlineMedium = t.headlineMedium.j(FontWeight.Bold, -0.2f),
+        headlineSmall = t.headlineSmall.j(FontWeight.Bold, -0.1f),
+        titleLarge = t.titleLarge.j(FontWeight.Bold, 0f),
+        titleMedium = t.titleMedium.j(FontWeight.SemiBold, 0f),
         titleSmall = t.titleSmall.j(FontWeight.SemiBold, 0f),
         bodyLarge = t.bodyLarge.j(FontWeight.Normal, 0f),
         bodyMedium = t.bodyMedium.j(FontWeight.Normal, 0f),
         bodySmall = t.bodySmall.j(FontWeight.Normal, 0.1f),
         labelLarge = t.labelLarge.j(FontWeight.SemiBold, 0.1f),
         labelMedium = t.labelMedium.j(FontWeight.SemiBold, 0.2f),
-        labelSmall = t.labelSmall.j(FontWeight.SemiBold, 0.2f),
+        labelSmall = t.labelSmall.j(FontWeight.Normal, 0.2f),
     )
 }
 
 private val shapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(22.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(10.dp),
+    large = RoundedCornerShape(14.dp),
+    extraLarge = RoundedCornerShape(20.dp),
 )
 
 @Immutable
@@ -157,12 +149,12 @@ data class QtExtras(val isDark: Boolean, val brand: Brush, val brandStart: Color
 
 val LocalQtExtras = staticCompositionLocalOf { QtExtras(true, Brush.linearGradient(listOf(Color.Cyan, Color.Blue)), Color.Cyan, Color.Blue) }
 
-val BrandTitle = TextStyle(fontFamily = Jakarta, fontSize = 42.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-1.4).sp)
+val BrandTitle = TextStyle(fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.6).sp)
 
 @Composable
 fun VidGrabTheme(
     darkTheme: Boolean,
-    accent: ThemeAccent = ThemeAccent.MINT,
+    accent: ThemeAccent = ThemeAccent.ORANGE,
     amoled: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
