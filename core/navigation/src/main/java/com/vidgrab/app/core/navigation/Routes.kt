@@ -1,0 +1,59 @@
+package com.vidgrab.app.core.navigation
+
+import kotlinx.serialization.Serializable
+
+// Bottom-bar destinations
+@Serializable data object HomeRoute
+@Serializable data object LibraryRoute
+@Serializable data object GalleryRoute
+@Serializable data object SettingsRoute
+
+// Discover / download
+@Serializable data class SearchRoute(val initial: String = "")
+@Serializable data class SearchResultsRoute(val query: String)
+/** [title] and [thumbnail]: what the tapped card showed, so the page can show them while it loads. */
+@Serializable data class VideoRoute(val url: String, val title: String? = null, val thumbnail: String? = null)
+@Serializable data class ChannelRoute(val url: String)
+@Serializable data class PlaylistRoute(val url: String)
+@Serializable data class HowToRoute(val platform: String)
+
+// Browser
+/** [autoDownload]: open the download sheet by itself once the page's video is found (pasted/shared links). */
+@Serializable data class BrowserRoute(val url: String, val autoDownload: Boolean = false)
+@Serializable data object SitesRoute
+@Serializable data object BrowserHistoryRoute
+@Serializable data object BookmarksRoute
+
+// Library / player
+@Serializable data object DownloadingRoute
+@Serializable data object PlayerRoute
+@Serializable data object SavedVideosRoute
+
+// Gallery
+@Serializable data class GalleryAlbumRoute(val bucketId: Long, val name: String)
+/** Full-screen viewer starting at [mediaId], paging through one album ([bucketId]) or everything ([GALLERY_ALL]). */
+@Serializable data class GalleryViewerRoute(val mediaId: Long, val bucketId: Long = GALLERY_ALL)
+/** The photo editor for one picture. */
+@Serializable data class PhotoEditorRoute(val mediaId: Long)
+const val GALLERY_ALL = Long.MIN_VALUE
+/** Virtual albums: one kind of media from every folder. They exist only in the gallery, not on disk. */
+const val GALLERY_PHOTOS = Long.MIN_VALUE + 1
+const val GALLERY_VIDEOS = Long.MIN_VALUE + 2
+const val GALLERY_AUDIOS = Long.MIN_VALUE + 3
+
+// Settings
+@Serializable data object DownloadSettingsRoute
+@Serializable data object PlayerSettingsRoute
+@Serializable data object NotificationSettingsRoute
+@Serializable data object ThemeSettingsRoute
+@Serializable data object LanguageRoute
+@Serializable data object AboutRoute
+
+// Tools
+@Serializable data object RecycleBinRoute
+@Serializable data object DeletedHistoryRoute
+@Serializable data object StatusSaverRoute
+@Serializable data object VaultRoute
+@Serializable data object LargeFilesRoute
+@Serializable data object AppManagerRoute
+@Serializable data object StorageCleanRoute

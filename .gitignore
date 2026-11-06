@@ -9,3 +9,15 @@ local.properties
 .DS_Store
 captures/
 *.iml
+.kotlin/
+*.apk
+*.aab
+*.ap_
+*.dex
+hs_err_pid*.log
+.env
+.env.*
+google-services.json
+**/google-services.json
+service-account*.json
+*-service-account.json

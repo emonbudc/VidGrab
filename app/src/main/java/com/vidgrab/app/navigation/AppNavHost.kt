@@ -1,0 +1,345 @@
+package com.vidgrab.app.navigation
+
+import com.vidgrab.app.core.designsystem.QtTransitions
+import com.vidgrab.app.core.designsystem.icon.QtIcons
+import androidx.compose.animation.fadeIn
+import com.vidgrab.app.core.designsystem.LocalBottomBarHeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.background
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.toRoute
+import com.vidgrab.app.core.data.LibraryRepository
+import com.vidgrab.app.core.downloadsheet.DownloadSheetHost
+import com.vidgrab.app.core.model.DownloadStatus
+import com.vidgrab.app.core.model.ItemKind
+import com.vidgrab.app.core.model.MediaItem
+import com.vidgrab.app.core.navigation.*
+import com.vidgrab.app.feature.browser.BookmarksScreen
+import com.vidgrab.app.feature.browser.BrowserScreen
+import com.vidgrab.app.feature.browser.HistoryScreen
+import com.vidgrab.app.feature.browser.SitesScreen
+import com.vidgrab.app.feature.home.HomeActions
+import com.vidgrab.app.feature.gallery.AlbumScreen
+import com.vidgrab.app.feature.gallery.GalleryScreen
+import com.vidgrab.app.feature.gallery.ViewerScreen
+import com.vidgrab.app.feature.gallery.editor.PhotoEditorScreen
+import com.vidgrab.app.player.GalleryPlayerActivity
+import com.vidgrab.app.player.FloatingPlayerActivity
+import com.vidgrab.app.core.designsystem.LocalBottomBarHidden
+import com.vidgrab.app.core.designsystem.QtEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import com.vidgrab.app.feature.settings.AboutScreen
+import com.vidgrab.app.feature.settings.DownloadSettingsScreen
+import com.vidgrab.app.feature.settings.NotificationSettingsScreen
+import com.vidgrab.app.feature.settings.PlayerSettingsScreen
+import com.vidgrab.app.feature.settings.RegionScreen
+import com.vidgrab.app.feature.settings.SettingsActions
+import com.vidgrab.app.feature.settings.SettingsScreen
+import com.vidgrab.app.feature.settings.ThemeSettingsScreen
+import com.vidgrab.app.feature.tools.AppManagerScreen
+import com.vidgrab.app.feature.tools.DeletedHistoryScreen
+import com.vidgrab.app.feature.tools.LargeFilesScreen
+import com.vidgrab.app.feature.tools.RecycleBinScreen
+import com.vidgrab.app.feature.tools.StatusSaverScreen
+import com.vidgrab.app.feature.tools.StorageCleanScreen
+import com.vidgrab.app.feature.tools.VaultScreen
+import com.vidgrab.app.feature.home.HomeScreen
+import com.vidgrab.app.feature.home.HowToScreen
+import com.vidgrab.app.feature.library.DownloadingScreen
+import com.vidgrab.app.feature.library.LibraryScreen
+import com.vidgrab.app.feature.player.MiniPlayer
+import com.vidgrab.app.feature.player.PlayerScreen
+import com.vidgrab.app.feature.search.SearchResultsScreen
+import com.vidgrab.app.feature.search.SearchScreen
+import com.vidgrab.app.feature.video.ListPageScreen
+import com.vidgrab.app.feature.video.SavedVideosScreen
+import com.vidgrab.app.feature.video.VideoScreen
+import kotlinx.coroutines.flow.map
+import org.koin.compose.koinInject
+
+private val tabs = listOf(
+    NavTab(HomeRoute, "Download", QtIcons.Download, QtIcons.Download),
+    NavTab(LibraryRoute, "Play", QtIcons.PlayCircleOutline, QtIcons.PlayCircle),
+    NavTab(GalleryRoute, "Gallery", QtIcons.Gallery, QtIcons.GalleryFilled),
+    NavTab(SettingsRoute, "Settings", QtIcons.Settings, QtIcons.SettingsFilled),
+)
+
+@Composable
+fun AppNavHost(nav: NavHostController) {
+    val router = koinInject<UrlRouter>()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val library = koinInject<LibraryRepository>()
+    val backStack by nav.currentBackStackEntryAsState()
+    val dest = backStack?.destination
+    val onTab = tabs.any { t -> dest?.hierarchy?.any { it.hasRoute(t.route::class) } == true }
+    // A gallery video is already on screen (its own player or picture-in-picture); gallery audio reopens that player.
+    val playing by koinInject<com.vidgrab.app.core.media.PlayerController>().state.collectAsStateWithLifecycle()
+    val galleryId = playing.current?.id?.takeIf { it.startsWith("gallery:") }?.removePrefix("gallery:")?.toLongOrNull()
+    val galleryVideo = galleryId != null && !playing.audioOnly
+    // The floating window is showing the video instead.
+    val floating by com.vidgrab.app.core.playerui.PipState.floating.collectAsStateWithLifecycle()
+    val showMini = !galleryVideo && !floating && dest?.let { d -> !d.hasRoute(PlayerRoute::class) && !d.hasRoute(VideoRoute::class) && !d.hasRoute(GalleryViewerRoute::class) } ?: false
+    // A tab screen can swap the floating bar for its own (the gallery's selection actions).
+    val barHidden = remember { mutableStateOf(false) }
+    // The mini player only draws when something is loaded; nothing playing = no space kept for it.
+    val miniVisible = showMini && !barHidden.value && playing.current != null
+    val activeCount by remember(library) {
+        library.downloads.map { l -> l.count { it.status != DownloadStatus.COMPLETED && it.deletedAt == 0L } }
+    }.collectAsStateWithLifecycle(0)
+
+    fun openUrl(url: String) = nav.navigate(router.routeFor(url))
+    fun downloadUrl(url: String) = nav.navigate(router.routeForPasted(url))
+    fun openItem(item: MediaItem) = nav.navigate(
+        when (item.kind) {
+            ItemKind.VIDEO -> VideoRoute(item.url, item.title.ifBlank { null }, item.thumbnail)
+            ItemKind.CHANNEL -> ChannelRoute(item.url)
+            ItemKind.PLAYLIST -> PlaylistRoute(item.url)
+        },
+    )
+
+    val analytics = koinInject<com.vidgrab.app.core.analytics.Analytics>()
+    // Screen views by route type only (e.g. "VideoRoute"), never the URL inside it.
+    androidx.compose.runtime.LaunchedEffect(dest?.route) {
+        dest?.route?.substringBefore('/')?.substringBefore('?')?.substringAfterLast('.')?.let(analytics::screen)
+    }
+    val density = LocalDensity.current
+    var overlayHeight by remember { mutableStateOf(0.dp) }
+    // Surface (not a plain Box) so screens get the theme's content colour, like Scaffold provided before.
+    androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
+    Box(Modifier.fillMaxSize()) {
+        // Tab screens draw behind the floating bar (and see their content through the gaps around it);
+        // other screens simply stop above the mini player.
+        CompositionLocalProvider(LocalBottomBarHeight provides if (onTab) overlayHeight else 0.dp, LocalBottomBarHidden provides barHidden) {
+        NavHost(
+            nav, startDestination = HomeRoute,
+            // Above the mini player on other screens; that space already covers the navigation bar, so screens' own
+            // navigation-bar padding is marked as used (else they'd leave an empty strip on top of it).
+            modifier = Modifier.fillMaxSize().padding(bottom = if (onTab) 0.dp else overlayHeight)
+                .consumeWindowInsets(PaddingValues(bottom = if (onTab) 0.dp else overlayHeight)),
+            enterTransition = QtTransitions.push,
+            exitTransition = QtTransitions.pushExit,
+            popEnterTransition = QtTransitions.popEnter,
+            popExitTransition = QtTransitions.popExit,
+            // No predictive back. Android 16 ignores the app's opt-out for apps targeting it, so the gesture's progress
+            // must not drive any animation here: the screen stays still while the finger moves, then simply goes back.
+            predictivePopEnterTransition = { EnterTransition.None },
+            predictivePopExitTransition = { ExitTransition.None },
+        ) {
+            composable<HomeRoute>(
+                enterTransition = QtTransitions.tabEnter, exitTransition = QtTransitions.tabExit,
+                popEnterTransition = QtTransitions.tabEnter, popExitTransition = QtTransitions.tabExit,
+            ) {
+                HomeScreen(
+                    HomeActions(
+                        openSearch = { nav.navigate(SearchRoute(it)) },
+                        openUrl = ::openUrl,
+                        downloadUrl = ::downloadUrl,
+                        openItem = ::openItem,
+                        openChannel = { nav.navigate(ChannelRoute(it)) },
+                        openHowTo = { nav.navigate(HowToRoute(it)) },
+                        openSites = { nav.navigate(SitesRoute) },
+                        openLibrary = {
+                            nav.navigate(LibraryRoute) {
+                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        openVault = { nav.navigate(VaultRoute) },
+                    ),
+                    Modifier.statusBarsPadding(),
+                )
+            }
+            composable<LibraryRoute>(
+                enterTransition = QtTransitions.tabEnter, exitTransition = QtTransitions.tabExit,
+                popEnterTransition = QtTransitions.tabEnter, popExitTransition = QtTransitions.tabExit,
+            ) {
+                LibraryScreen(
+                    onOpenDownloading = { nav.navigate(DownloadingRoute) },
+                    onOpenPlayer = { nav.navigate(PlayerRoute) { launchSingleTop = true } },
+                    onOpenMedia = { GalleryPlayerActivity.start(context, it) },
+                    onOpenSource = ::openUrl,
+                    onOpenSaved = { nav.navigate(SavedVideosRoute) },
+                )
+            }
+            composable<GalleryRoute>(
+                enterTransition = QtTransitions.tabEnter, exitTransition = QtTransitions.tabExit,
+                popEnterTransition = QtTransitions.tabEnter, popExitTransition = QtTransitions.tabExit,
+            ) {
+                GalleryScreen(
+                    onOpenAlbum = { nav.navigate(GalleryAlbumRoute(it.bucketId, it.name)) },
+                    onOpenViewer = { nav.navigate(GalleryViewerRoute(it.id)) },
+                    onOpenVideo = { GalleryPlayerActivity.start(context, it.id) },
+                )
+            }
+            composable<GalleryAlbumRoute> { e ->
+                val r = e.toRoute<GalleryAlbumRoute>()
+                AlbumScreen(
+                    r.bucketId, r.name, onBack = nav::popBackStack,
+                    onOpenViewer = { nav.navigate(GalleryViewerRoute(it.id, r.bucketId)) },
+                    onOpenVideo = { GalleryPlayerActivity.start(context, it.id) },
+                )
+            }
+            composable<GalleryViewerRoute>(
+                enterTransition = { fadeIn(tween(220)) + scaleIn(tween(260, easing = QtEasing.EmphasizedDecelerate), initialScale = 0.92f) },
+                exitTransition = { fadeOut(tween(160)) },
+                popEnterTransition = { fadeIn(tween(160)) },
+                popExitTransition = { fadeOut(tween(200)) + scaleOut(tween(220), targetScale = 0.94f) },
+            ) { e ->
+                val r = e.toRoute<GalleryViewerRoute>()
+                ViewerScreen(r.mediaId, r.bucketId, onBack = nav::popBackStack, onOpenVideo = { GalleryPlayerActivity.start(context, it.id) },
+                    onEditPhoto = { nav.navigate(PhotoEditorRoute(it.id)) })
+            }
+            composable<PhotoEditorRoute> { e -> PhotoEditorScreen(e.toRoute<PhotoEditorRoute>().mediaId, onBack = nav::popBackStack) }
+            composable<SettingsRoute>(
+                enterTransition = QtTransitions.tabEnter, exitTransition = QtTransitions.tabExit,
+                popEnterTransition = QtTransitions.tabEnter, popExitTransition = QtTransitions.tabExit,
+            ) {
+                SettingsScreen(
+                    SettingsActions(
+                        downloadSettings = { nav.navigate(DownloadSettingsRoute) },
+                        playerSettings = { nav.navigate(PlayerSettingsRoute) },
+                        notificationSettings = { nav.navigate(NotificationSettingsRoute) },
+                        theme = { nav.navigate(ThemeSettingsRoute) },
+                        recycleBin = { nav.navigate(RecycleBinRoute) },
+                        deletedHistory = { nav.navigate(DeletedHistoryRoute) },
+                        statusSaver = { nav.navigate(StatusSaverRoute) },
+                        vault = { nav.navigate(VaultRoute) },
+                        storageClean = { nav.navigate(StorageCleanRoute) },
+                        largeFiles = { nav.navigate(LargeFilesRoute) },
+                        appManager = { nav.navigate(AppManagerRoute) },
+                        region = { nav.navigate(LanguageRoute) },
+                        about = { nav.navigate(AboutRoute) },
+                    ),
+                )
+            }
+            composable<DownloadSettingsRoute> { DownloadSettingsScreen(nav::popBackStack) }
+            composable<PlayerSettingsRoute> { PlayerSettingsScreen(nav::popBackStack) }
+            composable<NotificationSettingsRoute> { NotificationSettingsScreen(nav::popBackStack) }
+            composable<ThemeSettingsRoute> { ThemeSettingsScreen(nav::popBackStack) }
+            composable<LanguageRoute> { RegionScreen(nav::popBackStack) }
+            composable<AboutRoute> { AboutScreen(nav::popBackStack) }
+            composable<RecycleBinRoute> { RecycleBinScreen(nav::popBackStack, onHistory = { nav.navigate(DeletedHistoryRoute) }) }
+            composable<DeletedHistoryRoute> { DeletedHistoryScreen(nav::popBackStack) }
+            composable<VaultRoute> { VaultScreen(nav::popBackStack, onOpenPlayer = { nav.navigate(PlayerRoute) { launchSingleTop = true } }) }
+            composable<StorageCleanRoute> { StorageCleanScreen(nav::popBackStack) }
+            composable<LargeFilesRoute> { LargeFilesScreen(nav::popBackStack) }
+            composable<AppManagerRoute> { AppManagerScreen(nav::popBackStack) }
+            composable<SearchRoute> { e ->
+                SearchScreen(
+                    e.toRoute<SearchRoute>().initial,
+                    onBack = nav::popBackStack,
+                    onSearch = { q -> nav.navigate(SearchResultsRoute(q)) { popUpTo<SearchRoute> { inclusive = true } } },
+                    onOpenUrl = { u -> nav.navigate(router.routeFor(u)) { popUpTo<SearchRoute> { inclusive = true } } },
+                    onViewSites = { nav.navigate(SitesRoute) },
+                    onDownloadUrl = { u -> nav.navigate(router.routeForPasted(u)) { popUpTo<SearchRoute> { inclusive = true } } },
+                )
+            }
+            composable<SearchResultsRoute> { e ->
+                val q = e.toRoute<SearchResultsRoute>().query
+                SearchResultsScreen(
+                    q, onBack = nav::popBackStack,
+                    onEditQuery = { nav.navigate(SearchRoute(q)) },
+                    onOpen = ::openItem, onOpenUrl = ::openUrl,
+                )
+            }
+            composable<VideoRoute> { e ->
+                val r = e.toRoute<VideoRoute>()
+                VideoScreen(r.url, previewTitle = r.title, previewThumbnail = r.thumbnail, onBack = nav::popBackStack, onOpen = ::openItem,
+                    onChannel = { nav.navigate(ChannelRoute(it)) },
+                    onPip = { FloatingPlayerActivity.start(context) },
+                    onPlayNext = { item -> nav.navigate(VideoRoute(item.url, item.title.ifBlank { null }, item.thumbnail)) { popUpTo<VideoRoute> { inclusive = true } } })
+            }
+            composable<SavedVideosRoute> { SavedVideosScreen(nav::popBackStack, onOpen = ::openItem) }
+            composable<ChannelRoute> { e -> ListPageScreen(e.toRoute<ChannelRoute>().url, true, nav::popBackStack, ::openItem) }
+            composable<PlaylistRoute> { e -> ListPageScreen(e.toRoute<PlaylistRoute>().url, false, nav::popBackStack, ::openItem) }
+            composable<HowToRoute> { e ->
+                HowToScreen(e.toRoute<HowToRoute>().platform, nav::popBackStack, openInBrowser = ::openUrl,
+                    openStatusSaver = { nav.navigate(StatusSaverRoute) })
+            }
+            composable<DownloadingRoute> { DownloadingScreen(nav::popBackStack) }
+            composable<PlayerRoute> { PlayerScreen(onBack = nav::popBackStack, onPip = { FloatingPlayerActivity.start(context) }) }
+            composable<BrowserRoute> { e ->
+                val r = e.toRoute<BrowserRoute>()
+                BrowserScreen(
+                    r.url,
+                    autoDownload = r.autoDownload,
+                    onClose = nav::popBackStack,
+                    onOpenVideo = { nav.navigate(VideoRoute(it)) },
+                    onOpenHistory = { nav.navigate(BrowserHistoryRoute) },
+                    onOpenBookmarks = { nav.navigate(BookmarksRoute) },
+                )
+            }
+            composable<SitesRoute> { SitesScreen(nav::popBackStack, onOpen = ::openUrl, onHistory = { nav.navigate(BrowserHistoryRoute) }) }
+            composable<BrowserHistoryRoute> { HistoryScreen(nav::popBackStack, onOpen = ::openUrl) }
+            composable<BookmarksRoute> { BookmarksScreen(nav::popBackStack, onOpen = ::openUrl) }
+            composable<StatusSaverRoute> { StatusSaverScreen(nav::popBackStack) }
+        }
+        }
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .onSizeChanged { overlayHeight = with(density) { it.height.toDp() } },
+        ) {
+            if (miniVisible) MiniPlayer(onExpand = {
+                if (galleryId != null) GalleryPlayerActivity.start(context, galleryId) else nav.navigate(PlayerRoute) { launchSingleTop = true }
+            })
+            if (onTab && !barHidden.value) {
+                val selected = tabs.indexOfFirst { t -> dest?.hierarchy?.any { it.hasRoute(t.route::class) } == true }
+                FloatingNavBar(
+                    tabs, selected,
+                    onSelect = { i ->
+                        nav.navigate(tabs[i].route) {
+                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    badges = mapOf(1 to activeCount),
+                )
+            } else if (miniVisible) Spacer(Modifier.navigationBarsPadding().height(8.dp))
+        }
+    }
+    }
+    DownloadSheetHost(onOpenInBrowser = ::openUrl, onOpenExisting = { task ->
+        val done = task.status == com.vidgrab.app.core.model.DownloadStatus.COMPLETED
+        nav.navigate(if (done) LibraryRoute else DownloadingRoute) { launchSingleTop = true }
+    })
+}

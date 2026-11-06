@@ -1,0 +1,139 @@
+package com.vidgrab.app.core.database
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import com.vidgrab.app.core.model.Bookmark
+import com.vidgrab.app.core.model.ContentType
+import com.vidgrab.app.core.model.DownloadStatus
+import com.vidgrab.app.core.model.DownloadTask
+import com.vidgrab.app.core.model.HistoryEntry
+import com.vidgrab.app.core.model.Site
+import com.vidgrab.app.core.model.StreamProtocol
+
+@Entity(tableName = "downloads", indices = [Index("status"), Index("deletedAt")])
+data class DownloadEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val pageUrl: String?,
+    val sourceHost: String?,
+    val thumbnail: String?,
+    val url: String,
+    val audioUrl: String?,
+    val filePath: String,
+    val mimeType: String,
+    val type: ContentType,
+    val quality: String?,
+    val totalBytes: Long,
+    val downloadedBytes: Long,
+    val audioTotalBytes: Long,
+    val audioDownloadedBytes: Long,
+    val status: DownloadStatus,
+    val error: String?,
+    val durationSec: Long,
+    val createdAt: Long,
+    val completedAt: Long,
+    val inVault: Boolean,
+    val deletedAt: Long,
+    val lastPlayedPositionMs: Long,
+    val headers: String? = null,
+    @ColumnInfo(defaultValue = "HTTP") val protocol: StreamProtocol = StreamProtocol.HTTP,
+    @ColumnInfo(defaultValue = "0") val extractAudio: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val clipStartMs: Long = 0,
+    @ColumnInfo(defaultValue = "0") val clipEndMs: Long = 0,
+)
+
+fun DownloadEntity.asModel() = DownloadTask(
+    id, title, pageUrl, sourceHost, thumbnail, url, audioUrl, filePath, mimeType, type, quality,
+    totalBytes, downloadedBytes, audioTotalBytes, audioDownloadedBytes, status, error, durationSec,
+    createdAt, completedAt, inVault, deletedAt, lastPlayedPositionMs, protocol = protocol,
+    clipStartMs = clipStartMs, clipEndMs = clipEndMs,
+)
+
+fun DownloadTask.asEntity(headers: String? = null) = DownloadEntity(
+    id, title, pageUrl, sourceHost, thumbnail, url, audioUrl, filePath, mimeType, type, quality,
+    totalBytes, downloadedBytes, audioTotalBytes, audioDownloadedBytes, status, error, durationSec,
+    createdAt, completedAt, inVault, deletedAt, lastPlayedPositionMs, headers, protocol,
+    clipStartMs = clipStartMs, clipEndMs = clipEndMs,
+)
+
+@Entity(tableName = "sites")
+data class SiteEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val url: String,
+    val builtIn: Boolean,
+    val position: Int,
+)
+
+fun SiteEntity.asModel() = Site(id, name, url, builtIn, position)
+
+@Entity(tableName = "browser_history", indices = [Index("url")])
+data class HistoryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val url: String,
+    val visitedAt: Long,
+)
+
+fun HistoryEntity.asModel() = HistoryEntry(id, title, url, visitedAt)
+
+@Entity(tableName = "bookmarks", indices = [Index("url", unique = true)])
+data class BookmarkEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val url: String,
+    val createdAt: Long,
+)
+
+fun BookmarkEntity.asModel() = Bookmark(id, title, url, createdAt)
+
+@Entity(tableName = "search_history")
+data class SearchQueryEntity(
+    @PrimaryKey val query: String,
+    val searchedAt: Long,
+)
+
+@Entity(tableName = "deleted_history", indices = [Index("deletedAt")])
+data class DeletedHistoryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val pageUrl: String?,
+    val url: String,
+    val thumbnail: String?,
+    val mimeType: String,
+    val quality: String?,
+    val sizeBytes: Long,
+    val durationSec: Long,
+    val deletedAt: Long,
+)
+
+fun DeletedHistoryEntity.asModel() =
+    com.vidgrab.app.core.model.DeletedDownload(id, title, pageUrl, url, thumbnail, mimeType, quality, sizeBytes, durationSec, deletedAt)
+
+/** Where a played video was left ([itemKey]: file path or page URL). Capped; the least recently opened rows go first. */
+@Entity(tableName = "play_history", indices = [Index("openedAt")])
+data class PlayHistoryEntity(
+    @PrimaryKey val itemKey: String,
+    val title: String,
+    val positionMs: Long,
+    val durationMs: Long,
+    val openedAt: Long,
+)
+
+fun PlayHistoryEntity.asModel() = com.vidgrab.app.core.model.PlayHistoryEntry(itemKey, title, positionMs, durationMs, openedAt)
+
+/** Videos saved with "Watch later", by page URL. */
+@Entity(tableName = "saved_videos", indices = [Index("savedAt")])
+data class SavedVideoEntity(
+    @PrimaryKey val url: String,
+    val title: String,
+    val thumbnail: String?,
+    val uploader: String,
+    val durationSec: Long,
+    val savedAt: Long,
+)
+
+fun SavedVideoEntity.asModel() = com.vidgrab.app.core.model.SavedVideo(url, title, thumbnail, uploader, durationSec, savedAt)
+fun com.vidgrab.app.core.model.SavedVideo.asEntity() = SavedVideoEntity(url, title, thumbnail, uploader, durationSec, savedAt)

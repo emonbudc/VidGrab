@@ -1,9 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.VidGrab" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0F1115</item>
-        <item name="android:statusBarColor">#0F1115</item>
-        <item name="android:navigationBarColor">#0F1115</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+    <style name="Theme.VidGrab" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/qt_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Share popup: draws over the app the user shared from. -->
+    <style name="Theme.VidGrab.Share" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Floating (picture-in-picture) player: see-through and without animations until it is in its window, so going
+         to picture-in-picture shows only the video shrinking. -->
+    <style name="Theme.VidGrab.Floating" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 </resources>

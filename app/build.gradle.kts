@@ -1,85 +1,142 @@
+import java.util.Properties
+
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.vidgrab.android.application)
+    alias(libs.plugins.kotlin.serialization)
 }
+
+// Firebase (Analytics + Crashlytics) is enabled only when google-services.json is present.
+// It is git-ignored: maintainers' release builds get it from a CI secret; forks build without it.
+if (file("google-services.json").exists()) {
+    pluginManager.apply(libs.plugins.google.services.get().pluginId)
+    pluginManager.apply(libs.plugins.firebase.crashlytics.get().pluginId)
+}
+
+// Release signing: CI passes RELEASE_* as environment variables; locally they come from local.properties.
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+}
+fun secret(name: String): String? = System.getenv(name) ?: localProps.getProperty(name)
 
 android {
     namespace = "com.vidgrab.app"
-    compileSdk = 35
-
-    defaultConfig {
-        applicationId = "com.vidgrab.app"
-        minSdk = 24
-        targetSdk = 35
-        versionCode = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 1
-        versionName = (project.findProperty("appVersionName") as String?) ?: "1.0.0"
-        ndk {
-            abiFilters += listOf("arm64-v8a")
-        }
-    }
 
     signingConfigs {
-        create("release") {
-            val path = System.getenv("RELEASE_KEYSTORE_PATH")
-            if (path != null && file(path).exists()) {
-                storeFile = file(path)
-                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+        val storePath = secret("RELEASE_KEYSTORE_PATH")
+        if (storePath != null && file(storePath).exists()) {
+            create("release") {
+                storeFile = file(storePath)
+                storePassword = secret("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = secret("RELEASE_KEY_ALIAS")
+                keyPassword = secret("RELEASE_KEY_PASSWORD")
             }
         }
     }
 
+    defaultConfig {
+        applicationId = "com.vidgrab.app"
+        // CI sets these from the release run (see .github/workflows/release.yml); local builds are "dev".
+        versionCode = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 1
+        versionName = (project.findProperty("appVersionName") as String?) ?: "${project.property("appVersionBase")}.0-dev"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Where the app looks for new versions. Override with -PupdateApiUrl=… to test against a local fake release.
+        val updateUrl = (project.findProperty("updateApiUrl") as String?)
+            ?: "https://api.github.com/repos/emonbudc/VidGrab/releases/latest"
+        buildConfigField("String", "UPDATE_API_URL", "\"$updateUrl\"")
+        buildConfigField("boolean", "UPDATE_URL_OVERRIDDEN", "${project.hasProperty("updateApiUrl")}")
+        // Phones only (the bundled Python is per-ABI); keeps the APK small.
+        ndk { abiFilters += setOf("arm64-v8a", "armeabi-v7a") }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // R8: shrink + optimise (much faster cold start and smaller APK).
+            optimization {
+                enable = true
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.findByName("release")
+            signingConfigs.findByName("release")?.let { signingConfig = it }
+        }
+        // Release code signed with the debug key, for testing real performance on a device.
+        create("qa") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            applicationIdSuffix = ".qa"
+        }
+    }
+    buildFeatures { buildConfig = true }
+
+    // One APK per CPU type (each ~35% smaller: the bundled Python runtime is per-ABI), plus a universal one.
+    // The in-app updater downloads the one matching the phone; the universal APK stays for manual installs.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = true
         }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    buildFeatures {
-        compose = true
-        buildConfig = true
-    }
-
     packaging {
+        resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/DEPENDENCIES")
+        // yt-dlp's Python runtime is unpacked from native libs at first launch.
         jniLibs.useLegacyPackaging = true
-        resources.excludes += setOf(
-            "/META-INF/{AL2.0,LGPL2.1}",
-            "META-INF/DEPENDENCIES",
-            "META-INF/LICENSE*",
-            "META-INF/NOTICE*",
-        )
+        // FFmpeg's video decoders (nextlib-media3ext) are downloaded on demand, not shipped: see core:media VideoDecoderPack.
+        jniLibs.excludes += listOf("libavcodec.so", "libavutil.so", "libswresample.so", "libswscale.so", "libmedia3ext.so")
+            .map { "**/$it" }
     }
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.16.0")
-    implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
-    implementation(platform("androidx.compose:compose-bom:2025.05.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-    implementation("io.coil-kt.coil3:coil-compose:3.2.0")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.2.0")
-    implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
-    implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1")
+    implementation(projects.core.model)
+    implementation(projects.core.common)
+    implementation(projects.core.designsystem)
+    implementation(projects.core.ui)
+    implementation(projects.core.navigation)
+    implementation(projects.core.database)
+    implementation(projects.core.datastore)
+    implementation(projects.core.extractor)
+    implementation(projects.core.data)
+    implementation(projects.core.download)
+    implementation(projects.core.media)
+    implementation(projects.core.playerui)
+    implementation(projects.core.downloadsheet)
+    implementation(projects.core.ytdlp)
+    implementation(projects.core.analytics)
+    implementation(projects.core.update)
+
+    implementation(projects.feature.home)
+    implementation(projects.feature.search)
+    implementation(projects.feature.video)
+    implementation(projects.feature.library)
+    implementation(projects.feature.player)
+    implementation(projects.feature.browser)
+    implementation(projects.feature.settings)
+    implementation(projects.feature.tools)
+    implementation(projects.feature.gallery)
+
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.video)
+    implementation(libs.okhttp)
+
+    testImplementation(libs.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(projects.core.extractor)
+    androidTestImplementation(libs.okhttp)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
