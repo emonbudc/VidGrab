@@ -129,7 +129,8 @@ class PlaybackService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        if (!engine.snapshot.value.isPlaying) {
+        val s = engine.snapshot.value
+        if (!s.isPlaying && !s.isBuffering) {
             commands?.pause()
             stopSelf()
         }

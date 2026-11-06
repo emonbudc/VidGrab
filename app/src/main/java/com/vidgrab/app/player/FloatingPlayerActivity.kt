@@ -82,8 +82,9 @@ class FloatingPlayerActivity : ComponentActivity() {
             LaunchedEffect(recall) { if (recall != recallAtStart) { keepPlaying = true; finishAndRemoveTask() } }
             // Nothing left to play (stopped from the notification): close the window.
             LaunchedEffect(state.current) { if (state.current == null && entered) { keepPlaying = true; finishAndRemoveTask() } }
-            // The window stays black until the system puts it in the picture-in-picture frame.
-            if (inPip) CompositionLocalProvider(LocalPipMode provides true, LocalFloatingPlayer provides true) {
+            // Draw before entering picture-in-picture too: the surface is attached by the time the window shrinks,
+            // so the transition shows the video instead of a black frame.
+            CompositionLocalProvider(LocalPipMode provides true, LocalFloatingPlayer provides true) {
                 Box(Modifier.fillMaxSize().background(Color.Black)) {
                     VideoPlayerBox(player, state, Modifier.fillMaxSize(), fullscreen = true, showPrevNext = false, overlayControls = false)
                 }
