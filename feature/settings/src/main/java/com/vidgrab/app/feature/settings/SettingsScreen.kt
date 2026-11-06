@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.designsystem.icon.BrandIcons
 import com.vidgrab.app.core.designsystem.icon.QtIcons
@@ -60,7 +61,20 @@ fun SettingsScreen(actions: SettingsActions) {
     }
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomBarHeight.current)) {
         item {
-            Text("Settings", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 6.dp))
+            Column(Modifier.fillMaxWidth().padding(start = 18.dp, top = 16.dp, bottom = 4.dp)) {
+                Text(
+                    "PREFERENCES / STORAGE / PRIVACY",
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    fontSize = 8.sp,
+                    letterSpacing = 1.1.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    "Settings",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
         }
         item { GroupLabel("General") }
         item {
@@ -77,7 +91,7 @@ fun SettingsScreen(actions: SettingsActions) {
                 RowDivider()
                 NavRow(QtIcons.Public, "Content region", trailing = s.contentRegion.ifBlank { "Auto" }, onClick = actions.region)
                 RowDivider()
-                SwitchRow("Trending on home", "Show trending videos on the Download tab", s.showTrending, QtIcons.TrendingUp) { v ->
+                SwitchRow("Trending on home", "Show trending videos on Home", s.showTrending, QtIcons.TrendingUp) { v ->
                     vm.update { it.copy(showTrending = v) }
                 }
             }

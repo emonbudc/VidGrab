@@ -68,6 +68,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -240,7 +241,7 @@ fun BrowserScreen(
                 if (editing) {
                     TextField(
                         address, { address = it }, Modifier.weight(1f), singleLine = true,
-                        shape = RoundedCornerShape(50),
+                        shape = RoundedCornerShape(4.dp),
                         colors = TextFieldDefaults.colors(focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(onGo = {
@@ -251,7 +252,7 @@ fun BrowserScreen(
                     )
                 } else {
                     Row(
-                        Modifier.weight(1f).padding(vertical = 8.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        Modifier.weight(1f).padding(vertical = 8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                             .pressable(scaleDown = 0.98f, onClick = { address = ui.url; editing = true }).padding(horizontal = 14.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -260,7 +261,8 @@ fun BrowserScreen(
                         Column(Modifier.padding(start = 8.dp)) {
                             Text(ui.title.ifBlank { Urls.host(ui.url).orEmpty() }, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.labelLarge)
-                            Text(Urls.host(ui.url).orEmpty(), maxLines = 1, style = MaterialTheme.typography.labelSmall,
+                            Text(Urls.host(ui.url).orEmpty().uppercase(), maxLines = 1,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -450,7 +452,8 @@ fun BrowserScreen(
                         Text(if (instagramPost) "Download this post" else "Video found on this page", style = MaterialTheme.typography.labelLarge)
                         Text(
                             listOfNotNull(d?.let { Format.duration(it.toLong()) }, Urls.host(ui.url)).joinToString(" · "),
-                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
                         )
                     }
                     PillButton("Download", { vm.download(isNative) }, icon = QtIcons.Download)

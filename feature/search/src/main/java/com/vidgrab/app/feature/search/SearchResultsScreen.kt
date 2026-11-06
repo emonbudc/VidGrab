@@ -83,7 +83,7 @@ fun SearchResultsScreen(
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 6.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)) {
                 QtIconButton(QtIcons.ArrowBack, "Back", onBack)
                 Row(
-                    Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                         .pressable(scaleDown = 0.98f, onClick = onEditQuery).padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -95,8 +95,8 @@ fun SearchResultsScreen(
                 items(inAppFilters) { (f, label) -> QtChip(label, ui.filter == f, { vm.load(f) }) }
                 items(webSearches(query)) { (label, url) ->
                     Row(
-                        Modifier.height(36.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .pressable(scaleDown = 0.94f, onClick = { onOpenUrl(url) }).padding(start = 5.dp, end = 12.dp),
+                        Modifier.height(32.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            .pressable(scaleDown = 0.94f, onClick = { onOpenUrl(url) }).padding(start = 4.dp, end = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         BrandTile(label, size = 26.dp)

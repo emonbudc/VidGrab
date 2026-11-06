@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.shadow
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.pressable
@@ -82,8 +82,6 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
         return
     }
     val showVideo = current.isVideo && !state.audioOnly
-    val brand = com.vidgrab.app.core.designsystem.LocalQtExtras.current.brand
-    val brandStart = com.vidgrab.app.core.designsystem.LocalQtExtras.current.brandStart
 
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding().navigationBarsPadding(),
@@ -98,14 +96,14 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             if (showVideo) {
                 VideoPlayerBox(
                     controller, state,
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))
                         .aspectRatio(if (state.videoWidth > 0 && state.videoHeight > 0) (state.videoWidth.toFloat() / state.videoHeight).coerceIn(0.5f, 2f) else 16f / 9f),
                     onToggleFullscreen = { fullscreen = true },
                     overlayControls = false,
                 )
             } else {
                 Box(
-                    Modifier.fillMaxWidth(0.82f).aspectRatio(1f).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                    Modifier.fillMaxWidth(0.82f).aspectRatio(1f).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(QtIcons.MusicNote, null, Modifier.size(96.dp), tint = MaterialTheme.colorScheme.primary)
@@ -119,20 +117,21 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
         )
         SeekBar(state, controller, Modifier.fillMaxWidth().padding(horizontal = 16.dp))
         Row(Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
-            Text(Format.durationMs(state.positionMs), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
-            Text(Format.durationMs(state.durationMs), style = MaterialTheme.typography.labelSmall)
+            Text(Format.durationMs(state.positionMs), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                fontSize = 8.sp, modifier = Modifier.weight(1f))
+            Text(Format.durationMs(state.durationMs), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp)
         }
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Box(Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
                 SpeedButton(state.speed) { controller.setSpeed(it) }
             }
             QtIconButton(QtIcons.SkipPrevious, "Previous", controller::previous, size = 56.dp, iconSize = 34.dp)
             Box(
-                Modifier.size(76.dp).shadow(16.dp, CircleShape, ambientColor = brandStart.copy(alpha = .5f), spotColor = brandStart.copy(alpha = .5f))
-                    .clip(CircleShape).background(brand).pressable(scaleDown = 0.9f, haptic = true, onClick = controller::togglePlay),
+                Modifier.size(76.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary)
+                    .pressable(scaleDown = 0.9f, haptic = true, onClick = controller::togglePlay),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(if (state.isPlaying) QtIcons.Pause else QtIcons.Play, "Play/Pause",
@@ -151,8 +150,8 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             )
         }
         Row(
-            Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLow).padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+            Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer).padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).pressable(scaleDown = 0.97f, onClick = { showQueue = true }).padding(vertical = 10.dp),
@@ -165,7 +164,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             QtIconButton(QtIcons.Shuffle, "Shuffle", { controller.setShuffle(!state.shuffle) },
                 tint = if (state.shuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             if (current.isVideo) Row(
-                Modifier.clip(RoundedCornerShape(50)).background(if (state.audioOnly) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.primary)
+                Modifier.clip(RoundedCornerShape(4.dp)).background(if (state.audioOnly) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.primary)
                     .pressable(scaleDown = 0.94f, haptic = true, onClick = { controller.setAudioOnly(!state.audioOnly) }).padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -177,14 +176,18 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
         Spacer(Modifier.height(8.dp))
     }
 
-    if (showQueue) ModalBottomSheet(onDismissRequest = { showQueue = false }) {
+    if (showQueue) ModalBottomSheet(
+        onDismissRequest = { showQueue = false },
+        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         LazyColumn(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             itemsIndexed(state.queue) { i, item ->
                 Row(
                     Modifier.fillMaxWidth().clickable { controller.skipTo(i); showQueue = false }.padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(Modifier.size(width = 88.dp, height = 50.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+                    Box(Modifier.size(width = 88.dp, height = 50.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
                         if (item.artwork != null) AsyncImage(item.artwork, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                     }
                     Text(
@@ -204,8 +207,7 @@ fun MiniPlayer(onExpand: () -> Unit, modifier: Modifier = Modifier) {
     val controller = koinInject<PlayerController>()
     val state by controller.state.collectAsStateWithLifecycle()
     val current = state.current ?: return
-    val brand = com.vidgrab.app.core.designsystem.LocalQtExtras.current.brand
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(4.dp)
     Column(
         modifier.padding(horizontal = 14.dp).padding(top = 6.dp).fillMaxWidth()
             .shadow(5.dp, shape, ambientColor = Color.Black.copy(.4f), spotColor = Color.Black.copy(.4f))
@@ -213,13 +215,13 @@ fun MiniPlayer(onExpand: () -> Unit, modifier: Modifier = Modifier) {
             .pressable(scaleDown = 0.98f, onClick = onExpand),
     ) {
         Row(Modifier.padding(start = 8.dp, end = 4.dp, top = 8.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(width = 64.dp, height = 40.dp).clip(RoundedCornerShape(10.dp)).background(Color.Black), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(width = 64.dp, height = 40.dp).clip(RoundedCornerShape(4.dp)).background(Color.Black), contentAlignment = Alignment.Center) {
                 Icon(QtIcons.MusicNote, null, tint = Color.White)
                 if (current.artwork != null) AsyncImage(current.artwork, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(current.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                if (current.artist.isNotBlank()) Text(current.artist, maxLines = 1, style = MaterialTheme.typography.labelSmall,
+                if (current.artist.isNotBlank()) Text(current.artist, maxLines = 1, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             QtIconButton(
@@ -230,7 +232,7 @@ fun MiniPlayer(onExpand: () -> Unit, modifier: Modifier = Modifier) {
         }
         Box(Modifier.fillMaxWidth().height(3.dp).background(MaterialTheme.colorScheme.surfaceVariant)) {
             Box(Modifier.fillMaxWidth(if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f)
-                .height(3.dp).background(brand))
+                .height(3.dp).background(MaterialTheme.colorScheme.primary))
         }
     }
 }

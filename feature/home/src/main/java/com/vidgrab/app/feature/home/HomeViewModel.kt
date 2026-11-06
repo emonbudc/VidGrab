@@ -3,9 +3,13 @@ package com.vidgrab.app.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vidgrab.app.core.data.MediaRepository
+import com.vidgrab.app.core.data.SearchHistoryRepository
+import com.vidgrab.app.core.model.DownloadStatus
+import com.vidgrab.app.core.model.DownloadTask
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.model.MediaSection
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.map
@@ -31,6 +35,7 @@ class HomeViewModel(
     private val media: MediaRepository,
     library: com.vidgrab.app.core.data.LibraryRepository,
     settings: com.vidgrab.app.core.data.SettingsRepository,
+    private val history: SearchHistoryRepository,
 ) : ViewModel() {
     /** Settings → Trending on home (off by default). */
     val showTrending = settings.settings.map { it.showTrending }
@@ -49,8 +54,31 @@ class HomeViewModel(
 
     /** Latest finished downloads for the "Recent downloads" row. */
     val recent = library.downloads
-        .map { l -> l.filter { it.status == com.vidgrab.app.core.model.DownloadStatus.COMPLETED && !it.inVault }.take(10) }
-        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), emptyList())
+        .map { l -> l.filter { it.status == DownloadStatus.COMPLETED && !it.inVault && it.deletedAt == 0L }.take(10) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val activeCount = library.downloads
+        .map { l -> l.count { it.status.isActive && it.deletedAt == 0L } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val savedCount = library.downloads
+        .map { l -> l.count { it.status == DownloadStatus.COMPLETED && !it.inVault && it.deletedAt == 0L } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val activeTask: StateFlow<DownloadTask?> = library.downloads
+        .map { l -> l.firstOrNull { it.status.isActive && it.deletedAt == 0L } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val recentSearches = history.recent
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun recordSearch(query: String) {
+        if (query.isNotBlank()) viewModelScope.launch { history.add(query) }
+    }
+
+    fun clearRecentSearches() = viewModelScope.launch { history.clear() }
+
+    fun forgetSearch(query: String) = viewModelScope.launch { history.remove(query) }
 
     private val _feed = MutableStateFlow(FeedUi())
     val feed: StateFlow<FeedUi> = _feed

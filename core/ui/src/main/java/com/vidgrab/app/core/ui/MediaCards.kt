@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,14 +23,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.vidgrab.app.core.common.Format
+import com.vidgrab.app.core.common.Platform
+import com.vidgrab.app.core.common.Urls
+import com.vidgrab.app.core.designsystem.QtColors
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
@@ -40,7 +45,7 @@ import com.vidgrab.app.core.model.MediaItem
 fun Thumbnail(
     url: String?,
     modifier: Modifier = Modifier,
-    corner: Int = 8,
+    corner: Int = 4,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     Box(modifier.clip(RoundedCornerShape(corner.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
@@ -54,13 +59,37 @@ fun Thumbnail(
 fun BoxScope.CornerLabel(text: String, modifier: Modifier = Modifier, live: Boolean = false) {
     if (text.isBlank()) return
     Row(
-        modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(4.dp))
-            .background(if (live) Color(0xFFE5243B) else Color.Black.copy(alpha = 0.72f)).padding(horizontal = 6.dp, vertical = 2.dp),
+        modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(2.dp))
+            .background(if (live) Color(0xFFE5243B) else Color(0xCC0D0F13)).padding(horizontal = 6.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (live) Box(Modifier.size(6.dp).clip(CircleShape).background(Color.White)).also { Spacer(Modifier.width(4.dp)) }
-        Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall)
+        if (live) {
+            Box(Modifier.size(5.dp).clip(CircleShape).background(Color.White))
+            Spacer(Modifier.width(4.dp))
+        }
+        Text(
+            text,
+            color = Color(0xFFE7E9EE),
+            fontFamily = FontFamily.Monospace,
+            fontSize = 8.sp,
+            letterSpacing = 0.4.sp,
+        )
     }
+}
+
+/** Source stamp in the top-left of a thumbnail. */
+@Composable
+fun BoxScope.SourceChip(text: String, modifier: Modifier = Modifier) {
+    if (text.isBlank()) return
+    Text(
+        text,
+        modifier.align(Alignment.TopStart).padding(5.dp).clip(RoundedCornerShape(2.dp))
+            .background(Color(0xCC0D0F13)).padding(horizontal = 5.dp, vertical = 2.dp),
+        color = QtColors.LiveMint,
+        fontFamily = FontFamily.Monospace,
+        fontSize = 7.sp,
+        letterSpacing = 0.5.sp,
+    )
 }
 
 @Composable
@@ -78,41 +107,56 @@ fun MediaItem.subtitle(): String = when (kind) {
     ItemKind.CHANNEL -> listOf(
         if (subscriberCount >= 0) "${Format.count(subscriberCount)} subscribers" else "",
         if (streamCount >= 0) "$streamCount videos" else "",
-    ).filter { it.isNotBlank() }.joinToString(" • ")
-    ItemKind.PLAYLIST -> listOf(uploader, if (streamCount >= 0) "$streamCount videos" else "").filter { it.isNotBlank() }.joinToString(" • ")
-    ItemKind.VIDEO -> listOf(uploader, Format.views(viewCount), uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString(" • ")
+    ).filter { it.isNotBlank() }.joinToString(" · ")
+    ItemKind.PLAYLIST -> listOf(uploader, if (streamCount >= 0) "$streamCount videos" else "").filter { it.isNotBlank() }.joinToString(" · ")
+    ItemKind.VIDEO -> listOf(uploader, Format.views(viewCount), uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString(" · ")
 }
 
-/** Accent-tinted round download button used on every card. */
+/** Squared download button that keeps a 48dp touch target around a compact glyph. */
 @Composable
 fun DownloadIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    QtIconButton(
-        QtIcons.Download, "Download", onClick, modifier,
-        tint = MaterialTheme.colorScheme.primary,
-        container = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-        size = 34.dp, iconSize = 18.dp,
-    )
+    Box(
+        modifier.size(48.dp).pressable(scaleDown = 0.88f, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(34.dp).clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(QtIcons.Download, "Download", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+        }
+    }
 }
 
 /** Full-width feed card: large thumbnail, avatar, title and a quick download button. */
 @Composable
 fun VideoFeedCard(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, onChannel: (() -> Unit)? = null) {
-    Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.985f, role = null, onClick = onClick).padding(bottom = 14.dp)) {
-        Thumbnail(item.thumbnail, Modifier.padding(horizontal = 12.dp).fillMaxWidth().aspectRatio(16f / 9f), corner = 8) {
+    Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.99f, role = null, onClick = onClick).padding(bottom = 14.dp)) {
+        Thumbnail(item.thumbnail, Modifier.padding(horizontal = 16.dp).fillMaxWidth().aspectRatio(16f / 9f), corner = 4) {
+            SourceChip(platformTag(item.url))
             CornerLabel(if (item.isLive) "LIVE" else Format.duration(item.durationSec), live = item.isLive)
         }
-        Row(Modifier.padding(start = 12.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
-            Avatar(item.uploaderAvatar, 32, Modifier.then(if (onChannel != null) Modifier.pressable(scaleDown = 0.9f, onClick = onChannel) else Modifier))
+        Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
+            Avatar(item.uploaderAvatar, 30, Modifier.then(if (onChannel != null) Modifier.pressable(scaleDown = 0.9f, onClick = onChannel) else Modifier))
             Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                 Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
-                    item.subtitle(), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    item.subtitle(),
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 8.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
             DownloadIconButton(onDownload)
         }
+        HorizontalDivider(
+            Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp),
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
     }
 }
 
@@ -125,33 +169,31 @@ fun MediaRow(
     onMore: (() -> Unit)? = null,
 ) {
     Row(
-        Modifier.fillMaxWidth().pressable(scaleDown = 0.98f, role = null, onClick = onClick).padding(horizontal = 12.dp, vertical = 6.dp),
+        Modifier.fillMaxWidth().pressable(scaleDown = 0.98f, role = null, onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (item.kind == ItemKind.CHANNEL) {
             Box(Modifier.width(132.dp), contentAlignment = Alignment.Center) { Avatar(item.thumbnail, 70) }
         } else {
-            Thumbnail(item.thumbnail, Modifier.width(132.dp).aspectRatio(16f / 9f), corner = 8) {
-                when (item.kind) {
-                    ItemKind.PLAYLIST -> Box(
-                        Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.38f).height(200.dp)
-                            .background(Brush.horizontalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(QtIcons.PlaylistPlay, null, tint = Color.White, modifier = Modifier.size(20.dp))
-                            if (item.streamCount >= 0) Text("${item.streamCount}", color = Color.White, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                    else -> CornerLabel(if (item.isLive) "LIVE" else Format.duration(item.durationSec), live = item.isLive)
+            Thumbnail(item.thumbnail, Modifier.width(132.dp).aspectRatio(16f / 9f), corner = 4) {
+                SourceChip(platformTag(item.url))
+                if (item.kind == ItemKind.PLAYLIST) {
+                    CornerLabel(if (item.streamCount >= 0) "${item.streamCount} videos" else "PLAYLIST")
+                } else {
+                    CornerLabel(if (item.isLive) "LIVE" else Format.duration(item.durationSec), live = item.isLive)
                 }
             }
         }
         Column(Modifier.weight(1f).padding(start = 10.dp, end = 4.dp)) {
             Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
-                item.subtitle(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp),
+                item.subtitle(),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 8.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 4.dp),
             )
         }
         if (onDownload != null && item.kind == ItemKind.VIDEO && !item.isLive) DownloadIconButton(onDownload)
@@ -162,22 +204,44 @@ fun MediaRow(
 /** Square card used in horizontal music rows. */
 @Composable
 fun MediaTile(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier.width(160.dp).pressable(scaleDown = 0.96f, role = null, onClick = onClick)) {
-        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f), corner = 10) {
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent, Color.Black.copy(alpha = 0.45f)))))
-            if (item.kind == ItemKind.PLAYLIST) Icon(
-                QtIcons.PlaylistPlay, null, tint = Color.White,
-                modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).size(22.dp),
-            ) else CornerLabel(Format.duration(item.durationSec))
+    Column(modifier.width(160.dp).pressable(scaleDown = 0.97f, role = null, onClick = onClick)) {
+        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f), corner = 4) {
+            if (item.kind == ItemKind.PLAYLIST) CornerLabel(if (item.streamCount >= 0) "${item.streamCount} videos" else "PLAYLIST")
+            else CornerLabel(Format.duration(item.durationSec))
             Box(
-                Modifier.align(Alignment.TopEnd).padding(6.dp).size(34.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.45f))
-                    .pressable(scaleDown = 0.85f, onClick = onDownload),
+                Modifier.align(Alignment.TopEnd).padding(6.dp).size(36.dp).clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xCC0D0F13))
+                    .pressable(scaleDown = 0.86f, onClick = onDownload),
                 contentAlignment = Alignment.Center,
-            ) { Icon(QtIcons.Download, "Download", tint = Color.White, modifier = Modifier.size(18.dp)) }
+            ) { Icon(QtIcons.Download, "Download", tint = QtColors.LiveMint, modifier = Modifier.size(17.dp)) }
         }
-        Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
-        Text(item.subtitle(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+        Text(
+            item.title,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Text(
+            item.subtitle(),
+            fontFamily = FontFamily.Monospace,
+            fontSize = 8.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 3.dp),
+        )
     }
+}
+
+private fun platformTag(url: String): String = when (Urls.platformOf(url)) {
+    Platform.YOUTUBE -> "YT"
+    Platform.INSTAGRAM -> "IG"
+    Platform.FACEBOOK -> "FB"
+    Platform.TIKTOK -> "TT"
+    Platform.TWITTER -> "X"
+    Platform.WHATSAPP -> "WA"
+    Platform.SOUNDCLOUD -> "SC"
+    Platform.OTHER -> "WEB"
 }

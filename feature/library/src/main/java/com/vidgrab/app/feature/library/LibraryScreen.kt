@@ -55,11 +55,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.designsystem.IconTile
 import com.vidgrab.app.core.designsystem.QtColors
+import com.vidgrab.app.core.designsystem.signalInk
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
@@ -139,11 +141,30 @@ fun LibraryScreen(
                                 focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             ),
-                            shape = RoundedCornerShape(50),
+                            shape = RoundedCornerShape(4.dp),
                         )
                     }
                 }
-                else -> Spacer(Modifier.height(8.dp))
+                else -> Row(
+                    Modifier.fillMaxWidth().height(64.dp).padding(start = 18.dp, end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text(
+                            "LIBRARY / ON DEVICE",
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            fontSize = 8.sp,
+                            letterSpacing = 1.1.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            "Downloads",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
+                }
             }
         }
 
@@ -153,10 +174,17 @@ fun LibraryScreen(
             }
             if (sel == null && ui.done.isNotEmpty()) item(key = "downloaded-header") {
                 Row(
-                    Modifier.fillMaxWidth().padding(start = 20.dp, end = 6.dp, top = 18.dp, bottom = 4.dp),
+                    Modifier.fillMaxWidth().padding(start = 18.dp, end = 6.dp, top = 18.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Downloaded", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text(
+                        "DOWNLOADED · ${ui.done.size}",
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        fontSize = 9.sp,
+                        letterSpacing = 1.1.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
                     QtIconButton(QtIcons.BookmarkBorder, "Watch later", onOpenSaved, size = 38.dp, iconSize = 20.dp)
                     Box {
                         QtIconButton(QtIcons.FilterList, "Filter", { filterOpen = true }, size = 38.dp, iconSize = 20.dp)
@@ -240,26 +268,35 @@ fun LibraryScreen(
     }
 }
 
-private val DownloadBlue = Color(0xFF4C8DFF)
-
 /** Thin blue progress bar used for both active downloads and watched progress. */
 @Composable
 fun GradientProgress(progress: Float, modifier: Modifier = Modifier, indeterminate: Boolean = false) {
-    Box(modifier.height(5.dp).clip(RoundedCornerShape(50)).background(DownloadBlue.copy(alpha = 0.20f))) {
-        if (!indeterminate) Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).clip(RoundedCornerShape(50)).background(DownloadBlue))
-        else Box(Modifier.fillMaxSize().clip(RoundedCornerShape(50)).background(DownloadBlue))
+    Box(modifier.height(4.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.20f))) {
+        if (!indeterminate) Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary))
+        else Box(Modifier.fillMaxSize().clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary))
     }
 }
 
 @Composable
 private fun ActiveCard(task: DownloadTask, count: Int, speed: Long, onClick: () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = 20.dp)
-            .pressable(scaleDown = 0.985f, onClick = onClick).padding(top = 16.dp, bottom = 2.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
+            .pressable(scaleDown = 0.985f, onClick = onClick).padding(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Downloading ($count)", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Icon(QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "TRANSFER / $count ACTIVE",
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    fontSize = 8.sp,
+                    letterSpacing = 1.sp,
+                    color = signalInk(QtColors.LiveMint),
+                )
+                Text("Downloading", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 2.dp))
+            }
+            Icon(QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
         Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             FileThumb(task, Modifier.width(112.dp).aspectRatio(16f / 9f))
@@ -267,14 +304,14 @@ private fun ActiveCard(task: DownloadTask, count: Int, speed: Long, onClick: () 
                 Text(task.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 GradientProgress(task.progress, Modifier.fillMaxWidth().padding(top = 7.dp))
                 Row(Modifier.padding(top = 5.dp)) {
-                    Text(statusText(task, speed), style = MaterialTheme.typography.labelSmall,
+                    Text(statusText(task, speed), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
                         color = when {
                             task.status == DownloadStatus.FAILED -> MaterialTheme.colorScheme.error
-                            task.status == DownloadStatus.RUNNING -> DownloadBlue
+                            task.status == DownloadStatus.RUNNING -> MaterialTheme.colorScheme.primary
                             else -> MaterialTheme.colorScheme.onSurfaceVariant
                         },
                         modifier = Modifier.weight(1f), maxLines = 1)
-                    Text("${(task.progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = DownloadBlue, fontWeight = FontWeight.Bold)
+                    Text("${(task.progress * 100).toInt()}%", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -302,7 +339,7 @@ fun statusText(task: DownloadTask, speed: Long): String = when (task.status) {
 
 @Composable
 fun FileThumb(task: DownloadTask, modifier: Modifier) {
-    Box(modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
+    Box(modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
         val file = File(task.filePath)
         val model: Any? = when {
             task.type == ContentType.IMAGE && file.exists() -> file
@@ -317,9 +354,10 @@ fun FileThumb(task: DownloadTask, modifier: Modifier) {
             contentAlignment = Alignment.Center,
         ) { Icon(QtIcons.MusicNote, null, tint = Color.White, modifier = Modifier.size(13.dp)) }
         if (task.durationSec > 0 && task.type == ContentType.VIDEO) Text(
-            Format.duration(task.durationSec), color = Color.White, style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(5.dp))
-                .background(Color.Black.copy(alpha = 0.7f)).padding(horizontal = 5.dp, vertical = 1.dp),
+            Format.duration(task.durationSec), color = Color(0xFFE7E9EE),
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+            modifier = Modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(2.dp))
+                .background(Color(0xCC0D0F13)).padding(horizontal = 5.dp, vertical = 2.dp),
         )
     }
 }
@@ -340,7 +378,7 @@ private fun DoneRow(task: DownloadTask, watched: Float?, selected: Boolean?, onC
                 Text(
                     listOf(if (task.durationSec > 0) Format.duration(task.durationSec) else "", Format.bytes(task.totalBytes))
                         .filter { it.isNotBlank() }.joinToString(" · "),
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             val progress = watched ?: if (task.lastPlayedPositionMs > 0 && task.durationSec > 0) task.lastPlayedPositionMs / 1000f / task.durationSec else null
@@ -350,8 +388,8 @@ private fun DoneRow(task: DownloadTask, watched: Float?, selected: Boolean?, onC
             )
         }
         if (selected != null) Box(
-            Modifier.padding(end = 10.dp).size(24.dp).clip(CircleShape)
-                .border(2.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
+            Modifier.padding(end = 10.dp).size(22.dp).clip(RoundedCornerShape(4.dp))
+                .border(2.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
                 .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent),
             contentAlignment = Alignment.Center,
         ) { if (selected) Icon(QtIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp)) }
@@ -372,14 +410,19 @@ private fun ItemMenu(
     onDelete: () -> Unit,
     onSource: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+    ) {
         Row(Modifier.padding(horizontal = 20.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             FileThumb(task, Modifier.width(100.dp).aspectRatio(16f / 9f))
             Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
                 Text(task.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
                 task.sourceHost?.let {
-                    Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(6.dp)).pressable(onClick = { onSource(); onDismiss() }))
+                    Text(it.uppercase(), color = signalInk(QtColors.LiveMint), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        fontSize = 8.sp, letterSpacing = 0.5.sp,
+                        modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(2.dp)).pressable(onClick = { onSource(); onDismiss() }))
                 }
             }
             QtIconButton(QtIcons.Edit, "Rename", { onRename(); onDismiss() }, container = MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -391,8 +434,8 @@ private fun ItemMenu(
             MenuRow(QtIcons.Headphones, "Play as audio", Color(0xFF9B7BFF), go(onListen))
             MenuRow(QtIcons.AudioFile, "Convert to audio", Color(0xFFFF8A3D), go(onConvert))
         }
-        MenuRow(QtIcons.Share, "Share", QtColors.Success, go(onShare))
-        MenuRow(QtIcons.OpenInNew, "Open with other app", Color(0xFF4C8DFF), go(onOpenWith))
+        MenuRow(QtIcons.Share, "Share", signalInk(QtColors.Success), go(onShare))
+        MenuRow(QtIcons.OpenInNew, "Open with other app", signalInk(QtColors.LiveBlue), go(onOpenWith))
         MenuRow(QtIcons.Delete, "Delete file", MaterialTheme.colorScheme.error, go(onDelete))
         Spacer(Modifier.navigationBarsPadding().height(12.dp))
     }

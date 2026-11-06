@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,9 +44,10 @@ fun FloatingNavBar(
     val scheme = MaterialTheme.colorScheme
     val haptic = LocalHapticFeedback.current
     Column(
-        Modifier.fillMaxWidth().background(scheme.background.copy(alpha = 0.97f))
+        Modifier.fillMaxWidth().background(scheme.surfaceContainer)
             .navigationBarsPadding(),
     ) {
+        HorizontalDivider(color = scheme.outlineVariant)
         Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
             tabs.forEachIndexed { i, tab ->
                 val active = i == selected

@@ -35,7 +35,7 @@ private data class AccentSpec(val dark: Color, val light: Color, val partner: Co
 private val accents = mapOf(
     ThemeAccent.ORANGE to AccentSpec(Color(0xFFFF6A1A), Color(0xFFFF5200), Color(0xFFFF2D55)),
     ThemeAccent.MINT to AccentSpec(Color(0xFF1DD8B8), Color(0xFF00A38A), Color(0xFF6C8CFF)),
-    ThemeAccent.OCEAN to AccentSpec(Color(0xFF5AA9FF), Color(0xFF1B6FE0), Color(0xFF39D5E8)),
+    ThemeAccent.OCEAN to AccentSpec(Color(0xFF6B84FF), Color(0xFF2E4BDB), Color(0xFF43E6B0)),
     ThemeAccent.VIOLET to AccentSpec(Color(0xFFAE94FF), Color(0xFF6E48E8), Color(0xFFFF7AC6)),
     ThemeAccent.SUNSET to AccentSpec(Color(0xFFFF9257), Color(0xFFE5541B), Color(0xFFFF5C8A)),
     ThemeAccent.ROSE to AccentSpec(Color(0xFFFF7AA8), Color(0xFFD02A68), Color(0xFFB98CFF)),
@@ -46,71 +46,98 @@ private val accents = mapOf(
 fun accentPreview(accent: ThemeAccent): Pair<Color, Color> = accents.getValue(accent).let { it.dark to it.partner }
 
 object QtColors {
-    val Coral = Color(0xFFFF6B6B)
-    val Success = Color(0xFF2FCB7A)
-    val Warning = Color(0xFFFFB547)
+    val Coral = Color(0xFFFF5C6C)
+    val Success = Color(0xFF43E6B0)
+    val Warning = Color(0xFFFFB340)
+    val LiveBlue = Color(0xFF4D6BFF)
+    val LiveMint = Color(0xFF43E6B0)
+    val LiveAmber = Color(0xFFFFB340)
+
+    /** Darker signal inks for light surfaces, where the raw signal colours are too bright to read. */
+    val InkMint = Color(0xFF067A57)
+    val InkBlue = Color(0xFF2E4BDB)
+    val InkAmber = Color(0xFF8A5200)
+}
+
+/** A signal colour that stays legible on the current theme's background. */
+@Composable
+fun signalInk(color: Color): Color {
+    if (MaterialTheme.colorScheme.background.luminance() <= 0.5f) return color
+    return when {
+        color == QtColors.LiveMint || color == QtColors.Success -> QtColors.InkMint
+        color == QtColors.LiveBlue -> QtColors.InkBlue
+        color == QtColors.LiveAmber || color == QtColors.Warning -> QtColors.InkAmber
+        else -> color
+    }
 }
 
 private fun onColor(c: Color) = if (c.luminance() > 0.45f) Color(0xFF0B0F14) else Color.White
 
 private fun darkScheme(a: AccentSpec, amoled: Boolean): ColorScheme {
-    val bg = if (amoled) Color.Black else Color(0xFF0B0B0C)
+    val bg = if (amoled) Color.Black else Color(0xFF0D0F13)
     val p = a.dark
+    val panel = if (amoled) Color(0xFF0A0B0E) else Color(0xFF151922)
     return darkColorScheme(
         primary = p,
         onPrimary = onColor(p),
-        primaryContainer = p.copy(alpha = 0.18f).compositeOver(bg),
+        primaryContainer = p.copy(alpha = 0.16f).compositeOver(bg),
         onPrimaryContainer = p.copy(alpha = 0.95f).compositeOver(Color.White),
         secondary = a.partner,
         onSecondary = onColor(a.partner),
-        secondaryContainer = a.partner.copy(alpha = 0.18f).compositeOver(bg),
-        onSecondaryContainer = Color.White,
-        tertiary = QtColors.Warning,
+        secondaryContainer = a.partner.copy(alpha = 0.16f).compositeOver(bg),
+        onSecondaryContainer = Color(0xFFE7E9EE),
+        tertiary = QtColors.LiveAmber,
+        onTertiary = Color(0xFF161006),
+        tertiaryContainer = QtColors.LiveAmber.copy(alpha = 0.16f).compositeOver(bg),
+        onTertiaryContainer = QtColors.LiveAmber,
         background = bg,
-        onBackground = Color(0xFFF4F4F5),
+        onBackground = Color(0xFFE7E9EE),
         surface = bg,
-        onSurface = Color(0xFFF4F4F5),
-        surfaceVariant = if (amoled) Color(0xFF121214) else Color(0xFF17171A),
-        onSurfaceVariant = Color(0xFF9A9AA2),
-        surfaceContainerLowest = if (amoled) Color.Black else Color(0xFF080809),
-        surfaceContainerLow = if (amoled) Color(0xFF0A0A0B) else Color(0xFF111113),
-        surfaceContainer = if (amoled) Color(0xFF101012) else Color(0xFF17171A),
-        surfaceContainerHigh = if (amoled) Color(0xFF151517) else Color(0xFF1D1D21),
-        surfaceContainerHighest = if (amoled) Color(0xFF1C1C1F) else Color(0xFF26262B),
-        outline = Color(0xFF3B3B42),
-        outlineVariant = Color(0xFF262629),
+        onSurface = Color(0xFFE7E9EE),
+        surfaceVariant = panel,
+        onSurfaceVariant = Color(0xFF98A0AD),
+        surfaceContainerLowest = if (amoled) Color.Black else Color(0xFF08090C),
+        surfaceContainerLow = if (amoled) Color(0xFF0A0B0E) else Color(0xFF101319),
+        surfaceContainer = panel,
+        surfaceContainerHigh = if (amoled) Color(0xFF14161B) else Color(0xFF1B202A),
+        surfaceContainerHighest = if (amoled) Color(0xFF1A1D24) else Color(0xFF232A36),
+        outline = Color(0xFF2C323D),
+        outlineVariant = Color(0xFF1F252F),
         error = QtColors.Coral,
         scrim = Color.Black,
     )
 }
 
 private fun lightScheme(a: AccentSpec): ColorScheme {
-    val bg = Color.White
+    val bg = Color(0xFFF4F6F9)
     val p = a.light
     return lightColorScheme(
         primary = p,
         onPrimary = onColor(p),
         primaryContainer = p.copy(alpha = 0.10f).compositeOver(Color.White),
-        onPrimaryContainer = Color.Black.copy(alpha = 0.42f).compositeOver(p),
+        onPrimaryContainer = Color.Black.copy(alpha = 0.48f).compositeOver(p),
         secondary = a.partner,
         onSecondary = onColor(a.partner),
-        secondaryContainer = a.partner.copy(alpha = 0.10f).compositeOver(Color.White),
-        onSecondaryContainer = Color.Black.copy(alpha = 0.42f).compositeOver(a.partner),
-        tertiary = Color(0xFFE09400),
+        secondaryContainer = a.partner.copy(alpha = 0.12f).compositeOver(Color.White),
+        onSecondaryContainer = Color.Black.copy(alpha = 0.52f).compositeOver(a.partner),
+        tertiary = Color(0xFF9A6300),
+        onTertiary = Color.White,
+        tertiaryContainer = Color(0xFFFFE7BD),
+        onTertiaryContainer = Color(0xFF4A2F00),
         background = bg,
-        onBackground = Color(0xFF111418),
+        onBackground = Color(0xFF0D0F13),
         surface = bg,
-        onSurface = Color(0xFF111418),
-        surfaceVariant = Color(0xFFF1F3F5),
-        onSurfaceVariant = Color(0xFF6B737C),
+        onSurface = Color(0xFF0D0F13),
+        surfaceVariant = Color(0xFFE8ECF2),
+        onSurfaceVariant = Color(0xFF5C6572),
         surfaceContainerLowest = Color.White,
-        surfaceContainerLow = Color(0xFFF8F9FA),
-        surfaceContainer = Color(0xFFF3F4F6),
-        surfaceContainerHigh = Color(0xFFEEF0F2),
-        surfaceContainerHighest = Color(0xFFE7EAED),
-        outline = Color(0xFFD5D9DE),
-        outlineVariant = Color(0xFFEBEDF0),
-        error = Color(0xFFD93F3F),
+        surfaceContainerLow = Color.White,
+        surfaceContainer = Color(0xFFEEF1F5),
+        surfaceContainerHigh = Color(0xFFE6EAF0),
+        surfaceContainerHighest = Color(0xFFDDE2EC),
+        outline = Color(0xFFC4CBD5),
+        outlineVariant = Color(0xFFE2E6EC),
+        error = Color(0xFFC83045),
     )
 }
 
@@ -137,11 +164,11 @@ private val typography = Typography().let { t ->
 }
 
 private val shapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(10.dp),
-    large = RoundedCornerShape(14.dp),
-    extraLarge = RoundedCornerShape(20.dp),
+    extraSmall = RoundedCornerShape(3.dp),
+    small = RoundedCornerShape(4.dp),
+    medium = RoundedCornerShape(6.dp),
+    large = RoundedCornerShape(8.dp),
+    extraLarge = RoundedCornerShape(12.dp),
 )
 
 @Immutable
@@ -154,7 +181,7 @@ val BrandTitle = TextStyle(fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, 
 @Composable
 fun VidGrabTheme(
     darkTheme: Boolean,
-    accent: ThemeAccent = ThemeAccent.GOLD,
+    accent: ThemeAccent = ThemeAccent.OCEAN,
     amoled: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,

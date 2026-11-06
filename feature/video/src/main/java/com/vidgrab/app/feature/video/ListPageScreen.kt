@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Permissions
 import com.vidgrab.app.core.designsystem.PillButton
@@ -169,7 +171,8 @@ fun ListPageScreen(url: String, isChannel: Boolean, onBack: () -> Unit, onOpen: 
                                     else Thumbnail(h.thumbnail, Modifier.fillMaxWidth(.4f).aspectRatio(16f / 9f))
                                     Column(Modifier.padding(start = 16.dp)) {
                                         Text(h.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                        Text(h.subtitle(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(h.subtitle(), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                                 ui.description?.takeIf { it.isNotBlank() }?.let {
@@ -250,7 +253,12 @@ private fun BatchProgress(state: BatchDownloader.State?, loaded: Int, aboveNavBa
 
 @Composable
 private fun QualitySheet(count: Int, onDismiss: () -> Unit, onPick: (BatchQuality) -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp)) {
             Text(
                 "Download $count video${if (count == 1) "" else "s"} as",

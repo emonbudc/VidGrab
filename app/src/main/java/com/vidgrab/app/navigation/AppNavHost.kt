@@ -2,7 +2,6 @@ package com.vidgrab.app.navigation
 
 import com.vidgrab.app.core.designsystem.QtTransitions
 import com.vidgrab.app.core.designsystem.icon.QtIcons
-import androidx.compose.animation.fadeIn
 import com.vidgrab.app.core.designsystem.LocalBottomBarHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.background
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.slideInHorizontally
@@ -54,17 +52,9 @@ import com.vidgrab.app.feature.browser.BrowserScreen
 import com.vidgrab.app.feature.browser.HistoryScreen
 import com.vidgrab.app.feature.browser.SitesScreen
 import com.vidgrab.app.feature.home.HomeActions
-import com.vidgrab.app.feature.gallery.AlbumScreen
-import com.vidgrab.app.feature.gallery.GalleryScreen
-import com.vidgrab.app.feature.gallery.ViewerScreen
-import com.vidgrab.app.feature.gallery.editor.PhotoEditorScreen
 import com.vidgrab.app.player.GalleryPlayerActivity
 import com.vidgrab.app.player.FloatingPlayerActivity
 import com.vidgrab.app.core.designsystem.LocalBottomBarHidden
-import com.vidgrab.app.core.designsystem.QtEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import com.vidgrab.app.feature.settings.AboutScreen
 import com.vidgrab.app.feature.settings.DownloadSettingsScreen
 import com.vidgrab.app.feature.settings.NotificationSettingsScreen
@@ -95,17 +85,17 @@ import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
 
 private val tabs = listOf(
-    NavTab(HomeRoute, "Download", QtIcons.Search, QtIcons.SearchFilled),
-    NavTab(GalleryRoute, "Play", QtIcons.PlayCircleOutline, QtIcons.PlayCircle),
+    NavTab(HomeRoute, "Home", QtIcons.Home, QtIcons.HomeFilled),
+    NavTab(LibraryRoute, "Downloads", QtIcons.Download, QtIcons.DownloadDone),
     NavTab(SettingsRoute, "Settings", QtIcons.Settings, QtIcons.SettingsFilled),
 )
 
 private fun tabIndexFor(dest: androidx.navigation.NavDestination?): Int = when {
     dest == null -> -1
+    dest.hierarchy.any { it.hasRoute(HomeRoute::class) } -> 0
     dest.hierarchy.any {
-        it.hasRoute(HomeRoute::class) || it.hasRoute(LibraryRoute::class) || it.hasRoute(DownloadingRoute::class)
-    } -> 0
-    dest.hierarchy.any { it.hasRoute(GalleryRoute::class) } -> 1
+        it.hasRoute(LibraryRoute::class) || it.hasRoute(DownloadingRoute::class)
+    } -> 1
     dest.hierarchy.any { it.hasRoute(SettingsRoute::class) } -> 2
     else -> -1
 }
@@ -125,7 +115,7 @@ fun AppNavHost(nav: NavHostController) {
     val galleryVideo = galleryId != null && !playing.audioOnly
     // The floating window is showing the video instead.
     val floating by com.vidgrab.app.core.playerui.PipState.floating.collectAsStateWithLifecycle()
-    val showMini = !galleryVideo && !floating && dest?.let { d -> !d.hasRoute(PlayerRoute::class) && !d.hasRoute(VideoRoute::class) && !d.hasRoute(GalleryViewerRoute::class) } ?: false
+    val showMini = !galleryVideo && !floating && dest?.let { d -> !d.hasRoute(PlayerRoute::class) && !d.hasRoute(VideoRoute::class) } ?: false
     // A tab screen can swap the floating bar for its own (the gallery's selection actions).
     val barHidden = remember { mutableStateOf(false) }
     // The mini player only draws when something is loaded; nothing playing = no space kept for it.
@@ -179,6 +169,7 @@ fun AppNavHost(nav: NavHostController) {
                 HomeScreen(
                     HomeActions(
                         openSearch = { nav.navigate(SearchRoute(it)) },
+                        openSearchResults = { nav.navigate(SearchResultsRoute(it)) },
                         openUrl = ::openUrl,
                         downloadUrl = ::downloadUrl,
                         openItem = ::openItem,
@@ -208,35 +199,6 @@ fun AppNavHost(nav: NavHostController) {
                     onOpenSaved = { nav.navigate(SavedVideosRoute) },
                 )
             }
-            composable<GalleryRoute>(
-                enterTransition = QtTransitions.tabEnter, exitTransition = QtTransitions.tabExit,
-                popEnterTransition = QtTransitions.tabEnter, popExitTransition = QtTransitions.tabExit,
-            ) {
-                GalleryScreen(
-                    onOpenAlbum = { nav.navigate(GalleryAlbumRoute(it.bucketId, it.name)) },
-                    onOpenViewer = { nav.navigate(GalleryViewerRoute(it.id)) },
-                    onOpenVideo = { GalleryPlayerActivity.start(context, it.id) },
-                )
-            }
-            composable<GalleryAlbumRoute> { e ->
-                val r = e.toRoute<GalleryAlbumRoute>()
-                AlbumScreen(
-                    r.bucketId, r.name, onBack = nav::popBackStack,
-                    onOpenViewer = { nav.navigate(GalleryViewerRoute(it.id, r.bucketId)) },
-                    onOpenVideo = { GalleryPlayerActivity.start(context, it.id) },
-                )
-            }
-            composable<GalleryViewerRoute>(
-                enterTransition = { fadeIn(tween(220)) + scaleIn(tween(260, easing = QtEasing.EmphasizedDecelerate), initialScale = 0.92f) },
-                exitTransition = { fadeOut(tween(160)) },
-                popEnterTransition = { fadeIn(tween(160)) },
-                popExitTransition = { fadeOut(tween(200)) + scaleOut(tween(220), targetScale = 0.94f) },
-            ) { e ->
-                val r = e.toRoute<GalleryViewerRoute>()
-                ViewerScreen(r.mediaId, r.bucketId, onBack = nav::popBackStack, onOpenVideo = { GalleryPlayerActivity.start(context, it.id) },
-                    onEditPhoto = { nav.navigate(PhotoEditorRoute(it.id)) })
-            }
-            composable<PhotoEditorRoute> { e -> PhotoEditorScreen(e.toRoute<PhotoEditorRoute>().mediaId, onBack = nav::popBackStack) }
             composable<SettingsRoute>(
                 enterTransition = QtTransitions.tabEnter, exitTransition = QtTransitions.tabExit,
                 popEnterTransition = QtTransitions.tabEnter, popExitTransition = QtTransitions.tabExit,
@@ -333,13 +295,18 @@ fun AppNavHost(nav: NavHostController) {
                 FloatingNavBar(
                     tabs, selectedTab,
                     onSelect = { i ->
-                        if (i != selectedTab || (i == 0 && dest?.hasRoute(HomeRoute::class) != true)) nav.navigate(tabs[i].route) {
+                        val atRoot = when (i) {
+                            0 -> dest?.hasRoute(HomeRoute::class) == true
+                            1 -> dest?.hasRoute(LibraryRoute::class) == true
+                            else -> dest?.hasRoute(SettingsRoute::class) == true
+                        }
+                        if (!atRoot) nav.navigate(tabs[i].route) {
                             popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     },
-                    badges = mapOf(0 to activeCount),
+                    badges = mapOf(1 to activeCount),
                 )
             } else if (miniVisible) Spacer(Modifier.navigationBarsPadding().height(8.dp))
         }

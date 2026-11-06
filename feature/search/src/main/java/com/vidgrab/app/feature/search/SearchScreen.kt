@@ -2,10 +2,10 @@ package com.vidgrab.app.feature.search
 
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import com.vidgrab.app.core.designsystem.IconTile
 import com.vidgrab.app.core.designsystem.QtChip
+import com.vidgrab.app.core.designsystem.QtColors
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.ui.BrandTile
@@ -45,7 +45,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -93,7 +92,7 @@ fun SearchScreen(
                 leadingIcon = { Icon(QtIcons.Search, null, Modifier.size(20.dp)) },
                 singleLine = true,
                 modifier = Modifier.weight(1f).focusRequester(focus),
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(4.dp),
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -105,8 +104,8 @@ fun SearchScreen(
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { submit(field.text) }),
             )
-            QtIconButton(QtIcons.Download, "Go", { submit(field.text) }, tint = MaterialTheme.colorScheme.onPrimary,
-                container = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 8.dp))
+            QtIconButton(QtIcons.Download, "Go", { submit(field.text) }, tint = Color(0xFF0D0F13),
+                container = QtColors.LiveMint, modifier = Modifier.padding(start = 8.dp))
         }
     }) { pad ->
         LazyColumn(Modifier.fillMaxSize().padding(pad)) {
@@ -145,7 +144,7 @@ fun SearchScreen(
                             "Facebook" to "https://m.facebook.com/", "TikTok" to "https://www.tiktok.com/", "Twitter/X" to "https://x.com/",
                         ).forEach { (n, u) ->
                             Row(
-                                Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                     .pressable(scaleDown = 0.94f, onClick = { onOpenUrl(u) }).padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -172,9 +171,7 @@ private fun SuggestionRow(
         Modifier.fillMaxWidth().pressable(scaleDown = 0.985f, onClick = onClick).padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-        }
+        IconTile(icon, size = 36.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(text, Modifier.weight(1f).padding(horizontal = 14.dp, vertical = 12.dp), maxLines = 1, overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodyLarge)
         if (onFill != null) QtIconButton(QtIcons.NorthWest, "Fill", onFill, tint = MaterialTheme.colorScheme.onSurfaceVariant, iconSize = 18.dp)

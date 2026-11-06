@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
@@ -58,13 +57,13 @@ fun DownloadingScreen(onBack: () -> Unit) {
     var cancel by remember { mutableStateOf<Long?>(null) }
     val anyRunning = active.any { it.status.isActive }
     Scaffold(topBar = {
-        QtTopBar("Downloading (${active.size})", onBack) {
+        QtTopBar("Downloading", onBack, subtitle = "${active.size} active") {
             if (active.isNotEmpty()) TextButton(onClick = { if (anyRunning) vm.pauseAll() else vm.resumeAll() }) {
                 Text(if (anyRunning) "Pause all" else "Start all")
             }
         }
     }) { pad ->
-        if (active.isEmpty()) EmptyBox("Nothing downloading", "Finished files are in the Play tab", Modifier.fillMaxSize().padding(pad))
+        if (active.isEmpty()) EmptyBox("Nothing downloading", "Finished files are in Downloads", Modifier.fillMaxSize().padding(pad))
         else LazyColumn(
             Modifier.fillMaxSize().padding(pad),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
@@ -96,8 +95,8 @@ private fun DownloadCard(
     val failed = t.status == DownloadStatus.FAILED
     val cs = MaterialTheme.colorScheme
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(cs.surfaceContainerLow)
-            .border(1.dp, cs.outlineVariant.copy(alpha = 0.45f), RoundedCornerShape(18.dp)).padding(10.dp),
+        modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).background(cs.surfaceContainer)
+            .border(1.dp, cs.outlineVariant, RoundedCornerShape(4.dp)).padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(92.dp).aspectRatio(16f / 9f)) {
@@ -111,7 +110,7 @@ private fun DownloadCard(
                 else -> QtIcons.Downloading to cs.primary
             }
             Box(
-                Modifier.align(Alignment.BottomStart).padding(5.dp).size(22.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.62f)),
+                Modifier.align(Alignment.BottomStart).padding(5.dp).size(22.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xCC0D0F13)),
                 contentAlignment = Alignment.Center,
             ) { Icon(icon, null, tint = if (tint == cs.onSurface) Color.White else tint, modifier = Modifier.size(14.dp)) }
         }
@@ -124,11 +123,12 @@ private fun DownloadCard(
             else GradientProgress(t.progress, Modifier.fillMaxWidth().padding(vertical = 7.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    statusText(t, speed), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    statusText(t, speed), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
                     color = if (failed) cs.error else cs.onSurfaceVariant, modifier = Modifier.weight(1f),
                 )
                 if (!failed && t.status != DownloadStatus.MERGING) Text(
-                    "${(t.progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                    "${(t.progress * 100).toInt()}%", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
                     color = cs.onSurface, modifier = Modifier.padding(start = 8.dp),
                 )
             }
@@ -142,7 +142,7 @@ private fun DownloadCard(
             }
             Spacer(Modifier.height(6.dp))
             Box(
-                Modifier.size(28.dp).clip(CircleShape).pressable(onClick = onCancel), contentAlignment = Alignment.Center,
+                Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)).pressable(onClick = onCancel), contentAlignment = Alignment.Center,
             ) { Icon(QtIcons.Close, "Cancel", tint = cs.onSurfaceVariant, modifier = Modifier.size(18.dp)) }
         }
     }
@@ -151,7 +151,7 @@ private fun DownloadCard(
 @Composable
 private fun RoundAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, tint: Color, onClick: () -> Unit) {
     Box(
-        Modifier.size(36.dp).clip(CircleShape).background(tint.copy(alpha = 0.14f)).pressable(onClick = onClick),
+        Modifier.size(36.dp).clip(RoundedCornerShape(4.dp)).background(tint.copy(alpha = 0.14f)).pressable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Icon(icon, label, tint = tint, modifier = Modifier.size(20.dp)) }
 }

@@ -37,9 +37,9 @@ internal fun MoreTab(actions: HomeActions) {
         }
         items(morePlatforms) { p ->
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f), RoundedCornerShape(22.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f), RoundedCornerShape(4.dp))
                     .pressable(scaleDown = 0.97f, onClick = { actions.openHowTo(p.name) })
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -49,7 +49,7 @@ internal fun MoreTab(actions: HomeActions) {
                     Text(p.title, style = MaterialTheme.typography.titleMedium)
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
                         Box(
-                            Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
+                            Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
                                 .padding(horizontal = 12.dp, vertical = 5.dp),
                         ) { Text("How to start", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary) }
                     }
