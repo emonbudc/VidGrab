@@ -194,7 +194,6 @@ fun AppNavHost(nav: NavHostController) {
                 LibraryScreen(
                     onOpenDownloading = { nav.navigate(DownloadingRoute) },
                     onOpenPlayer = { nav.navigate(PlayerRoute) { launchSingleTop = true } },
-                    onOpenMedia = { GalleryPlayerActivity.start(context, it) },
                     onOpenSource = ::openUrl,
                     onOpenSaved = { nav.navigate(SavedVideosRoute) },
                 )

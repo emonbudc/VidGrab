@@ -40,7 +40,6 @@ class LibraryViewModel(
     private val settings: com.vidgrab.app.core.data.SettingsRepository,
     private val downloads: DownloadManager,
     private val player: PlayerController,
-    private val gallery: com.vidgrab.app.core.data.GalleryRepository,
     history: com.vidgrab.app.core.data.PlaybackHistoryRepository,
 ) : ViewModel() {
     val filter = MutableStateFlow(LibraryFilter.ALL)
@@ -90,15 +89,6 @@ class LibraryViewModel(
             .ifEmpty { listOf(task) }
         val index = list.indexOfFirst { it.id == task.id }.coerceAtLeast(0)
         player.play(list.map { it.toPlayItem() }, index, audioOnly)
-    }
-
-    /**
-     * Opens [task] in the app's main (gallery) player through [onMedia] with its MediaStore id. Files MediaStore can't
-     * see (app-private storage) play in the library's own player instead, through [onFallback].
-     */
-    fun open(task: DownloadTask, onMedia: (Long) -> Unit, onFallback: () -> Unit) = viewModelScope.launch {
-        val id = gallery.mediaIdFor(task.filePath)
-        if (id != null) onMedia(id) else { play(task); onFallback() }
     }
 
     /** Re-adds files already sitting in the download folder (after a reinstall or when copied in). */

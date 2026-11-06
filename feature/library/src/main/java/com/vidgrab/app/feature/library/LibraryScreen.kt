@@ -78,8 +78,6 @@ import java.io.File
 fun LibraryScreen(
     onOpenDownloading: () -> Unit,
     onOpenPlayer: () -> Unit,
-    /** Opens a downloaded file (by MediaStore id) in the app's main player. */
-    onOpenMedia: (Long) -> Unit,
     onOpenSource: (String) -> Unit,
     /** Saved / Watch later list. */
     onOpenSaved: () -> Unit,
@@ -225,7 +223,7 @@ fun LibraryScreen(
                     selected = sel?.contains(task.id),
                     onClick = {
                         if (sel != null) selection = if (task.id in sel) sel - task.id else sel + task.id
-                        else if (task.type == ContentType.VIDEO || task.type == ContentType.AUDIO) vm.open(task, onOpenMedia, onOpenPlayer)
+                        else if (task.type == ContentType.VIDEO || task.type == ContentType.AUDIO) { vm.play(task); onOpenPlayer() }
                         else FileActions.openWith(context, task)
                     },
                     onLongClick = { if (sel == null) selection = setOf(task.id) },
