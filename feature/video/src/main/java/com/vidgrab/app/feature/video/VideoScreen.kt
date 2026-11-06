@@ -142,90 +142,98 @@ fun VideoScreen(
         },
     )
 
-    if (fullscreen) {
-        VideoPlayerBox(vm.player, playback, Modifier.fillMaxSize(), fullscreen = true, onToggleFullscreen = { fullscreen = false },
-            showPrevNext = false, onRetry = vm::retry, options = playerOptions, onPip = { leave(toPip = true) },
-            quality = qualityMenu, autoplay = appSettings.autoplayNext, onAutoplayChange = onAutoplay, onNext = nextVideo, upNext = upNext)
-        return
-    }
-
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black)) {
-            if (details is LoadState.Success) {
-                VideoPlayerBox(vm.player, playback, Modifier.fillMaxSize(), onToggleFullscreen = { fullscreen = true },
-                    onCollapse = { leave() }, showPrevNext = false, onRetry = vm::retry, options = playerOptions, onPip = { leave(toPip = true) },
-                    quality = qualityMenu, autoplay = appSettings.autoplayNext, onAutoplayChange = onAutoplay, onNext = nextVideo, upNext = upNext)
-            } else if (details is LoadState.Loading) PlayerLoading(previewThumbnail)
-            IconButton(onClick = { leave() }, modifier = Modifier.align(Alignment.TopStart)) {
-                if (details !is LoadState.Success) Icon(QtIcons.ArrowBack, "Back", tint = Color.White)
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
+            Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black)) {
+                if (details is LoadState.Loading) PlayerLoading(previewThumbnail)
             }
-        }
-        when (val d = details) {
-            is LoadState.Loading -> VideoPageSkeleton(previewTitle, Modifier.fillMaxWidth().weight(1f))
-            is LoadState.Error -> ErrorBox(d.message, vm::retry, Modifier.fillMaxWidth().weight(1f))
-            is LoadState.Success -> {
-                val v = d.data
-                val comments by vm.comments.collectAsStateWithLifecycle()
-                LazyColumn(Modifier.weight(1f), contentPadding = WindowInsets.navigationBars.asPaddingValues()) {
-                    item {
-                        Row(Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp), verticalAlignment = Alignment.Top) {
-                            Avatar(v.item.uploaderAvatar, 36, Modifier.clickable { v.item.uploaderUrl?.let(onChannel) })
-                            Column(Modifier.weight(1f).padding(horizontal = 12.dp).clickable { showAbout = true }) {
-                                Text(v.item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                Text(
-                                    listOf(v.item.uploader, Format.views(v.item.viewCount), v.uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString(" · "),
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 4.dp),
+            when (val d = details) {
+                is LoadState.Loading -> VideoPageSkeleton(previewTitle, Modifier.fillMaxWidth().weight(1f))
+                is LoadState.Error -> ErrorBox(d.message, vm::retry, Modifier.fillMaxWidth().weight(1f))
+                is LoadState.Success -> {
+                    val v = d.data
+                    val comments by vm.comments.collectAsStateWithLifecycle()
+                    LazyColumn(Modifier.weight(1f), contentPadding = WindowInsets.navigationBars.asPaddingValues()) {
+                        item {
+                            Row(Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp), verticalAlignment = Alignment.Top) {
+                                Avatar(v.item.uploaderAvatar, 36, Modifier.clickable { v.item.uploaderUrl?.let(onChannel) })
+                                Column(Modifier.weight(1f).padding(horizontal = 12.dp).clickable { showAbout = true }) {
+                                    Text(v.item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        listOf(v.item.uploader, Format.views(v.item.viewCount), v.uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString(" · "),
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                    )
+                                }
+                            }
+                        }
+                        item {
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                PillButton(
+                                    "Download", { sheet.open(v.item.url, v.item) }, Modifier.weight(1f), icon = QtIcons.Download,
+                                    enabled = !v.item.isLive,
+                                )
+                                QtIconButton(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, "Watch later", {
+                                    vm.toggleSaved()
+                                    Toast.makeText(context, if (saved) "Removed from Watch later" else "Saved to Watch later", Toast.LENGTH_SHORT).show()
+                                }, container = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.padding(start = 12.dp),
+                                    tint = if (saved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                                QtIconButton(QtIcons.Headphones, "Play in background", {
+                                    vm.playInBackground()
+                                    Toast.makeText(context, "Playing audio in background", Toast.LENGTH_SHORT).show()
+                                }, container = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.padding(start = 8.dp))
+                                QtIconButton(QtIcons.MoreVert, "More", { showAbout = true }, container = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    modifier = Modifier.padding(start = 8.dp))
+                            }
+                        }
+                        item {
+                            Column(
+                                Modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                                    .clickable { showComments = true }.padding(14.dp),
+                            ) {
+                                Text("Comments", style = MaterialTheme.typography.titleSmall)
+                                val first = comments.items.firstOrNull()
+                                if (first != null) Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Avatar(first.authorAvatar, 24)
+                                    Text(first.text, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(start = 10.dp))
+                                } else Text(
+                                    if (comments.loading) "Loading…" else comments.error?.let { "Comments unavailable" } ?: "No comments",
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 6.dp),
                                 )
                             }
                         }
-                    }
-                    item {
-                        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            PillButton(
-                                "Download", { sheet.open(v.item.url, v.item) }, Modifier.weight(1f), icon = QtIcons.Download,
-                                enabled = !v.item.isLive,
-                            )
-                            QtIconButton(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, "Watch later", {
-                                vm.toggleSaved()
-                                Toast.makeText(context, if (saved) "Removed from Watch later" else "Saved to Watch later", Toast.LENGTH_SHORT).show()
-                            }, container = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.padding(start = 12.dp),
-                                tint = if (saved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                            QtIconButton(QtIcons.Headphones, "Play in background", {
-                                vm.playInBackground()
-                                Toast.makeText(context, "Playing audio in background", Toast.LENGTH_SHORT).show()
-                            }, container = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.padding(start = 8.dp))
-                            QtIconButton(QtIcons.MoreVert, "More", { showAbout = true }, container = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                modifier = Modifier.padding(start = 8.dp))
+                        item { SectionHeader("Up next") }
+                        items(v.related, key = { it.url }) { r ->
+                            MediaRow(r, onClick = { onOpen(r) }, onDownload = { sheet.open(r) })
                         }
                     }
-                    item {
-                        Column(
-                            Modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                .clickable { showComments = true }.padding(14.dp),
-                        ) {
-                            Text("Comments", style = MaterialTheme.typography.titleSmall)
-                            val first = comments.items.firstOrNull()
-                            if (first != null) Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Avatar(first.authorAvatar, 24)
-                                Text(first.text, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(start = 10.dp))
-                            } else Text(
-                                if (comments.loading) "Loading…" else comments.error?.let { "Comments unavailable" } ?: "No comments",
-                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 6.dp),
-                            )
-                        }
-                    }
-                    item { SectionHeader("Up next") }
-                    items(v.related, key = { it.url }) { r ->
-                        MediaRow(r, onClick = { onOpen(r) }, onDownload = { sheet.open(r) })
-                    }
+                    if (showAbout) AboutSheet(v, vm, onDismiss = { showAbout = false }, onChannel = onChannel)
+                    if (showComments) CommentsSheet(vm, onDismiss = { showComments = false })
                 }
-                if (showAbout) AboutSheet(v, vm, onDismiss = { showAbout = false }, onChannel = onChannel)
-                if (showComments) CommentsSheet(vm, onDismiss = { showComments = false })
+            }
+        }
+        if (details is LoadState.Success) {
+            Box(
+                Modifier.align(Alignment.TopCenter).background(Color.Black).then(
+                    if (fullscreen) Modifier.fillMaxSize()
+                    else Modifier.statusBarsPadding().fillMaxWidth().aspectRatio(16f / 9f),
+                ),
+            ) {
+                VideoPlayerBox(
+                    vm.player, playback, Modifier.fillMaxSize(), fullscreen = fullscreen,
+                    onToggleFullscreen = { fullscreen = !fullscreen }, onCollapse = { if (fullscreen) fullscreen = false else leave() },
+                    showPrevNext = false, onRetry = vm::retry, options = playerOptions, onPip = { leave(toPip = true) },
+                    quality = qualityMenu, autoplay = appSettings.autoplayNext, onAutoplayChange = onAutoplay, onNext = nextVideo, upNext = upNext,
+                )
+            }
+        }
+        if (!fullscreen) {
+            IconButton(onClick = { leave() }, modifier = Modifier.align(Alignment.TopStart).statusBarsPadding()) {
+                Icon(QtIcons.ArrowBack, "Back", tint = Color.White)
             }
         }
     }
