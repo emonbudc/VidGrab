@@ -4,7 +4,7 @@
 
 VidGrab is a GPL-3.0 Android app built on [QuickTube](https://github.com/devgalib/QuickTube) by devgalib. The full feature set is preserved; games/promotions are removed.
 
-[**Download the latest APK**](https://github.com/emonbudc/VidGrab/releases/latest) · [Report a bug](https://github.com/emonbudc/VidGrab/issues)
+[**Download the latest APK**](https://github.com/emonbudc/VidGrab/releases/latest) · [Website](https://udcemon.me/VidGrab/) · [Report a bug](https://github.com/emonbudc/VidGrab/issues)
 
 > Only download content you own or have permission to save, and respect each site's terms of service.
 > VidGrab doesn't bypass DRM and isn't affiliated with YouTube, Google or any other site.
