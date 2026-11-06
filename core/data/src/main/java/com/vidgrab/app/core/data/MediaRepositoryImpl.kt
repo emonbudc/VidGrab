@@ -15,6 +15,7 @@ internal class MediaRepositoryImpl(private val extractor: MediaExtractor) : Medi
     // YouTube sometimes lists the same video twice in one page; the lists key items by URL, so duplicates go here.
     override suspend fun search(query: String, filter: SearchFilter, page: Any?) = extractor.search(query, filter, page).distinct()
     override suspend fun trending(page: Any?) = extractor.trending(page).distinct()
+    override suspend fun discover(page: Any?) = extractor.discover(page).distinct()
     override suspend fun musicHome() = extractor.musicHome().map { it.copy(items = it.items.distinctBy { i -> i.url }) }
     override suspend fun comments(url: String, page: Any?) = extractor.comments(url, page)
     override suspend fun channel(url: String, page: Any?) = extractor.channel(url, page).let { it.copy(videos = it.videos.distinct()) }

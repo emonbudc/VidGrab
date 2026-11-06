@@ -21,6 +21,7 @@ interface MediaRepository {
     suspend fun suggestions(query: String): List<String>
     suspend fun search(query: String, filter: SearchFilter, page: Any? = null): Page<MediaItem>
     suspend fun trending(page: Any? = null): Page<MediaItem>
+    suspend fun discover(page: Any? = null): Page<MediaItem>
     suspend fun musicHome(): List<MediaSection>
     suspend fun details(url: String, forceRefresh: Boolean = false): VideoDetails
     suspend fun comments(url: String, page: Any? = null): Page<Comment>
