@@ -21,7 +21,7 @@ internal data class Resolved(
 )
 
 /** Shared extraction + download logic used by the CLI and the browser bridge. */
-class MediaEngine(private val client: OkHttpClient) {
+internal class MediaEngine(private val client: OkHttpClient) {
     private val extractor = NewPipeMediaExtractor(client)
     private val web = WebMediaFinder(client)
     private val resolver = StreamResolver(client, HlsClient(client))

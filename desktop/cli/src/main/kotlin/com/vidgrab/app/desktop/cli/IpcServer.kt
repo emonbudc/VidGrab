@@ -74,7 +74,7 @@ private data class Job(
  * Every request needs the shared token in X-VidGrab-Token (or ?token=), and the Host header must be
  * loopback: a random page can reach 127.0.0.1, but not without the token.
  */
-class IpcServer(
+internal class IpcServer(
     private val engine: MediaEngine,
     private val token: String,
     private val port: Int,
@@ -88,7 +88,7 @@ class IpcServer(
     private val queue = Channel<Pair<String, DownloadRequest>>(Channel.UNLIMITED)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    suspend fun run() = withContext(Dispatchers.IO) {
+    suspend fun run(): Unit = withContext(Dispatchers.IO) {
         val server = HttpServer.create(InetSocketAddress(InetAddress.getByName("127.0.0.1"), port), 0)
         server.createContext("/") { exchange -> route(exchange) }
         server.executor = Executors.newCachedThreadPool()
