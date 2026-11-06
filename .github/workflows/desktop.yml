@@ -1,0 +1,78 @@
+name: Desktop CLI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "desktop/**"]
+    paths:
+      - "desktop/**"
+      - "core/model/**"
+      - "core/common/**"
+      - "core/extractor/**"
+      - "gradle/libs.versions.toml"
+      - "settings.gradle.kts"
+      - ".github/workflows/desktop.yml"
+  pull_request:
+    paths:
+      - "desktop/**"
+      - "core/model/**"
+      - "core/common/**"
+      - "core/extractor/**"
+      - "gradle/libs.versions.toml"
+      - "settings.gradle.kts"
+      - ".github/workflows/desktop.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build desktop CLI
+        run: |
+          chmod +x gradlew
+          ./gradlew :desktop:cli:installDist --stacktrace
+
+      - name: Package
+        run: |
+          cd desktop/cli/build/install
+          zip -r "vidgrab-cli-${GITHUB_RUN_NUMBER}.zip" vidgrab-cli
+          ls -la
+
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vidgrab-cli-${{ github.run_number }}
+          path: desktop/cli/build/install/vidgrab-cli-*.zip
+          retention-days: 14
+
+      - name: Package extension
+        run: |
+          cd desktop/extension
+          zip -r "$RUNNER_TEMP/vidgrab-extension.zip" .
+          ls -la "$RUNNER_TEMP/vidgrab-extension.zip"
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vidgrab-extension-${{ github.run_number }}
+          path: ${{ runner.temp }}/vidgrab-extension.zip
+          retention-days: 14

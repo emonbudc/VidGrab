@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "VidGrab",
+  "version": "0.1.0",
+  "description": "Send videos and direct media links from your browser to the VidGrab desktop app.",
+  "permissions": ["storage", "contextMenus", "tabs"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_title": "VidGrab",
+    "default_popup": "src/popup.html"
+  },
+  "options_ui": {
+    "page": "src/options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -48,6 +48,8 @@ include(":core:ytdlp")
 include(":core:analytics")
 include(":core:update")
 
+include(":desktop:cli")
+
 include(":feature:home")
 include(":feature:search")
 include(":feature:video")

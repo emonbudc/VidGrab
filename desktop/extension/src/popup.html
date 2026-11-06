@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VidGrab</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      width: 360px; margin: 0; padding: 14px 14px 12px;
+      background: #141218; color: #e6e1e5;
+      font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    h1 { margin: 0; font-size: 16px; letter-spacing: .2px; }
+    .status { font-size: 11px; color: #938f99; }
+    .status.ok { color: #8fd8a0; }
+    .status.bad { color: #f2b8b5; }
+    .hint { margin: 6px 0 10px; color: #938f99; font-size: 12px; }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 300px; overflow: auto; }
+    li {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 8px; background: #211f26;
+    }
+    .meta { min-width: 0; flex: 1; }
+    .label { color: #d0bcff; font-size: 10px; text-transform: uppercase; letter-spacing: .6px; }
+    .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+    button {
+      flex: none; padding: 6px 10px; border: 0; border-radius: 6px;
+      background: #d0bcff; color: #1c1b1f; cursor: pointer; font-weight: 600; font-size: 12px;
+    }
+    button:hover { background: #e9ddff; }
+    button:disabled { opacity: .6; cursor: default; }
+    footer { display: flex; justify-content: space-between; margin-top: 12px; color: #938f99; font-size: 11px; }
+    a { color: #d0bcff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>VidGrab</h1>
+    <span id="status" class="status">checking...</span>
+  </header>
+  <p id="hint" class="hint"></p>
+  <ul id="media"></ul>
+  <footer>
+    <a href="#" id="options">Settings</a>
+    <span id="version"></span>
+  </footer>
+  <script src="popup.js"></script>
+</body>
+</html>
