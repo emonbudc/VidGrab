@@ -89,7 +89,7 @@ fun UpdatePrompt() {
                 }
             }
             if (info.notes.isNotBlank()) {
-                Text("What's new", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 22.dp, bottom = 8.dp))
+                Text("What's improved", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 22.dp, bottom = 8.dp))
                 Text(
                     info.notes, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp).clip(RoundedCornerShape(16.dp))

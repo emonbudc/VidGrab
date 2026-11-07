@@ -60,11 +60,13 @@ object UpdateParsing {
         .map { line ->
             line.removePrefix("#").removePrefix("#").removePrefix("#").trim()
                 .replace(Regex("""\s+by @[\w-]+ in https?://\S+"""), "")
+                .replace(Regex("""\s+in https?://\S+$"""), "")
                 .replace(Regex("""\[([^\]]+)]\([^)]+\)"""), "$1")
                 .replace(Regex("""^[*-]\s+"""), "• ")
                 .replace("**", "")
         }
-        .filter { !it.equals("What's Changed", true) && !it.equals("New Contributors", true) }
+        .filterNot { it.equals("What's Changed", true) || it.equals("What's improved", true) || it.equals("New Contributors", true) }
+        .filterNot { it.startsWith("• @") }
         .take(12)
         .joinToString("\n")
 

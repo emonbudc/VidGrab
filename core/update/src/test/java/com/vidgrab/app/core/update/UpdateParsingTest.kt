@@ -6,6 +6,12 @@ import org.junit.Test
 
 class UpdateParsingTest {
     @Test
+    fun cleansPlainNotes() {
+        val body = "## What's improved\n\n- Add video tags\n- Save thumbnails\n\n## New Contributors\n* @dev made their first contribution in https://x"
+        assertEquals("• Add video tags\n• Save thumbnails", UpdateParsing.cleanNotes(body))
+    }
+
+    @Test
     fun versionCodes() {
         assertEquals(12L, UpdateParsing.versionCodeOf("v1.0.12"))
         assertEquals(40L, UpdateParsing.versionCodeOf("1.1.40"))
