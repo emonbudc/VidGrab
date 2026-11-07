@@ -240,6 +240,7 @@ class NewPipeMediaExtractor(
         VideoDetails(
             item = item,
             description = info.description?.content.orEmpty(),
+            tags = info.tags.orEmpty(),
             likeCount = info.likeCount,
             subscriberCount = info.uploaderSubscriberCount,
             uploadDate = info.uploadDate?.offsetDateTime()?.let(::relativeTime) ?: info.textualUploadDate,

@@ -2,6 +2,9 @@ package com.vidgrab.app.feature.video
 
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.icon.QtIcons
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -27,6 +30,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -177,6 +182,16 @@ fun VideoScreen(
                                 WatchAction(QtIcons.Download, "Download", filled = true, enabled = !v.item.isLive) {
                                     sheet.open(v.item.url, v.item)
                                 }
+                                WatchAction(QtIcons.Image, "Thumbnail") {
+                                    scope.launch {
+                                        val name = saveThumbnail(context, v.item.thumbnail, v.item.title)
+                                        Toast.makeText(
+                                            context,
+                                            if (name != null) "Thumbnail saved to Pictures/VidGrab" else "Couldn't save the thumbnail",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                }
                                 WatchAction(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, if (saved) "Saved" else "Watch later", selected = saved) {
                                     vm.toggleSaved()
                                     Toast.makeText(context, if (saved) "Removed from Watch later" else "Saved to Watch later", Toast.LENGTH_SHORT).show()
@@ -323,6 +338,19 @@ private fun WatchAction(
 private fun AboutSheet(v: VideoDetails, vm: VideoViewModel, onDismiss: () -> Unit, onChannel: (String) -> Unit) {
     val context = LocalContext.current
     val saved by vm.savedFlow.collectAsStateWithLifecycle()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var menuOpen by remember { mutableStateOf(false) }
+    val plainDescription = remember(v.description) {
+        v.description.replace(Regex("<br\\s*/?>"), "\n").replace(Regex("<[^>]+>"), "")
+    }
+    fun saveThumb() = scope.launch {
+        val name = saveThumbnail(context, v.item.thumbnail, v.item.title)
+        Toast.makeText(
+            context,
+            if (name != null) "Thumbnail saved to Pictures/VidGrab" else "Couldn't save the thumbnail",
+            Toast.LENGTH_SHORT,
+        ).show()
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
@@ -331,7 +359,48 @@ private fun AboutSheet(v: VideoDetails, vm: VideoViewModel, onDismiss: () -> Uni
         Column(Modifier.fillMaxWidth().heightIn(max = 600.dp).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding()) {
             Text("ABOUT", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp, letterSpacing = 1.2.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(v.item.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
+            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(v.item.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Box {
+                    IconButton(onClick = { menuOpen = true }) { Icon(QtIcons.MoreVert, "More actions") }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Save thumbnail") },
+                            onClick = { menuOpen = false; saveThumb() },
+                            leadingIcon = { Icon(QtIcons.Image, null) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Copy title") },
+                            onClick = { menuOpen = false; copyText(context, "Title", v.item.title) },
+                            leadingIcon = { Icon(QtIcons.ContentCopy, null) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Copy description") },
+                            onClick = { menuOpen = false; copyText(context, "Description", plainDescription) },
+                            leadingIcon = { Icon(QtIcons.ContentCopy, null) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(if (v.tags.isEmpty()) "No tags" else "Copy tags") },
+                            enabled = v.tags.isNotEmpty(),
+                            onClick = { menuOpen = false; copyText(context, "Tags", v.tags.joinToString("\n") { "#$it" }) },
+                            leadingIcon = { Icon(QtIcons.Link, null) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Copy link") },
+                            onClick = { menuOpen = false; copyText(context, "Link", v.item.url) },
+                            leadingIcon = { Icon(QtIcons.Link, null) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Open in browser") },
+                            onClick = {
+                                menuOpen = false
+                                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(v.item.url))) }
+                            },
+                            leadingIcon = { Icon(QtIcons.OpenInNew, null) },
+                        )
+                    }
+                }
+            }
             Row(Modifier.fillMaxWidth().clickable { v.item.uploaderUrl?.let(onChannel); onDismiss() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Avatar(v.item.uploaderAvatar, 40)
                 Column(Modifier.padding(start = 12.dp).weight(1f)) {
@@ -358,10 +427,24 @@ private fun AboutSheet(v: VideoDetails, vm: VideoViewModel, onDismiss: () -> Uni
                 listOf(Format.views(v.item.viewCount), v.uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString("  "),
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp, modifier = Modifier.padding(top = 12.dp),
             )
-            Text(v.description.replace(Regex("<br\\s*/?>"), "\n").replace(Regex("<[^>]+>"), ""),
+            Text(plainDescription,
                 style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 12.dp))
+            if (v.tags.isNotEmpty()) {
+                Text(
+                    v.tags.joinToString("  ") { "#$it" },
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+            }
         }
     }
+}
+
+private fun copyText(context: Context, label: String, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
+    Toast.makeText(context, "$label copied", Toast.LENGTH_SHORT).show()
 }
 
 @Composable

@@ -75,6 +75,7 @@ data class DownloadOption(
 data class VideoDetails(
     val item: MediaItem,
     val description: String,
+    val tags: List<String> = emptyList(),
     val likeCount: Long,
     val subscriberCount: Long,
     val uploadDate: String?,
