@@ -3,6 +3,7 @@ package com.vidgrab.app.core.download
 import android.content.Context
 import android.media.MediaScannerConnection
 import android.os.SystemClock
+import com.vidgrab.app.core.common.Permissions
 import com.vidgrab.app.core.common.Urls
 import com.vidgrab.app.core.data.MediaRepository
 import com.vidgrab.app.core.data.SettingsRepository
@@ -123,7 +124,8 @@ internal class DownloadEngine(
     private suspend fun enqueueLocked(request: DownloadRequest): Long {
         val s = settings.current()
         // Public Downloads is the default; fall back to app storage if this device/OS version won't let us write there.
-        val dir = File(s.downloadDir).apply { mkdirs() }.takeIf { it.canWrite() }
+        val public = File(s.downloadDir).apply { mkdirs() }
+        val dir = public.takeIf { Permissions.allFilesAccess() && it.canWrite() }
             ?: File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir, "VidGrab").apply { mkdirs() }
         val base = Urls.safeFileName(request.title)
         val suffix = request.quality?.let { "($it)" }.orEmpty()

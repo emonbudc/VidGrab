@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Environment
+import com.vidgrab.app.core.common.Permissions
 import com.vidgrab.app.core.database.DeletedHistoryDao
 import com.vidgrab.app.core.database.DeletedHistoryEntity
 import com.vidgrab.app.core.database.DownloadDao
@@ -131,7 +132,7 @@ internal class LibraryRepositoryImpl(
 
     private suspend fun publicDir(): File {
         val configured = File(settings.current().downloadDir).apply { mkdirs() }
-        if (configured.canWrite()) return configured
+        if (Permissions.allFilesAccess() && configured.canWrite()) return configured
         return File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir, "VidGrab").apply { mkdirs() }
     }
 

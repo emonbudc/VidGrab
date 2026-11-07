@@ -1,5 +1,7 @@
 package com.vidgrab.app.feature.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +36,8 @@ import com.vidgrab.app.core.designsystem.LocalQtExtras
 import com.vidgrab.app.core.designsystem.QtCard
 import com.vidgrab.app.core.designsystem.QtTopBar
 import com.vidgrab.app.core.designsystem.icon.QtIcons
+import com.vidgrab.app.core.common.Permissions
+import android.os.Build
 import android.os.Environment
 import org.koin.compose.viewmodel.koinViewModel
 import java.io.File
@@ -51,12 +55,25 @@ private val speedSteps = listOf(0, 128, 256, 512, 1024, 2048, 5120)
 fun DownloadSettingsScreen(onBack: () -> Unit) {
     val vm = koinViewModel<SettingsViewModel>()
     val s by vm.settings.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var allFiles by remember { mutableStateOf(Permissions.allFilesAccess()) }
+    val allFilesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        allFiles = Permissions.allFilesAccess()
+    }
     var dialog by remember { mutableStateOf<String?>(null) }
     Scaffold(topBar = { QtTopBar("Download settings", onBack) }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
             GroupLabel("Storage")
             QtCard {
                 NavRow(QtIcons.Folder, "Download path", s.downloadDir.removePrefix("/storage/emulated/0")) { dialog = "path" }
+                if (Build.VERSION.SDK_INT >= 30) {
+                    RowDivider()
+                    NavRow(
+                        QtIcons.Folder, "All files access",
+                        if (allFiles) "Granted · public folders are writable" else "Needed to save into public Downloads; without it files stay in app storage",
+                        trailing = if (allFiles) "GRANTED" else "GRANT",
+                    ) { runCatching { allFilesLauncher.launch(Permissions.allFilesAccessIntent(context)) } }
+                }
             }
             GroupLabel("Network")
             QtCard {

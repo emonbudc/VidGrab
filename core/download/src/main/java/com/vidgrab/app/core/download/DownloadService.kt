@@ -8,6 +8,11 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 /**
@@ -21,6 +26,7 @@ import org.koin.android.ext.android.inject
 class DownloadService : LifecycleService() {
     private val notifier: DownloadNotifier by inject()
     private val manager: DownloadManager by inject()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var lastStartId = 0
 
     override fun onCreate() {
@@ -32,6 +38,7 @@ class DownloadService : LifecycleService() {
         if (instance === this) instance = null
         inForeground = false
         notifier.serviceStopped()
+        scope.cancel()
         super.onDestroy()
     }
 
@@ -63,6 +70,9 @@ class DownloadService : LifecycleService() {
         }
         when (intent?.action) {
             ACTION_PAUSE_ALL -> manager.pauseAll()
+            ACTION_CANCEL -> intent.getLongExtra(EXTRA_ID, -1L).takeIf { it > 0 }?.let { id ->
+                scope.launch { manager.remove(listOf(id)) }
+            }
         }
         notifier.refresh(true)
         return START_STICKY
@@ -86,6 +96,8 @@ class DownloadService : LifecycleService() {
 
     companion object {
         const val ACTION_PAUSE_ALL = "pause_all"
+        const val ACTION_CANCEL = "cancel_task"
+        const val EXTRA_ID = "task_id"
         private const val TAG = "DownloadService"
         @Volatile private var instance: DownloadService? = null
         @Volatile private var inForeground = false

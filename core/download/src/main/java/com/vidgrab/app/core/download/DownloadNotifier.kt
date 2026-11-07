@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 internal class DownloadNotifier(
     private val context: Context,
@@ -28,6 +29,7 @@ internal class DownloadNotifier(
 ) {
     private val nm = NotificationManagerCompat.from(context)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val posted = ConcurrentHashMap.newKeySet<Long>()
     @Volatile private var serviceRunning = false
     @Volatile private var lastRefresh = 0L
 
@@ -60,16 +62,53 @@ internal class DownloadNotifier(
             }.isSuccess
         }
         scope.launch {
-            val running = dao.byStatus(listOf(DownloadStatus.RUNNING, DownloadStatus.MERGING, DownloadStatus.QUEUED))
-            if (running.isEmpty() && !hasWork) {
+            val active = dao.byStatus(listOf(DownloadStatus.RUNNING, DownloadStatus.MERGING, DownloadStatus.QUEUED))
+            if (active.isEmpty() && !hasWork) {
                 // Never stopService(): a stop that lands before the service went foreground crashes the app.
                 if (serviceRunning) DownloadService.requestStop()
                 serviceRunning = false
                 nm.cancel(ID_PROGRESS)
+                posted.forEach { nm.cancel(childId(it)) }
+                posted.clear()
                 return@launch
             }
-            if (canPost()) nm.notify(ID_PROGRESS, progressNotification(running))
+            if (!canPost()) return@launch
+            // One notification per transferring task, each with its own Cancel; a single task doubles as the
+            // foreground notification, several get the overall summary above them.
+            val transferring = active.filter { it.status == DownloadStatus.RUNNING || it.status == DownloadStatus.MERGING }
+            if (transferring.size == 1) {
+                posted.forEach { nm.cancel(childId(it)) }
+                posted.clear()
+                nm.notify(ID_PROGRESS, taskNotification(transferring.first()))
+            } else {
+                val live = transferring.map { it.id }.toSet()
+                posted.filter { it !in live }.forEach { nm.cancel(childId(it)); posted.remove(it) }
+                nm.notify(ID_PROGRESS, progressNotification(active))
+                transferring.forEach { task ->
+                    posted.add(task.id)
+                    nm.notify(childId(task.id), taskNotification(task))
+                }
+            }
         }
+    }
+
+    private fun taskNotification(task: DownloadEntity): android.app.Notification {
+        val total = (task.totalBytes + task.audioTotalBytes.coerceAtLeast(0)).coerceAtLeast(0)
+        val done = task.downloadedBytes + task.audioDownloadedBytes
+        val percent = if (total > 0) (done * 100 / total).toInt().coerceIn(0, 100) else 0
+        val processing = task.status == DownloadStatus.MERGING
+        return NotificationCompat.Builder(context, CH_PROGRESS)
+            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setContentTitle(task.title)
+            .setContentText(if (processing) "Processing video…" else "${Format.bytes(done)} / ${if (total > 0) Format.bytes(total) else "--"}")
+            .setProgress(100, percent, total <= 0 || processing)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setContentIntent(openApp("downloads"))
+            .addAction(0, "Cancel", cancelIntent(task.id))
+            .setGroup(GROUP)
+            .build()
     }
 
     fun progressNotification(running: List<DownloadEntity>): android.app.Notification {
@@ -94,6 +133,8 @@ internal class DownloadNotifier(
             .setSilent(true)
             .setContentIntent(openApp("downloads"))
             .addAction(0, "Pause all", actionIntent(DownloadService.ACTION_PAUSE_ALL))
+            .setGroup(GROUP)
+            .setGroupSummary(true)
             .build()
     }
 
@@ -106,7 +147,7 @@ internal class DownloadNotifier(
             .setAutoCancel(true)
             .setContentIntent(openApp("play:${task.id}"))
             .build()
-        nm.notify((task.id % Int.MAX_VALUE).toInt() + 1000, n)
+        nm.notify(doneId(task.id), n)
     }
 
     fun failed(task: DownloadEntity) = scope.launch {
@@ -118,7 +159,7 @@ internal class DownloadNotifier(
             .setAutoCancel(true)
             .setContentIntent(openApp("downloads"))
             .build()
-        nm.notify((task.id % Int.MAX_VALUE).toInt() + 1000, n)
+        nm.notify(doneId(task.id), n)
     }
 
     private fun canPost() = Build.VERSION.SDK_INT < 33 ||
@@ -135,10 +176,20 @@ internal class DownloadNotifier(
         context, action.hashCode(), Intent(context, DownloadService::class.java).setAction(action), PendingIntent.FLAG_IMMUTABLE,
     )
 
+    private fun cancelIntent(id: Long) = PendingIntent.getService(
+        context, childId(id),
+        Intent(context, DownloadService::class.java).setAction(DownloadService.ACTION_CANCEL).putExtra(DownloadService.EXTRA_ID, id),
+        PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    private fun childId(id: Long) = (7_000 + id % 10_000).toInt()
+    private fun doneId(id: Long) = 1_000_000 + (id % 1_000_000).toInt()
+
     companion object {
         const val CH_PROGRESS = "downloads"
         const val CH_DONE = "downloads_done"
         const val ID_PROGRESS = 42
         const val EXTRA_OPEN = "open"
+        private const val GROUP = "downloads_active"
     }
 }

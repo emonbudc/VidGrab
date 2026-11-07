@@ -2,8 +2,12 @@ package com.vidgrab.app.core.common
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.provider.Settings
 import androidx.core.content.ContextCompat
 
 /** Which runtime permissions each Android version actually needs. */
@@ -55,6 +59,18 @@ object Permissions {
 
     val notifications: Array<String>
         get() = if (Build.VERSION.SDK_INT >= 33) arrayOf(Manifest.permission.POST_NOTIFICATIONS) else emptyArray()
+
+    /**
+     * Android 11+ only lets an app write straight into public folders (Downloads, Movies, Music…) with the
+     * "all files access" grant; without it downloads fall back to app storage.
+     */
+    fun allFilesAccess(): Boolean = Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager()
+
+    /** System page where the user grants all-files access to this app. */
+    fun allFilesAccessIntent(context: Context): Intent = Intent(
+        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+        Uri.parse("package:${context.packageName}"),
+    )
 
     fun granted(context: Context, perms: Array<String>) =
         perms.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
