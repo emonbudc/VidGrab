@@ -12,7 +12,10 @@ import com.vidgrab.app.core.model.HistoryEntry
 import com.vidgrab.app.core.model.Site
 import com.vidgrab.app.core.model.StreamProtocol
 
-@Entity(tableName = "downloads", indices = [Index("status"), Index("deletedAt")])
+@Entity(
+    tableName = "downloads",
+    indices = [Index("status"), Index("deletedAt"), Index("filePath"), Index("pageUrl"), Index(value = ["title", "sourceHost"])],
+)
 data class DownloadEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,

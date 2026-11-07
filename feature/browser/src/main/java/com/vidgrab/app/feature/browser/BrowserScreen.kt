@@ -306,7 +306,12 @@ fun BrowserScreen(
                         settings.useWideViewPort = true
                         settings.builtInZoomControls = true
                         settings.displayZoomControls = false
-                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                        // Pages are remote web content: nothing local should be reachable, and https pages must
+                        // not pull plain-http subresources.
+                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                        settings.allowFileAccess = false
+                        settings.allowContentAccess = false
+                        settings.setGeolocationEnabled(false)
                         // Ad scripts open pop-ups/pop-unders on any tap; only real links the user tapped may open.
                         settings.javaScriptCanOpenWindowsAutomatically = false
                         settings.setSupportMultipleWindows(true)

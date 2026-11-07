@@ -13,7 +13,7 @@ import org.koin.dsl.module
         DownloadEntity::class, SiteEntity::class, HistoryEntity::class, BookmarkEntity::class, SearchQueryEntity::class,
         DeletedHistoryEntity::class, PlayHistoryEntity::class, SavedVideoEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 abstract class VidGrabDatabase : RoomDatabase() {
@@ -77,10 +77,19 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+/** v7: lookup indices for duplicate detection and file-path checks. */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_downloads_filePath` ON `downloads` (`filePath`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_downloads_pageUrl` ON `downloads` (`pageUrl`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_downloads_title_sourceHost` ON `downloads` (`title`, `sourceHost`)")
+    }
+}
+
 val databaseModule = module {
     single {
         Room.databaseBuilder(androidContext(), VidGrabDatabase::class.java, "vidgrab.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .fallbackToDestructiveMigrationOnDowngrade(true)
             .build()
     }
