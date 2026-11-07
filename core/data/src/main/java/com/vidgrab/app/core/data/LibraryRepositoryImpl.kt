@@ -37,12 +37,13 @@ internal class LibraryRepositoryImpl(
     override suspend fun get(id: Long) = dao.get(id)?.asModel()
 
     override suspend fun moveToTrash(ids: List<Long>) {
-        val now = System.currentTimeMillis()
-        ids.forEach { id -> dao.get(id)?.let { dao.update(it.copy(deletedAt = now)) } }
+        if (ids.isEmpty()) return
+        dao.markDeleted(ids, System.currentTimeMillis())
     }
 
     override suspend fun restore(ids: List<Long>) {
-        ids.forEach { id -> dao.get(id)?.let { dao.update(it.copy(deletedAt = 0)) } }
+        if (ids.isEmpty()) return
+        dao.clearDeleted(ids)
     }
 
     override val deletedHistory = history.observe().map { list -> list.map { it.asModel() } }
@@ -50,25 +51,23 @@ internal class LibraryRepositoryImpl(
     override suspend fun clearDeletedHistory() = history.clear()
 
     override suspend fun deleteForever(ids: List<Long>) = withContext(Dispatchers.IO) {
+        if (ids.isEmpty()) return@withContext
         val now = System.currentTimeMillis()
+        val entities = dao.byIds(ids)
         // Remember what was deleted so it can be downloaded again later.
-        history.insertAll(
-            ids.mapNotNull { dao.get(it) }.filter { it.status == com.vidgrab.app.core.model.DownloadStatus.COMPLETED }.map { it.toHistory(now) },
-        )
-        ids.forEach { id ->
-            dao.get(id)?.let { e ->
-                File(e.filePath).delete()
-                File(e.filePath + ".part").delete()
-                File(e.filePath + ".audio.part").delete()
-                File(e.filePath + ".part.idx").delete()
-                File(e.filePath + ".audio.part.idx").delete()
-            }
+        history.insertAll(entities.filter { it.status == DownloadStatus.COMPLETED }.map { it.toHistory(now) })
+        entities.forEach { e ->
+            File(e.filePath).delete()
+            File(e.filePath + ".part").delete()
+            File(e.filePath + ".audio.part").delete()
+            File(e.filePath + ".part.idx").delete()
+            File(e.filePath + ".audio.part.idx").delete()
         }
         dao.delete(ids)
     }
 
     override suspend fun archiveMissing(): Int = withContext(Dispatchers.IO) {
-        val gone = dao.byStatus(listOf(com.vidgrab.app.core.model.DownloadStatus.COMPLETED))
+        val gone = dao.byStatus(listOf(DownloadStatus.COMPLETED))
             .filter { !it.inVault && !File(it.filePath).exists() }
         if (gone.isEmpty()) return@withContext 0
         val now = System.currentTimeMillis()

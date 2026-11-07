@@ -2,6 +2,7 @@ package com.vidgrab.app.core.download
 
 import android.content.Context
 import android.media.MediaScannerConnection
+import android.os.SystemClock
 import com.vidgrab.app.core.common.Urls
 import com.vidgrab.app.core.data.MediaRepository
 import com.vidgrab.app.core.data.SettingsRepository
@@ -103,6 +104,7 @@ internal class DownloadEngine(
     private val _speeds = MutableStateFlow<Map<Long, Long>>(emptyMap())
     override val speeds: StateFlow<Map<Long, Long>> = _speeds
     private val started = AtomicBoolean(false)
+    private val lastPersist = ConcurrentHashMap<Long, Long>()
 
     override fun start() {
         if (!started.compareAndSet(false, true)) return
@@ -339,6 +341,7 @@ internal class DownloadEngine(
         } finally {
             jobs.remove(id)
             _speeds.update { it - id }
+            lastPersist.remove(id)
             reschedule()
         }
     }
@@ -381,7 +384,7 @@ internal class DownloadEngine(
                 refreshUrls(e, compatibleOnly = true) ?: throw ex
             } finally {
                 ticker.cancel()
-                publish(id, progress)
+                publish(id, progress, force = true)
             }
         }
     }
@@ -401,13 +404,18 @@ internal class DownloadEngine(
             if (start.audioUrl == null && dao.get(id)?.audioUrl != null) fetchWithRefresh(id, isAudio = true, audioPart, progress, refreshLock)
         } finally {
             ticker.cancel()
+            publish(id, progress, force = true)
         }
-        publish(id, progress)
         dao.get(id) ?: throw CancellationException("Removed")
     }
 
-    private suspend fun publish(id: Long, p: TaskProgress) {
-        dao.updateTransfer(id, p.video.get(), p.audio.get(), p.videoTotal.get(), p.audioTotal.get())
+    private suspend fun publish(id: Long, p: TaskProgress, force: Boolean = false) {
+        val now = SystemClock.elapsedRealtime()
+        val last = lastPersist[id] ?: 0L
+        if (force || now - last >= PERSIST_INTERVAL_MS) {
+            lastPersist[id] = now
+            dao.updateTransfer(id, p.video.get(), p.audio.get(), p.videoTotal.get(), p.audioTotal.get())
+        }
         _speeds.update { it + (id to p.meter.bytesPerSecond()) }
         notifier.refresh(true)
     }
@@ -864,6 +872,8 @@ internal class DownloadEngine(
         private const val HLS_PARALLEL = 6
         /** Network transfers in flight across all downloads. */
         private const val TRANSFERS = 12
+        /** Progress reaches the UI at 2 Hz; the database only needs it every couple of seconds. */
+        private const val PERSIST_INTERVAL_MS = 2_000L
         private const val UA = "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36"
     }
 }

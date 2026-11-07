@@ -29,6 +29,15 @@ interface DownloadDao {
     @Query("SELECT * FROM downloads WHERE inVault = 1 AND deletedAt = 0")
     suspend fun byVault(): List<DownloadEntity>
 
+    @Query("SELECT * FROM downloads WHERE id IN (:ids)")
+    suspend fun byIds(ids: List<Long>): List<DownloadEntity>
+
+    @Query("UPDATE downloads SET deletedAt = :now WHERE id IN (:ids)")
+    suspend fun markDeleted(ids: List<Long>, now: Long)
+
+    @Query("UPDATE downloads SET deletedAt = 0 WHERE id IN (:ids)")
+    suspend fun clearDeleted(ids: List<Long>)
+
     @Query("SELECT * FROM downloads WHERE deletedAt > 0 AND deletedAt < :before")
     suspend fun trashOlderThan(before: Long): List<DownloadEntity>
 
