@@ -57,13 +57,14 @@ fun VaultScreen(onBack: () -> Unit, onOpenPlayer: () -> Unit) {
     val vm = koinViewModel<VaultViewModel>()
     val pin by vm.pin.collectAsStateWithLifecycle()
     val unlocked by vm.unlocked.collectAsStateWithLifecycle()
+    val error by vm.error.collectAsStateWithLifecycle()
     DisposableEffect(Unit) { onDispose { vm.lock() } }
     Scaffold(topBar = { QtTopBar("Vault", onBack) }) { pad ->
         Box(Modifier.fillMaxSize().padding(pad)) {
             when {
                 pin == "loading" -> LoadingBox()
-                pin == null -> PinPad("Create a 4-digit PIN", confirmStep = true) { vm.setPin(it); true }
-                !unlocked -> PinPad("Enter PIN") { vm.tryUnlock(it) }
+                pin == null -> PinPad("Create a 4-digit PIN", confirmStep = true, onComplete = { vm.setPin(it) })
+                !unlocked -> PinPad("Enter PIN", error = error, onComplete = { vm.tryUnlock(it) })
                 else -> VaultContent(vm, onOpenPlayer)
             }
         }
@@ -117,26 +118,33 @@ private fun VaultContent(vm: VaultViewModel, onOpenPlayer: () -> Unit) {
     }
 }
 
-/** Numeric keypad; with [confirmStep] asks for the PIN twice. Returns false from [onComplete] to shake/reset. */
+/** Numeric keypad; with [confirmStep] asks for the PIN twice. */
 @Composable
-fun PinPad(title: String, confirmStep: Boolean = false, onComplete: (String) -> Boolean) {
+fun PinPad(
+    title: String,
+    confirmStep: Boolean = false,
+    error: String? = null,
+    onComplete: (String) -> Unit,
+) {
     var entered by remember { mutableStateOf("") }
     var first by remember { mutableStateOf<String?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var mismatch by remember { mutableStateOf<String?>(null) }
     fun press(d: String) {
         if (entered.length >= 4) return
         entered += d
-        error = null
+        mismatch = null
         if (entered.length == 4) {
-            if (confirmStep && first == null) { first = entered; entered = "" }
-            else if (confirmStep && first != entered) { error = "PINs don't match"; first = null; entered = "" }
-            else if (!onComplete(entered)) { error = "Wrong PIN"; entered = "" }
+            when {
+                confirmStep && first == null -> { first = entered; entered = "" }
+                confirmStep && first != entered -> { mismatch = "PINs don't match"; first = null; entered = "" }
+                else -> { onComplete(entered); entered = ""; if (confirmStep) first = null }
+            }
         }
     }
     Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Icon(QtIcons.Lock, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
         Text(if (confirmStep && first != null) "Confirm your PIN" else title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-        Text(error ?: " ", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+        Text(mismatch ?: error ?: " ", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
         Row(Modifier.padding(vertical = 20.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             repeat(4) { i ->
                 Box(Modifier.size(16.dp).clip(CircleShape).background(if (i < entered.length) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant))

@@ -42,6 +42,8 @@ interface LibraryRepository {
     suspend fun deleteForever(ids: List<Long>)
     suspend fun purgeExpiredTrash()
     suspend fun setVault(ids: List<Long>, inVault: Boolean)
+    /** Moves files that older versions only flagged as vaulted out of the public download folder. */
+    suspend fun migrateVault()
     suspend fun rename(id: Long, newTitle: String): Boolean
     suspend fun savePosition(id: Long, positionMs: Long)
     suspend fun addLocalFile(task: DownloadTask): Long

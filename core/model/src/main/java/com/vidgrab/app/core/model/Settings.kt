@@ -30,6 +30,7 @@ data class AppSettings(
     val notifyRecommended: Boolean = true,
     val notifyTools: Boolean = true,
     val toolbarNotification: Boolean = false,
+    /** Salted PBKDF2 hash of the vault PIN, never the PIN itself. */
     val vaultPin: String? = null,
     val language: String = "en",
     val contentRegion: String = "",

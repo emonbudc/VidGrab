@@ -55,6 +55,7 @@ import java.nio.channels.FileChannel
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 class HttpStatusException(val code: Int) : IOException("HTTP $code")
@@ -101,11 +102,10 @@ internal class DownloadEngine(
     private val scheduleLock = Mutex()
     private val _speeds = MutableStateFlow<Map<Long, Long>>(emptyMap())
     override val speeds: StateFlow<Map<Long, Long>> = _speeds
-    @Volatile private var started = false
+    private val started = AtomicBoolean(false)
 
     override fun start() {
-        if (started) return
-        started = true
+        if (!started.compareAndSet(false, true)) return
         scope.launch {
             // Anything "running" when the process died is resumed.
             dao.byStatus(listOf(DownloadStatus.RUNNING, DownloadStatus.MERGING)).forEach {

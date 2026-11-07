@@ -26,6 +26,9 @@ interface DownloadDao {
     @Query("SELECT * FROM downloads WHERE status IN (:statuses) AND deletedAt = 0 ORDER BY createdAt ASC")
     suspend fun byStatus(statuses: List<DownloadStatus>): List<DownloadEntity>
 
+    @Query("SELECT * FROM downloads WHERE inVault = 1 AND deletedAt = 0")
+    suspend fun byVault(): List<DownloadEntity>
+
     @Query("SELECT * FROM downloads WHERE deletedAt > 0 AND deletedAt < :before")
     suspend fun trashOlderThan(before: Long): List<DownloadEntity>
 

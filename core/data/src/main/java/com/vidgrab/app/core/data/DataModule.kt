@@ -9,7 +9,7 @@ import org.koin.dsl.module
 val dataModule = module {
     includes(databaseModule, datastoreModule, extractorModule)
     single<MediaRepository> { MediaRepositoryImpl(get()) }
-    single<LibraryRepository> { LibraryRepositoryImpl(get(), get()) }
+    single<LibraryRepository> { LibraryRepositoryImpl(androidContext(), get(), get(), get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single<BrowserRepository> { BrowserRepositoryImpl(get(), get(), get()) }
     single<SearchHistoryRepository> { SearchHistoryRepositoryImpl(get()) }

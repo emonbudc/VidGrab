@@ -13,6 +13,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vidgrab.app.core.common.VaultPin
 import com.vidgrab.app.core.data.LibraryRepository
 import com.vidgrab.app.core.data.SettingsRepository
 import com.vidgrab.app.core.media.PlayItem
@@ -51,9 +52,49 @@ class VaultViewModel(
     val pin = settings.settings.map { it.vaultPin }.stateIn(viewModelScope, SharingStarted.Eagerly, "loading")
     private val _unlocked = MutableStateFlow(false)
     val unlocked: StateFlow<Boolean> = _unlocked
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
-    fun setPin(p: String) = viewModelScope.launch { settings.update { it.copy(vaultPin = p) }; _unlocked.value = true }
-    fun tryUnlock(p: String): Boolean = (p == pin.value).also { if (it) _unlocked.value = true }
+    init {
+        viewModelScope.launch {
+            // Older versions saved the PIN itself; replace it with a hash in place.
+            val stored = settings.current().vaultPin ?: return@launch
+            if (VaultPin.isHashed(stored)) return@launch
+            val hashed = withContext(Dispatchers.Default) { VaultPin.hash(stored) }
+            settings.update { it.copy(vaultPin = hashed) }
+        }
+    }
+
+    fun setPin(p: String) = viewModelScope.launch {
+        val hashed = withContext(Dispatchers.Default) { VaultPin.hash(p) }
+        settings.update { it.copy(vaultPin = hashed) }
+        failures = 0
+        lockedUntilMs = 0L
+        _error.value = null
+        _unlocked.value = true
+    }
+
+    fun tryUnlock(p: String) = viewModelScope.launch {
+        val now = System.currentTimeMillis()
+        if (now < lockedUntilMs) {
+            _error.value = "Too many attempts. Wait ${(lockedUntilMs - now) / 1000 + 1}s."
+            return@launch
+        }
+        val stored = pin.value ?: return@launch
+        if (withContext(Dispatchers.Default) { VaultPin.verify(p, stored) }) {
+            failures = 0
+            _error.value = null
+            _unlocked.value = true
+        } else {
+            failures++
+            _error.value = if (failures >= MAX_ATTEMPTS) {
+                failures = 0
+                lockedUntilMs = now + LOCKOUT_MS
+                "Too many attempts. Wait ${LOCKOUT_MS / 1000} seconds."
+            } else "Wrong PIN"
+        }
+    }
+
     fun lock() { _unlocked.value = false }
     fun unlockItems(ids: List<Long>) = viewModelScope.launch { library.setVault(ids, false) }
     fun delete(ids: List<Long>) = viewModelScope.launch { library.moveToTrash(ids) }
@@ -62,6 +103,14 @@ class VaultViewModel(
         player.play(list.map {
             PlayItem("dl:${it.id}", Uri.fromFile(File(it.filePath)).toString(), it.title, it.sourceHost.orEmpty(), it.thumbnail, it.type == ContentType.VIDEO)
         }, list.indexOf(task).coerceAtLeast(0))
+    }
+
+    private companion object {
+        const val MAX_ATTEMPTS = 5
+        const val LOCKOUT_MS = 30_000L
+        // Process-wide so closing and reopening the screen doesn't reset the throttle.
+        private var failures = 0
+        private var lockedUntilMs = 0L
     }
 }
 

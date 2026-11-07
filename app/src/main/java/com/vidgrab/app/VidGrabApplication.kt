@@ -49,6 +49,7 @@ class VidGrabApplication : Application(), SingletonImageLoader.Factory {
         }
         appScope.launch {
             val library = get<LibraryRepository>()
+            library.migrateVault()
             library.purgeExpiredTrash()
             // Files already in the download folder (e.g. after a reinstall) show up in the library again.
             library.importFolder(get<SettingsRepository>().current().downloadDir)
