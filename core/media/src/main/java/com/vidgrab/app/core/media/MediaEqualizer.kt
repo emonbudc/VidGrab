@@ -27,10 +27,10 @@ class MediaEqualizer(private val engine: MediaEngine) {
         get() = ensure()?.bandLevelRange ?: DEFAULT_RANGE
 
     val numberOfBands: Int
-        get() = ensure()?.numberOfBands ?: 0
+        get() = ensure()?.numberOfBands?.toInt() ?: 0
 
     val numberOfPresets: Int
-        get() = ensure()?.numberOfPresets ?: 0
+        get() = ensure()?.numberOfPresets?.toInt() ?: 0
 
     fun getPresetName(preset: Short): String =
         runCatching { ensure()?.getPresetName(preset) }.getOrNull() ?: "Preset $preset"
@@ -60,7 +60,7 @@ class MediaEqualizer(private val engine: MediaEngine) {
 
     /** MilliHertz, like Android's equalizer. */
     fun getCenterFreq(band: Short): Int =
-        runCatching { ensure()?.getCenterFreq(band) }.getOrDefault(0)
+        runCatching { ensure()?.getCenterFreq(band) }.getOrNull() ?: 0
 
     fun release() {
         runCatching { eq?.release() }
@@ -77,7 +77,7 @@ class MediaEqualizer(private val engine: MediaEngine) {
         sessionId = desired
         eq?.let { e ->
             val previous = levels
-            levels = ShortArray(e.numberOfBands) { previous.getOrElse(it) { 0 } }
+            levels = ShortArray(e.numberOfBands.toInt()) { previous.getOrElse(it) { 0 } }
             if (currentPreset.toInt() >= 0) runCatching { e.usePreset(currentPreset) }
         }
         apply()
@@ -85,7 +85,7 @@ class MediaEqualizer(private val engine: MediaEngine) {
     }
 
     private fun readLevels(e: Equalizer) {
-        levels = ShortArray(e.numberOfBands) { runCatching { e.getBandLevel(it.toShort()) }.getOrDefault(0) }
+        levels = ShortArray(e.numberOfBands.toInt()) { runCatching { e.getBandLevel(it.toShort()) }.getOrDefault(0) }
     }
 
     private fun apply() {
