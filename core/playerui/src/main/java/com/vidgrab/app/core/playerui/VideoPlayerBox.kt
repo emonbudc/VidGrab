@@ -75,6 +75,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Format
@@ -166,14 +167,24 @@ fun VideoPlayerBox(
     val windowView = LocalView.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val inFloatingPlayer = LocalFloatingPlayer.current
-    LaunchedEffect(floating) {
-        if (!floating || inFloatingPlayer) return@LaunchedEffect
+    DisposableEffect(lifecycle, floating, inFloatingPlayer) {
+        if (!floating || inFloatingPlayer) return@DisposableEffect onDispose {}
         // Coming back to the player while its floating window is open: bring the picture back automatically.
         // The window loses focus while leaving the app, so this doesn't close it on the way out.
-        delay(250)
-        if (PipState.floating.value && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
-            windowView.hasWindowFocus()
-        ) PipState.recall.value++
+        var active = true
+        fun recallWhenVisible() {
+            windowView.postDelayed({
+                if (active && PipState.floating.value && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                    windowView.hasWindowFocus()
+                ) PipState.recall.value++
+            }, 350)
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) recallWhenVisible()
+        }
+        lifecycle.addObserver(observer)
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) recallWhenVisible()
+        onDispose { active = false; lifecycle.removeObserver(observer) }
     }
     if (floating && !inFloatingPlayer) {
         FloatingPlaceholder(state.current?.artwork, modifier)
