@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -466,11 +467,11 @@ private fun Hero() {
             .background(Brush.linearGradient(listOf(Color(0xFF101B35), Color(0xFF1D3268), ex.brandStart))),
     ) {
         Box(
-            Modifier.align(Alignment.TopEnd).padding(top = (-26).dp, end = (-16).dp).size(124.dp)
+            Modifier.align(Alignment.TopEnd).offset(x = 16.dp, y = (-26).dp).size(124.dp)
                 .clip(CircleShape).background(Color.White.copy(alpha = 0.06f)),
         )
         Box(
-            Modifier.align(Alignment.BottomEnd).padding(end = 18.dp, bottom = (-30).dp).size(92.dp)
+            Modifier.align(Alignment.BottomEnd).offset(x = (-18).dp, y = 30.dp).size(92.dp)
                 .clip(CircleShape).background(ex.brandEnd.copy(alpha = 0.16f)),
         )
         Column(Modifier.fillMaxHeight().padding(start = 20.dp, top = 18.dp, bottom = 18.dp, end = 96.dp)) {
