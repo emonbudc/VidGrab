@@ -1,19 +1,39 @@
+<div align="center">
+
 # VidGrab
 
-[![Build](https://github.com/emonbudc/VidGrab/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/emonbudc/VidGrab/actions/workflows/build.yml)
+<a href="https://github.com/emonbudc/VidGrab/actions/workflows/build.yml"><img src="https://github.com/emonbudc/VidGrab/actions/workflows/build.yml/badge.svg?branch=main" alt="Build" /></a>
+<img src="https://img.shields.io/github/v/release/emonbudc/VidGrab?style=flat-square&color=4f46e5&label=release" alt="Release" />
+<img src="https://img.shields.io/badge/license-GPL--3.0-22c55e?style=flat-square" alt="License" />
+<img src="https://img.shields.io/badge/Android-7.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android" />
 
-**Search, watch and download videos and music from YouTube and 1,800+ sites. Open source, no ads, no account.**
+**Search, watch and download videos and music from YouTube and 1,800+ sites.**
+**Open source. No ads. No account.**
+
+<a href="https://github.com/emonbudc/VidGrab/releases/latest"><img src="https://img.shields.io/badge/Download-APK-4f46e5?style=for-the-badge&logo=android&logoColor=white" alt="Download" /></a>
+<a href="https://udcemon.me/VidGrab/"><img src="https://img.shields.io/badge/Website-1f2937?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Website" /></a>
+<a href="https://github.com/emonbudc/VidGrab/issues"><img src="https://img.shields.io/badge/Report_Bug-1f2937?style=for-the-badge&logo=github&logoColor=white" alt="Report a bug" /></a>
+<a href="PRIVACY.md"><img src="https://img.shields.io/badge/Privacy-1f2937?style=for-the-badge&logo=shield&logoColor=white" alt="Privacy" /></a>
+
+</div>
+
+---
+
+| <img src="https://api.iconify.design/material-symbols:language.svg?color=4f46e5" width="32" height="32" /> | <img src="https://api.iconify.design/material-symbols:download.svg?color=4f46e5" width="32" height="32" /> | <img src="https://api.iconify.design/material-symbols:block.svg?color=4f46e5" width="32" height="32" /> | <img src="https://api.iconify.design/material-symbols:person-off.svg?color=4f46e5" width="32" height="32" /> |
+|:---:|:---:|:---:|:---:|
+| **1,800+ sites** | **Up to 4K** | **No ads** | **No account** |
+
+---
 
 VidGrab is a GPL-3.0 Android app built on [QuickTube](https://github.com/devgalib/QuickTube) by devgalib. The full feature set is preserved; games and promotions are removed.
 
-[**Download the latest APK**](https://github.com/emonbudc/VidGrab/releases/latest) · [Website](https://udcemon.me/VidGrab/) · [Report a bug](https://github.com/emonbudc/VidGrab/issues) · [Privacy](PRIVACY.md)
+> <img src="https://api.iconify.design/material-symbols:info.svg?color=ca8a04" width="16" height="16" /> **Legal notice** — Only download content you own or have permission to save, and respect each site's terms of service. VidGrab doesn't bypass DRM and isn't affiliated with YouTube, Google or any other site.
 
-> Only download content you own or have permission to save, and respect each site's terms of service.
-> VidGrab doesn't bypass DRM and isn't affiliated with YouTube, Google or any other site.
+---
 
-## Highlights
+## <img src="https://api.iconify.design/material-symbols:star.svg?color=4f46e5" width="28" height="28" align="center" /> Highlights
 
-### Home feeds that learn what you watch
+### <img src="https://api.iconify.design/material-symbols:home.svg?color=4f46e5" width="22" height="22" align="center" /> Home feeds that learn what you watch
 
 **For you**, **Music**, **News**, **Movies** and **Natok** each build their own feed from the same signals:
 
@@ -26,7 +46,7 @@ VidGrab is a GPL-3.0 Android app built on [QuickTube](https://github.com/devgali
 
 The feeds are paged, deduplicated and capped per channel so one creator cannot take over a list.
 
-### Playback built for real use
+### <img src="https://api.iconify.design/material-symbols:play-circle.svg?color=4f46e5" width="22" height="22" align="center" /> Playback built for real use
 
 - Inline and full-screen video with quality selection, speed control, sleep timer and autoplay.
 - Resume from where you stopped, with playback history capped at 300 videos.
@@ -38,7 +58,7 @@ The feeds are paged, deduplicated and capped per channel so one creator cannot t
 - Lock-screen and notification controls, audio-focus handling, headphone unplug pause and a foreground playback service.
 - Local downloads, online streams and gallery videos share the same player engine.
 
-### Downloads
+### <img src="https://api.iconify.design/material-symbols:download.svg?color=4f46e5" width="22" height="22" align="center" /> Downloads
 
 - Search or paste a link, then pick video 144p–4K or audio in M4A/Opus.
 - Video-only streams are merged with the best audio on-device.
@@ -47,14 +67,14 @@ The feeds are paged, deduplicated and capped per channel so one creator cannot t
 - Persistent queue with Wi-Fi/mobile limits, speed limit, pause/resume/cancel and progress notifications.
 - "Download with VidGrab" appears in every app's share sheet with the format picker on top of the source app.
 
-### Search and browsing
+### <img src="https://api.iconify.design/material-symbols:search.svg?color=4f46e5" width="22" height="22" align="center" /> Search and browsing
 
 - Live search suggestions, recent searches and hot topics.
 - Filters for videos, playlists, channels and music.
 - Built-in browser with site list, history, bookmarks and player detection for MP4, HLS (including AES-128), iframes and shadow-DOM videos.
 - Native pages for YouTube, SoundCloud, Bandcamp and media.ccc.de; the rest go through the page reader or bundled yt-dlp.
 
-### Library, gallery and tools
+### <img src="https://api.iconify.design/material-symbols:video-library.svg?color=4f46e5" width="22" height="22" align="center" /> Library, gallery and tools
 
 - Downloaded library with filters, search, multi-select, rename, share, delete and vault.
 - Play downloads as audio or convert video to audio.
@@ -62,12 +82,16 @@ The feeds are paged, deduplicated and capped per channel so one creator cannot t
 - Recycle bin, deleted-download history, WhatsApp status saver and PIN vault.
 - Appearance options: system/light/dark, AMOLED black, Material You and eight accent palettes.
 
-## Requirements
+---
 
-- Android 7.0 (API 24) or newer. Picture-in-picture requires Android 8.0 (API 26).
-- `arm64-v8a` or `armeabi-v7a`; release builds ship per-ABI APKs plus a universal APK.
+## <img src="https://api.iconify.design/material-symbols:check-circle.svg?color=4f46e5" width="28" height="28" align="center" /> Requirements
 
-## Build
+- **Android** 7.0 (API 24) or newer. Picture-in-picture requires Android 8.0 (API 26).
+- **Architecture**: `arm64-v8a` or `armeabi-v7a`; release builds ship per-ABI APKs plus a universal APK.
+
+---
+
+## <img src="https://api.iconify.design/material-symbols:build.svg?color=4f46e5" width="28" height="28" align="center" /> Build
 
 ```sh
 ./gradlew :app:installDebug
@@ -89,7 +113,9 @@ CI builds tests and signed release APKs from `main` through `.github/workflows/b
 
 Without them the app still builds; the release APK is simply unsigned for distribution.
 
-## Project layout
+---
+
+## <img src="https://api.iconify.design/material-symbols:folder.svg?color=4f46e5" width="28" height="28" align="center" /> Project layout
 
 ```text
 app/                 application shell, navigation, player activities, sharing
@@ -99,15 +125,21 @@ build-logic/         Gradle convention plugins
 docs/                GitHub Pages site
 ```
 
-## Privacy
+---
+
+## <img src="https://api.iconify.design/material-symbols:shield.svg?color=4f46e5" width="28" height="28" align="center" /> Privacy
 
 VidGrab has no accounts and no servers of its own. Downloads, history, vault contents and settings stay on the device. Official release builds may include Firebase Crashlytics and anonymous analytics when a Firebase configuration is supplied at build time; both can be disabled in **Settings → Privacy**. URLs, titles, search terms and file names are never sent. See [PRIVACY.md](PRIVACY.md) for details.
 
-## Contributing
+---
+
+## <img src="https://api.iconify.design/material-symbols:groups.svg?color=4f46e5" width="28" height="28" align="center" /> Contributing
 
 Issues and pull requests are welcome. Keep changes focused, follow the existing module boundaries and run `./gradlew testDebugUnitTest` before opening a pull request. New features belong in their `feature/` module; shared contracts belong in `core/`.
 
-## Credits
+---
+
+## <img src="https://api.iconify.design/material-symbols:verified.svg?color=4f46e5" width="28" height="28" align="center" /> Credits
 
 - [QuickTube](https://github.com/devgalib/QuickTube) by devgalib (GPL-3.0): the app this is based on.
 - [NewPipe Extractor](https://github.com/TeamNewPipe/NewPipeExtractor) (GPL-3.0): YouTube, SoundCloud, Bandcamp and media.ccc.de support.
@@ -115,6 +147,8 @@ Issues and pull requests are welcome. Keep changes focused, follow the existing 
 - AndroidX (Compose, Room, Navigation, DataStore), AndroidX Media3 (Apache-2.0), Koin, Coil and OkHttp (Apache-2.0).
 - Material Symbols (Apache-2.0), Simple Icons (CC0), Plus Jakarta Sans (OFL-1.1).
 
-## License
+---
+
+## <img src="https://api.iconify.design/material-symbols:description.svg?color=4f46e5" width="28" height="28" align="center" /> License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
