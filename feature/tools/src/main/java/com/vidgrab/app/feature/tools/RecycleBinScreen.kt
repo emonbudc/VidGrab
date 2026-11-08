@@ -58,7 +58,7 @@ private val binTabs = listOf("All", "Video", "Audio", "Photo", "Other")
 
 @Composable
 internal fun TaskThumb(task: DownloadTask, modifier: Modifier) {
-    Box(modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
+    Box(modifier.clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
         val f = File(task.filePath)
         val model: Any? = task.thumbnail ?: f.takeIf { it.exists() && task.type != ContentType.AUDIO }
         Icon(if (task.type == ContentType.AUDIO) QtIcons.MusicNote else QtIcons.PlayCircle, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -69,8 +69,8 @@ internal fun TaskThumb(task: DownloadTask, modifier: Modifier) {
 @Composable
 internal fun SelectDot(on: Boolean) {
     Box(
-        Modifier.size(22.dp).clip(RoundedCornerShape(4.dp))
-            .border(2.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+        Modifier.size(22.dp).clip(RoundedCornerShape(6.dp))
+            .border(2.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
             .background(if (on) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent),
         contentAlignment = Alignment.Center,
     ) { if (on) Icon(QtIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp)) }
@@ -116,14 +116,14 @@ fun RecycleBinScreen(onBack: () -> Unit, onHistory: () -> Unit = {}) {
                             TaskThumb(t, Modifier.width(112.dp).aspectRatio(16f / 9f))
                             Text(
                                 "$daysLeft days", color = androidx.compose.ui.graphics.Color(0xFFE7E9EE),
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-                                modifier = Modifier.align(Alignment.BottomStart).padding(5.dp).clip(RoundedCornerShape(2.dp))
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.align(Alignment.BottomStart).padding(5.dp).clip(RoundedCornerShape(6.dp))
                                     .background(androidx.compose.ui.graphics.Color(0xCC0D0F13)).padding(horizontal = 5.dp, vertical = 2.dp),
                             )
                         }
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
                             Text(t.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
-                            Text(Format.bytes(t.totalBytes), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            Text(Format.bytes(t.totalBytes), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp))
                         }
                     }
@@ -135,7 +135,7 @@ fun RecycleBinScreen(onBack: () -> Unit, onHistory: () -> Unit = {}) {
                         Text(
                             "Check deleted download history to find more.", style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clip(RoundedCornerShape(4.dp)).pressable(onClick = onHistory).padding(10.dp),
+                            modifier = Modifier.clip(RoundedCornerShape(12.dp)).pressable(onClick = onHistory).padding(10.dp),
                         )
                     }
                 }

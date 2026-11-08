@@ -81,7 +81,7 @@ fun FooterLoading() {
 // ---------- Skeletons (shown while content loads) ----------
 
 @Composable
-private fun Bone(modifier: Modifier, corner: Int = 4) = Box(modifier.clip(RoundedCornerShape(corner.dp)).shimmer())
+private fun Bone(modifier: Modifier, corner: Int = 14) = Box(modifier.clip(RoundedCornerShape(corner.dp)).shimmer())
 
 @Composable
 fun FeedSkeleton(count: Int = 3) {

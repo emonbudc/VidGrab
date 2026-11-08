@@ -212,7 +212,7 @@ internal fun GestureOverlays(f: GestureFeedback, durationMs: Long, prefs: AppSet
 @Composable
 private fun Pill(modifier: Modifier, content: @Composable () -> Unit) {
     Row(
-        modifier.clip(RoundedCornerShape(4.dp)).background(Color.Black.copy(alpha = 0.6f)).padding(horizontal = 14.dp, vertical = 8.dp),
+        modifier.clip(RoundedCornerShape(12.dp)).background(Color.Black.copy(alpha = 0.6f)).padding(horizontal = 14.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) { content() }

@@ -38,12 +38,19 @@ class HomeViewModel(
     library: com.vidgrab.app.core.data.LibraryRepository,
     private val settings: com.vidgrab.app.core.data.SettingsRepository,
     private val history: SearchHistoryRepository,
+    private val downloads: com.vidgrab.app.core.download.DownloadManager,
 ) : ViewModel() {
     private var feedLoadedAt = 0L
 
     /** Settings → Trending on home (off by default). */
     val showTrending = settings.settings.map { it.showTrending }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
+
+    val clipboardDetection = settings.settings.map { it.clipboardDetection }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
+
+    fun pause(id: Long) = downloads.pause(id)
+    fun resume(id: Long) = downloads.resume(id)
 
     /**
      * Links the plain download sheet can't handle by itself: playlists and channels (their page lists the videos) and

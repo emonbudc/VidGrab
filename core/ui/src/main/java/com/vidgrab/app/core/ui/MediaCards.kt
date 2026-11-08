@@ -45,7 +45,7 @@ import com.vidgrab.app.core.model.MediaItem
 fun Thumbnail(
     url: String?,
     modifier: Modifier = Modifier,
-    corner: Int = 4,
+    corner: Int = 14,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     Box(modifier.clip(RoundedCornerShape(corner.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
@@ -59,7 +59,7 @@ fun Thumbnail(
 fun BoxScope.CornerLabel(text: String, modifier: Modifier = Modifier, live: Boolean = false) {
     if (text.isBlank()) return
     Row(
-        modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(2.dp))
+        modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(7.dp))
             .background(if (live) Color(0xFFE5243B) else Color(0xCC0D0F13)).padding(horizontal = 6.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -71,7 +71,7 @@ fun BoxScope.CornerLabel(text: String, modifier: Modifier = Modifier, live: Bool
             text,
             color = Color(0xFFE7E9EE),
             fontFamily = FontFamily.Monospace,
-            fontSize = 8.sp,
+            fontSize = 10.sp,
             letterSpacing = 0.4.sp,
         )
     }
@@ -83,7 +83,7 @@ fun BoxScope.SourceChip(text: String, modifier: Modifier = Modifier) {
     if (text.isBlank()) return
     Text(
         text,
-        modifier.align(Alignment.TopStart).padding(5.dp).clip(RoundedCornerShape(2.dp))
+        modifier.align(Alignment.TopStart).padding(5.dp).clip(RoundedCornerShape(7.dp))
             .background(Color(0xCC0D0F13)).padding(horizontal = 5.dp, vertical = 2.dp),
         color = QtColors.LiveMint,
         fontFamily = FontFamily.Monospace,
@@ -120,7 +120,7 @@ fun DownloadIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            Modifier.size(34.dp).clip(RoundedCornerShape(4.dp))
+            Modifier.size(34.dp).clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center,
         ) {
@@ -133,7 +133,7 @@ fun DownloadIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun VideoFeedCard(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, onChannel: (() -> Unit)? = null) {
     Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.99f, role = null, onClick = onClick).padding(bottom = 14.dp)) {
-        Thumbnail(item.thumbnail, Modifier.padding(horizontal = 16.dp).fillMaxWidth().aspectRatio(16f / 9f), corner = 4) {
+        Thumbnail(item.thumbnail, Modifier.padding(horizontal = 16.dp).fillMaxWidth().aspectRatio(16f / 9f), corner = 14) {
             SourceChip(platformTag(item.url))
             CornerLabel(if (item.isLive) "LIVE" else Format.duration(item.durationSec), live = item.isLive)
         }
@@ -143,8 +143,7 @@ fun VideoFeedCard(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, 
                 Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
                     item.subtitle(),
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 8.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -175,7 +174,7 @@ fun MediaRow(
         if (item.kind == ItemKind.CHANNEL) {
             Box(Modifier.width(132.dp), contentAlignment = Alignment.Center) { Avatar(item.thumbnail, 70) }
         } else {
-            Thumbnail(item.thumbnail, Modifier.width(132.dp).aspectRatio(16f / 9f), corner = 4) {
+            Thumbnail(item.thumbnail, Modifier.width(132.dp).aspectRatio(16f / 9f), corner = 14) {
                 SourceChip(platformTag(item.url))
                 if (item.kind == ItemKind.PLAYLIST) {
                     CornerLabel(if (item.streamCount >= 0) "${item.streamCount} videos" else "PLAYLIST")
@@ -188,8 +187,7 @@ fun MediaRow(
             Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
                 item.subtitle(),
-                fontFamily = FontFamily.Monospace,
-                fontSize = 8.sp,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -205,11 +203,11 @@ fun MediaRow(
 @Composable
 fun MediaTile(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.width(160.dp).pressable(scaleDown = 0.97f, role = null, onClick = onClick)) {
-        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f), corner = 4) {
+        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f), corner = 14) {
             if (item.kind == ItemKind.PLAYLIST) CornerLabel(if (item.streamCount >= 0) "${item.streamCount} videos" else "PLAYLIST")
             else CornerLabel(Format.duration(item.durationSec))
             Box(
-                Modifier.align(Alignment.TopEnd).padding(6.dp).size(36.dp).clip(RoundedCornerShape(4.dp))
+                Modifier.align(Alignment.TopEnd).padding(6.dp).size(36.dp).clip(RoundedCornerShape(12.dp))
                     .background(Color(0xCC0D0F13))
                     .pressable(scaleDown = 0.86f, onClick = onDownload),
                 contentAlignment = Alignment.Center,
@@ -225,8 +223,7 @@ fun MediaTile(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, modi
         )
         Text(
             item.subtitle(),
-            fontFamily = FontFamily.Monospace,
-            fontSize = 8.sp,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

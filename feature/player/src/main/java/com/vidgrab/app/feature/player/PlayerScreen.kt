@@ -40,7 +40,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.shadow
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.pressable
@@ -100,14 +99,14 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             if (showVideo) {
                 VideoPlayerBox(
                     controller, state,
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
                         .aspectRatio(if (state.videoWidth > 0 && state.videoHeight > 0) (state.videoWidth.toFloat() / state.videoHeight).coerceIn(0.5f, 2f) else 16f / 9f),
                     onToggleFullscreen = { fullscreen = true },
                     overlayControls = false,
                 )
             } else {
                 Box(
-                    Modifier.fillMaxWidth(0.82f).aspectRatio(1f).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainer),
+                    Modifier.fillMaxWidth(0.82f).aspectRatio(1f).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(QtIcons.MusicNote, null, Modifier.size(96.dp), tint = MaterialTheme.colorScheme.primary)
@@ -121,20 +120,19 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
         )
         SeekBar(state, controller, Modifier.fillMaxWidth().padding(horizontal = 16.dp))
         Row(Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
-            Text(Format.durationMs(state.positionMs), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                fontSize = 8.sp, modifier = Modifier.weight(1f))
-            Text(Format.durationMs(state.durationMs), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp)
+            Text(Format.durationMs(state.positionMs), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
+            Text(Format.durationMs(state.durationMs), style = MaterialTheme.typography.labelSmall)
         }
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Box(Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
                 SpeedButton(state.speed) { controller.setSpeed(it) }
             }
             QtIconButton(QtIcons.SkipPrevious, "Previous", controller::previous, size = 56.dp, iconSize = 34.dp)
             Box(
-                Modifier.size(76.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary)
+                Modifier.size(76.dp).clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.primary)
                     .pressable(scaleDown = 0.9f, haptic = true, onClick = controller::togglePlay),
                 contentAlignment = Alignment.Center,
             ) {
@@ -154,7 +152,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             )
         }
         Row(
-            Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().clip(RoundedCornerShape(4.dp))
+            Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainer).padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -168,7 +166,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
             QtIconButton(QtIcons.Shuffle, "Shuffle", { controller.setShuffle(!state.shuffle) },
                 tint = if (state.shuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             if (current.isVideo) Row(
-                Modifier.clip(RoundedCornerShape(4.dp)).background(if (state.audioOnly) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.primary)
+                Modifier.clip(RoundedCornerShape(14.dp)).background(if (state.audioOnly) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.primary)
                     .pressable(scaleDown = 0.94f, haptic = true, onClick = { controller.setAudioOnly(!state.audioOnly) }).padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -182,7 +180,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
 
     if (showQueue) ModalBottomSheet(
         onDismissRequest = { showQueue = false },
-        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         LazyColumn(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
@@ -191,7 +189,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
                     Modifier.fillMaxWidth().clickable { controller.skipTo(i); showQueue = false }.padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(Modifier.size(width = 88.dp, height = 50.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+                    Box(Modifier.size(width = 88.dp, height = 50.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
                         if (item.artwork != null) AsyncImage(item.artwork, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                     }
                     Text(
@@ -211,7 +209,7 @@ fun MiniPlayer(onExpand: () -> Unit, modifier: Modifier = Modifier) {
     val controller = koinInject<PlayerController>()
     val state by controller.state.collectAsStateWithLifecycle()
     val current = state.current ?: return
-    val shape = RoundedCornerShape(4.dp)
+    val shape = RoundedCornerShape(16.dp)
     Column(
         modifier.padding(horizontal = 14.dp).padding(top = 6.dp).fillMaxWidth()
             .shadow(5.dp, shape, ambientColor = Color.Black.copy(.4f), spotColor = Color.Black.copy(.4f))
@@ -219,13 +217,13 @@ fun MiniPlayer(onExpand: () -> Unit, modifier: Modifier = Modifier) {
             .pressable(scaleDown = 0.98f, onClick = onExpand),
     ) {
         Row(Modifier.padding(start = 8.dp, end = 4.dp, top = 8.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(width = 64.dp, height = 40.dp).clip(RoundedCornerShape(4.dp)).background(Color.Black), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(width = 64.dp, height = 40.dp).clip(RoundedCornerShape(10.dp)).background(Color.Black), contentAlignment = Alignment.Center) {
                 Icon(QtIcons.MusicNote, null, tint = Color.White)
                 if (current.artwork != null) AsyncImage(current.artwork, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(current.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                if (current.artist.isNotBlank()) Text(current.artist, maxLines = 1, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                if (current.artist.isNotBlank()) Text(current.artist, maxLines = 1, style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             QtIconButton(

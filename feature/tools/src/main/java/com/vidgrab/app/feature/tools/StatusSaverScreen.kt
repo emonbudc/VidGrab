@@ -99,7 +99,7 @@ fun StatusSaverScreen(onBack: () -> Unit) {
                 if (list.isEmpty()) EmptyBox("No statuses yet", "Open WhatsApp and watch some statuses, then come back", mod, BrandIcons.WhatsApp)
                 else LazyVerticalGrid(GridCells.Fixed(3), mod, contentPadding = PaddingValues(4.dp)) {
                     items(list, key = { it.uri.toString() }) { s ->
-                        Box(Modifier.padding(4.dp).aspectRatio(0.75f).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
+                        Box(Modifier.padding(4.dp).aspectRatio(0.75f).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
                             .clickable {
                                 runCatching {
                                     context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(s.uri, if (s.isVideo) "video/*" else "image/*")
@@ -110,7 +110,7 @@ fun StatusSaverScreen(onBack: () -> Unit) {
                             if (s.isVideo) Icon(QtIcons.PlayCircle, null, tint = Color.White, modifier = Modifier.align(Alignment.Center).size(32.dp))
                             IconButton(
                                 onClick = { vm.save(s) { ok -> Toast.makeText(context, if (ok) "Saved to downloads" else "Couldn't save", Toast.LENGTH_SHORT).show() } },
-                                modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp).size(40.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary),
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp).size(40.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary),
                             ) { Icon(QtIcons.Download, "Save", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp)) }
                         }
                     }

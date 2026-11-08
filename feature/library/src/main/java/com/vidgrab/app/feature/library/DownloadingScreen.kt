@@ -88,70 +88,65 @@ fun DownloadingScreen(onBack: () -> Unit) {
  * and a single status line that never wraps. Actions sit in a narrow column so the text keeps the width.
  */
 @Composable
-private fun DownloadCard(
-    t: DownloadTask, speed: Long, modifier: Modifier,
+fun DownloadCard(
+    t: DownloadTask, speed: Long, modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     onPause: () -> Unit, onResume: () -> Unit, onCancel: () -> Unit,
 ) {
     val failed = t.status == DownloadStatus.FAILED
     val cs = MaterialTheme.colorScheme
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).background(cs.surfaceContainer)
-            .border(1.dp, cs.outlineVariant, RoundedCornerShape(4.dp)).padding(10.dp),
+        modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(cs.surface)
+            .border(1.dp, cs.outlineVariant, RoundedCornerShape(18.dp))
+            .then(if (onClick != null) Modifier.pressable(scaleDown = 0.99f, onClick = onClick) else Modifier)
+            .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(92.dp).aspectRatio(16f / 9f)) {
+        Box(Modifier.width(96.dp).aspectRatio(16f / 9f)) {
             FileThumb(t, Modifier.fillMaxSize())
-            // Status badge on the thumbnail.
             val (icon, tint) = when (t.status) {
                 DownloadStatus.FAILED -> QtIcons.Error to cs.error
-                DownloadStatus.PAUSED -> QtIcons.Pause to cs.onSurface
-                DownloadStatus.MERGING -> QtIcons.Tune to cs.primary
-                DownloadStatus.QUEUED, DownloadStatus.WAITING_NETWORK -> QtIcons.Schedule to cs.onSurface
-                else -> QtIcons.Downloading to cs.primary
+                DownloadStatus.PAUSED -> QtIcons.Pause to Color.White
+                DownloadStatus.MERGING -> QtIcons.Tune to Color.White
+                DownloadStatus.QUEUED, DownloadStatus.WAITING_NETWORK -> QtIcons.Schedule to Color.White
+                else -> QtIcons.Downloading to Color.White
             }
             Box(
-                Modifier.align(Alignment.BottomStart).padding(5.dp).size(22.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xCC0D0F13)),
+                Modifier.align(Alignment.BottomStart).padding(5.dp).size(22.dp).clip(RoundedCornerShape(7.dp)).background(Color(0xCC0D1526)),
                 contentAlignment = Alignment.Center,
-            ) { Icon(icon, null, tint = if (tint == cs.onSurface) Color.White else tint, modifier = Modifier.size(14.dp)) }
+            ) { Icon(icon, null, tint = tint, modifier = Modifier.size(13.dp)) }
         }
         Column(Modifier.weight(1f).padding(start = 12.dp, end = 4.dp)) {
             Text(
                 t.title, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 19.sp), fontWeight = FontWeight.SemiBold,
             )
-            if (t.status == DownloadStatus.MERGING) GradientProgress(0f, Modifier.fillMaxWidth().padding(vertical = 7.dp), indeterminate = true)
-            else GradientProgress(t.progress, Modifier.fillMaxWidth().padding(vertical = 7.dp))
+            if (t.status == DownloadStatus.MERGING) GradientProgress(0f, Modifier.fillMaxWidth().padding(vertical = 8.dp), indeterminate = true)
+            else GradientProgress(t.progress, Modifier.fillMaxWidth().padding(vertical = 8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    statusText(t, speed), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                    statusText(t, speed), style = MaterialTheme.typography.labelSmall,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                     color = if (failed) cs.error else cs.onSurfaceVariant, modifier = Modifier.weight(1f),
                 )
                 if (!failed && t.status != DownloadStatus.MERGING) Text(
-                    "${(t.progress * 100).toInt()}%", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-                    color = cs.onSurface, modifier = Modifier.padding(start = 8.dp),
+                    "${(t.progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold, color = cs.primary, modifier = Modifier.padding(start = 8.dp),
                 )
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             when (t.status) {
-                DownloadStatus.RUNNING, DownloadStatus.QUEUED, DownloadStatus.WAITING_NETWORK -> RoundAction(QtIcons.Pause, "Pause", cs.primary, onPause)
-                DownloadStatus.PAUSED -> RoundAction(QtIcons.Play, "Resume", cs.primary, onResume)
-                DownloadStatus.FAILED -> RoundAction(QtIcons.Refresh, "Retry", cs.error, onResume)
-                else -> Spacer(Modifier.size(36.dp))
+                DownloadStatus.RUNNING, DownloadStatus.QUEUED, DownloadStatus.WAITING_NETWORK ->
+                    QtIconButton(QtIcons.Pause, "Pause", onPause, tint = cs.primary, container = cs.primaryContainer, size = 38.dp, iconSize = 19.dp)
+                DownloadStatus.PAUSED ->
+                    QtIconButton(QtIcons.Play, "Resume", onResume, tint = cs.primary, container = cs.primaryContainer, size = 38.dp, iconSize = 19.dp)
+                DownloadStatus.FAILED ->
+                    QtIconButton(QtIcons.Refresh, "Retry", onResume, tint = cs.error, container = cs.error.copy(alpha = 0.12f), size = 38.dp, iconSize = 19.dp)
+                else -> Spacer(Modifier.size(38.dp))
             }
             Spacer(Modifier.height(6.dp))
-            Box(
-                Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)).pressable(onClick = onCancel), contentAlignment = Alignment.Center,
-            ) { Icon(QtIcons.Close, "Cancel", tint = cs.onSurfaceVariant, modifier = Modifier.size(18.dp)) }
+            QtIconButton(QtIcons.Close, "Cancel", onCancel, tint = cs.onSurfaceVariant, size = 32.dp, iconSize = 16.dp)
         }
     }
-}
-
-@Composable
-private fun RoundAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, tint: Color, onClick: () -> Unit) {
-    Box(
-        Modifier.size(36.dp).clip(RoundedCornerShape(4.dp)).background(tint.copy(alpha = 0.14f)).pressable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) { Icon(icon, label, tint = tint, modifier = Modifier.size(20.dp)) }
 }

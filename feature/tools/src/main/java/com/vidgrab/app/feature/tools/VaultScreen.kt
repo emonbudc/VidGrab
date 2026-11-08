@@ -95,7 +95,7 @@ private fun VaultContent(vm: VaultViewModel, onOpenPlayer: () -> Unit) {
                     TaskThumb(t, Modifier.width(110.dp).aspectRatio(16f / 9f))
                     Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                         Text(t.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text(Format.bytes(t.totalBytes), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                        Text(Format.bytes(t.totalBytes), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     QtIconButton(QtIcons.LockOpen, "Move out of vault", { vm.unlockItems(listOf(t.id)) })

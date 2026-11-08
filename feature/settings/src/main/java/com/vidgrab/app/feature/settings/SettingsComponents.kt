@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vidgrab.app.core.designsystem.IconTile
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
@@ -28,19 +27,18 @@ import com.vidgrab.app.core.designsystem.pressable
 @Composable
 fun GroupLabel(text: String) {
     Text(
-        text.uppercase(),
-        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-        fontSize = 9.sp,
-        letterSpacing = 1.2.sp,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 18.dp, top = 24.dp, bottom = 8.dp),
+        text,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(start = 22.dp, top = 22.dp, bottom = 8.dp),
     )
 }
 
 @Composable
 fun RowDivider() = HorizontalDivider(
-    Modifier.padding(start = 18.dp, end = 18.dp),
-    color = MaterialTheme.colorScheme.outlineVariant,
+    Modifier.padding(horizontal = 16.dp),
+    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
 )
 
 /** Settings row: coloured icon tile, title, optional summary and trailing value + chevron. */
@@ -50,39 +48,51 @@ fun NavRow(
     title: String,
     summary: String? = null,
     trailing: String? = null,
-    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    tint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 60.dp).pressable(scaleDown = 0.985f, onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
+        Modifier.fillMaxWidth().heightIn(min = 62.dp).pressable(scaleDown = 0.985f, onClick = onClick).padding(horizontal = 16.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != null) IconTile(icon, tint = tint, size = 34.dp)
-        Column(Modifier.weight(1f).padding(start = if (icon != null) 12.dp else 4.dp, end = 8.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, fontSize = 15.sp, fontWeight = FontWeight.Normal)
-            if (summary != null) Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+        if (icon != null) IconTile(icon, tint = tint, size = 36.dp)
+        Column(Modifier.weight(1f).padding(start = if (icon != null) 13.dp else 4.dp, end = 8.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            if (summary != null) Text(
+                summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                modifier = Modifier.padding(top = 1.dp),
+            )
         }
         if (trailing != null) Text(
             trailing,
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-            fontSize = 9.sp,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(end = 2.dp),
         )
-        Icon(QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        Icon(QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
     }
 }
 
 @Composable
 fun SwitchRow(title: String, summary: String?, checked: Boolean, icon: ImageVector? = null, onChange: (Boolean) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 60.dp).pressable(scaleDown = 0.985f, onClick = { onChange(!checked) })
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        Modifier.fillMaxWidth().heightIn(min = 62.dp).pressable(scaleDown = 0.985f, onClick = { onChange(!checked) })
+            .padding(horizontal = 16.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != null) IconTile(icon, size = 34.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Column(Modifier.weight(1f).padding(start = if (icon != null) 12.dp else 4.dp, end = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, fontSize = 15.sp, fontWeight = FontWeight.Normal)
-            if (summary != null) Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (icon != null) IconTile(icon, size = 36.dp, tint = MaterialTheme.colorScheme.primary)
+        Column(Modifier.weight(1f).padding(start = if (icon != null) 13.dp else 4.dp, end = 12.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            if (summary != null) Text(
+                summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                modifier = Modifier.padding(top = 1.dp),
+            )
         }
         Switch(
             checked, onChange,

@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.designsystem.icon.BrandIcons
 import com.vidgrab.app.core.designsystem.icon.QtIcons
@@ -61,24 +60,23 @@ fun SettingsScreen(actions: SettingsActions) {
     }
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomBarHeight.current)) {
         item {
-            Column(Modifier.fillMaxWidth().padding(start = 18.dp, top = 16.dp, bottom = 4.dp)) {
-                Text(
-                    "PREFERENCES / STORAGE / PRIVACY",
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                    fontSize = 8.sp,
-                    letterSpacing = 1.1.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 4.dp)) {
                 Text(
                     "Settings",
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(top = 4.dp),
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                )
+                Text(
+                    "Appearance, downloads, storage and privacy",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 3.dp),
                 )
             }
         }
         item { GroupLabel("General") }
         item {
-            Column {
+            com.vidgrab.app.core.designsystem.QtCard {
                 NavRow(QtIcons.Download, "Download settings", "Path, speed limit, tasks", onClick = actions.downloadSettings)
                 RowDivider()
                 NavRow(QtIcons.PlayCircle, "Player", "Resume, history, gestures, picture-in-picture", onClick = actions.playerSettings)
@@ -94,11 +92,15 @@ fun SettingsScreen(actions: SettingsActions) {
                 SwitchRow("Trending on home", "Show trending videos on Home", s.showTrending, QtIcons.TrendingUp) { v ->
                     vm.update { it.copy(showTrending = v) }
                 }
+                RowDivider()
+                SwitchRow("Clipboard detection", "Offer a copied link when you open the app", s.clipboardDetection, QtIcons.ContentPaste) { v ->
+                    vm.update { it.copy(clipboardDetection = v) }
+                }
             }
         }
         item { GroupLabel("Download tools") }
         item {
-            Column {
+            com.vidgrab.app.core.designsystem.QtCard {
                 NavRow(QtIcons.RestoreFromTrash, "Recover deleted files", trailing = if (trash > 0) "$trash" else null, onClick = actions.recycleBin)
                 RowDivider()
                 NavRow(QtIcons.History, "Deleted downloads", "Download again anything no longer on this phone", onClick = actions.deletedHistory)
@@ -110,7 +112,7 @@ fun SettingsScreen(actions: SettingsActions) {
         }
         item { GroupLabel("Phone clean") }
         item {
-            Column {
+            com.vidgrab.app.core.designsystem.QtCard {
                 NavRow(QtIcons.CleaningServices, "Storage clean", "Temporary files, cache and leftovers", onClick = actions.storageClean)
                 RowDivider()
                 NavRow(QtIcons.FolderZip, "Large files clean", "Find big videos, music and photos", onClick = actions.largeFiles)
@@ -120,7 +122,7 @@ fun SettingsScreen(actions: SettingsActions) {
         }
         item { GroupLabel("Privacy") }
         item {
-            Column {
+            com.vidgrab.app.core.designsystem.QtCard {
                 SwitchRow(
                     "Share crash reports & usage", "Anonymous: never URLs, titles, searches or files. See PRIVACY.md",
                     s.analyticsEnabled, QtIcons.Shield,
@@ -129,7 +131,7 @@ fun SettingsScreen(actions: SettingsActions) {
         }
         item { GroupLabel("Info") }
         item {
-            Column {
+            com.vidgrab.app.core.designsystem.QtCard {
                 NavRow(QtIcons.Feedback, "Feedback") {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/emonbudc/VidGrab/issues")))
                 }

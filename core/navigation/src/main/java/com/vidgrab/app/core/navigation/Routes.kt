@@ -19,6 +19,8 @@ import kotlinx.serialization.Serializable
 // Browser
 /** [autoDownload]: open the download sheet by itself once the page's video is found (pasted/shared links). */
 @Serializable data class BrowserRoute(val url: String, val autoDownload: Boolean = false)
+/** The Browser tab: keeps its page while the user moves between tabs. */
+@Serializable data object BrowserTabRoute
 @Serializable data object SitesRoute
 @Serializable data object BrowserHistoryRoute
 @Serializable data object BookmarksRoute

@@ -12,6 +12,16 @@ enum class VideoEndMode(val label: String) {
     REPEAT_ALL("Play the next video"), AUTOPLAY_OFF("Stop"), REPEAT_ONE("Repeat the video"), SHUFFLE("Play a random video")
 }
 
+/** Quality the format sheet selects first. */
+enum class PreferredQuality(val label: String) {
+    BEST("Best available"), P1080("1080p"), P720("720p"), P480("480p"), AUDIO("Audio only")
+}
+
+/** Container the format sheet prefers when the site offers more than one. */
+enum class PreferredFormat(val label: String) {
+    MP4("MP4"), WEBM("WebM"), M4A("M4A audio"), ANY("Any")
+}
+
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.LIGHT,
     val accent: ThemeAccent = ThemeAccent.OCEAN,
@@ -25,6 +35,10 @@ data class AppSettings(
     /** KB/s, 0 = unlimited. */
     val speedLimitKbps: Int = 0,
     val allowMobileData: Boolean = true,
+    /** Show a "link copied" suggestion on Home when the clipboard holds a video URL. */
+    val clipboardDetection: Boolean = true,
+    val defaultQuality: PreferredQuality = PreferredQuality.P720,
+    val defaultFormat: PreferredFormat = PreferredFormat.MP4,
     val notifyProgress: Boolean = true,
     val notifyCompleted: Boolean = true,
     val notifyRecommended: Boolean = true,

@@ -38,9 +38,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -195,6 +197,8 @@ fun BrowserScreen(
     silent: Boolean = false,
     /** Separates browser states that open the same URL (each share gets a fresh one). */
     stateKey: String = startUrl,
+    /** Shown as a bottom-bar destination: no Close button and the page stops above the floating bar. */
+    isTab: Boolean = false,
 ) {
     val vm = koinViewModel<BrowserViewModel>(key = stateKey)
     val fetcher = remember { PageFetcher() }
@@ -236,13 +240,17 @@ fun BrowserScreen(
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                QtIconButton(QtIcons.Close, "Close", onClose)
+            Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (!isTab) QtIconButton(QtIcons.Close, "Close", onClose) else Spacer(Modifier.width(6.dp))
                 if (editing) {
                     TextField(
                         address, { address = it }, Modifier.weight(1f), singleLine = true,
-                        shape = RoundedCornerShape(4.dp),
-                        colors = TextFieldDefaults.colors(focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(onGo = {
                             val t = address.trim()
@@ -252,8 +260,10 @@ fun BrowserScreen(
                     )
                 } else {
                     Row(
-                        Modifier.weight(1f).padding(vertical = 8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .pressable(scaleDown = 0.98f, onClick = { address = ui.url; editing = true }).padding(horizontal = 14.dp, vertical = 7.dp),
+                        Modifier.weight(1f).padding(horizontal = 4.dp, vertical = 8.dp).clip(RoundedCornerShape(14.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            .pressable(scaleDown = 0.98f, onClick = { address = ui.url; editing = true })
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(if (ui.url.startsWith("https")) QtIcons.Lock else QtIcons.Public, null, Modifier.size(15.dp),
@@ -261,9 +271,11 @@ fun BrowserScreen(
                         Column(Modifier.padding(start = 8.dp)) {
                             Text(ui.title.ifBlank { Urls.host(ui.url).orEmpty() }, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.labelLarge)
-                            Text(Urls.host(ui.url).orEmpty().uppercase(), maxLines = 1,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                Urls.host(ui.url).orEmpty(), maxLines = 1,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                 }
@@ -457,14 +469,14 @@ fun BrowserScreen(
                         Text(if (instagramPost) "Download this post" else "Video found on this page", style = MaterialTheme.typography.labelLarge)
                         Text(
                             listOfNotNull(d?.let { Format.duration(it.toLong()) }, Urls.host(ui.url)).joinToString(" · "),
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
                         )
                     }
                     PillButton("Download", { vm.download(isNative) }, icon = QtIcons.Download)
                 }
             }
-            Spacer(Modifier.navigationBarsPadding())
+            Spacer(if (isTab) Modifier.height(com.vidgrab.app.core.designsystem.LocalBottomBarHeight.current) else Modifier.navigationBarsPadding())
         }
     }
 

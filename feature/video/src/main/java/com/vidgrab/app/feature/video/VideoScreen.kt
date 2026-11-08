@@ -54,7 +54,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.common.LoadState
@@ -168,7 +167,7 @@ fun VideoScreen(
                                 Text(v.item.title, style = MaterialTheme.typography.titleLarge, maxLines = 3, overflow = TextOverflow.Ellipsis)
                                 Text(
                                     listOf(Format.views(v.item.viewCount), v.uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString("  ·  "),
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(top = 7.dp),
                                 )
@@ -230,7 +229,7 @@ fun VideoScreen(
                                     Text(v.item.uploader, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Text(
                                         if (v.subscriberCount >= 0) "${Format.count(v.subscriberCount)} subscribers" else "YouTube channel",
-                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                        style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp),
                                     )
                                 }
@@ -239,16 +238,14 @@ fun VideoScreen(
                         }
                         item {
                             Column(
-                                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).clip(RoundedCornerShape(4.dp))
+                                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(18.dp))
                                     .background(MaterialTheme.colorScheme.surfaceContainer)
                                     .clickable { showComments = true }.padding(14.dp),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("COMMENTS", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp,
-                                        letterSpacing = 1.1.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Comments", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-                                    Text("VIEW ALL", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-                                        color = MaterialTheme.colorScheme.primary)
+                                    Text("View all", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 }
                                 val preview = comments.items.take(2)
                                 if (preview.isEmpty()) Text(
@@ -260,7 +257,7 @@ fun VideoScreen(
                                     Row(Modifier.padding(top = 10.dp)) {
                                         Avatar(c.authorAvatar, 26)
                                         Column(Modifier.padding(start = 10.dp)) {
-                                            Text(c.author, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                            Text(c.author, style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             Text(c.text, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall,
                                                 modifier = Modifier.padding(top = 2.dp))
@@ -325,7 +322,7 @@ private fun WatchAction(
         else -> cs.onSurface
     }
     Row(
-        Modifier.height(42.dp).clip(RoundedCornerShape(4.dp)).background(background)
+        Modifier.height(42.dp).clip(RoundedCornerShape(14.dp)).background(background)
             .pressable(enabled = enabled, scaleDown = 0.94f, onClick = onClick).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -353,11 +350,11 @@ private fun AboutSheet(v: VideoDetails, vm: VideoViewModel, onDismiss: () -> Uni
     }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(Modifier.fillMaxWidth().heightIn(max = 600.dp).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding()) {
-            Text("ABOUT", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp, letterSpacing = 1.2.sp,
+            Text("About", style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(v.item.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -405,7 +402,7 @@ private fun AboutSheet(v: VideoDetails, vm: VideoViewModel, onDismiss: () -> Uni
                 Avatar(v.item.uploaderAvatar, 40)
                 Column(Modifier.padding(start = 12.dp).weight(1f)) {
                     Text(v.item.uploader, fontWeight = FontWeight.SemiBold)
-                    if (v.subscriberCount >= 0) Text("${Format.count(v.subscriberCount)} subscribers", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                    if (v.subscriberCount >= 0) Text("${Format.count(v.subscriberCount)} subscribers", style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -425,14 +422,14 @@ private fun AboutSheet(v: VideoDetails, vm: VideoViewModel, onDismiss: () -> Uni
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Text(
                 listOf(Format.views(v.item.viewCount), v.uploadDate.orEmpty()).filter { it.isNotBlank() }.joinToString("  "),
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp, modifier = Modifier.padding(top = 12.dp),
+                style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 12.dp),
             )
             Text(plainDescription,
                 style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 12.dp))
             if (v.tags.isNotEmpty()) {
                 Text(
                     v.tags.joinToString("  ") { "#$it" },
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp),
                 )
@@ -452,10 +449,10 @@ private fun CommentsSheet(vm: VideoViewModel, onDismiss: () -> Unit) {
     val ui by vm.comments.collectAsStateWithLifecycle()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Text("COMMENTS", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp, letterSpacing = 1.2.sp,
+        Text("Comments", style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         val state = rememberLazyListState()
         state.OnNearEnd { vm.loadComments() }
@@ -472,8 +469,8 @@ private fun CommentRow(c: Comment) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
         Avatar(c.authorAvatar, 32)
         Column(Modifier.padding(start = 12.dp)) {
-            Text(listOfNotNull(c.author, c.date).joinToString(" · "), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(listOfNotNull(c.author, c.date).joinToString(" · "), style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(QtIcons.ThumbUp, null, Modifier.padding(end = 4.dp).heightIn(max = 14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -503,7 +500,7 @@ private fun PlayerLoading(thumbnail: String?) {
 @Composable
 private fun VideoPageSkeleton(title: String?, modifier: Modifier) {
     val bone = MaterialTheme.colorScheme.surfaceContainerHigh
-    fun Modifier.bone(shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(4.dp)) = clip(shape).background(bone).shimmer()
+    fun Modifier.bone(shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(8.dp)) = clip(shape).background(bone).shimmer()
     Column(modifier.verticalScroll(rememberScrollState(), enabled = false)) {
         Row(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalAlignment = Alignment.Top) {
             Box(Modifier.size(36.dp).bone(androidx.compose.foundation.shape.CircleShape))
@@ -517,14 +514,14 @@ private fun VideoPageSkeleton(title: String?, modifier: Modifier) {
             }
         }
         Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f).height(48.dp).bone(RoundedCornerShape(4.dp)))
-            repeat(3) { Box(Modifier.padding(start = 10.dp).size(48.dp).bone(RoundedCornerShape(4.dp))) }
+            Box(Modifier.weight(1f).height(48.dp).bone(RoundedCornerShape(12.dp)))
+            repeat(3) { Box(Modifier.padding(start = 10.dp).size(48.dp).bone(RoundedCornerShape(12.dp))) }
         }
-        Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(76.dp).bone(RoundedCornerShape(4.dp)))
+        Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(76.dp).bone(RoundedCornerShape(12.dp)))
         Box(Modifier.padding(start = 16.dp, top = 20.dp, bottom = 12.dp).width(80.dp).height(16.dp).bone())
         repeat(5) {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(160.dp).aspectRatio(16f / 9f).bone(RoundedCornerShape(4.dp)))
+                Box(Modifier.width(160.dp).aspectRatio(16f / 9f).bone(RoundedCornerShape(12.dp)))
                 Column(Modifier.weight(1f).padding(start = 12.dp)) {
                     Box(Modifier.fillMaxWidth().height(14.dp).bone())
                     Box(Modifier.padding(top = 6.dp).fillMaxWidth(0.8f).height(14.dp).bone())

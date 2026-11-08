@@ -48,9 +48,9 @@ fun QtIconButton(
     Box(
         modifier
             .size(size)
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(size * 0.30f))
             .background(container)
-            .pressable(enabled = enabled, scaleDown = 0.88f, bounded = true, onClick = onClick),
+            .pressable(enabled = enabled, scaleDown = 0.9f, bounded = true, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription, tint = if (enabled) tint else tint.copy(alpha = 0.38f), modifier = Modifier.size(iconSize))
@@ -67,7 +67,7 @@ fun QtTopBar(
 ) {
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).statusBarsPadding()
-            .heightIn(min = 60.dp).padding(start = if (onBack != null) 6.dp else 20.dp, end = 8.dp),
+            .heightIn(min = 64.dp).padding(start = if (onBack != null) 6.dp else 20.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {
@@ -77,18 +77,18 @@ fun QtTopBar(
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (subtitle != null) Text(
-                subtitle.uppercase(),
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                fontSize = 8.sp,
-                letterSpacing = 1.sp,
+                subtitle,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically, content = actions)
     }
 }
 
-/** Primary call to action: solid squared button with press motion. */
+/** Primary call to action. */
 @Composable
 fun PillButton(
     text: String,
@@ -106,8 +106,8 @@ fun PillButton(
     }
     Row(
         modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(4.dp))
+            .heightIn(min = 50.dp)
+            .clip(RoundedCornerShape(16.dp))
             .then(
                 when {
                     !enabled -> Modifier.background(cs.surfaceContainerHigh)
@@ -115,8 +115,8 @@ fun PillButton(
                     else -> Modifier.background(cs.primary)
                 },
             )
-            .pressable(enabled = enabled, scaleDown = 0.95f, haptic = true, onClick = onClick)
-            .padding(horizontal = 22.dp, vertical = 12.dp),
+            .pressable(enabled = enabled, scaleDown = 0.96f, haptic = true, onClick = onClick)
+            .padding(horizontal = 22.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -128,19 +128,25 @@ fun PillButton(
     }
 }
 
+/** Section title with an optional trailing action ("See all", "Library"…). */
 @Composable
-fun SectionHeader(text: String, modifier: Modifier = Modifier, trailing: @Composable () -> Unit = {}) {
+fun SectionHeader(
+    text: String,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+) {
     Row(
-        modifier.fillMaxWidth().padding(start = 18.dp, end = 12.dp, top = 20.dp, bottom = 10.dp),
+        modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 24.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text.uppercase(),
+            text,
             modifier = Modifier.weight(1f),
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-            fontSize = 9.sp,
-            letterSpacing = 1.2.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
         trailing()
     }
@@ -149,7 +155,7 @@ fun SectionHeader(text: String, modifier: Modifier = Modifier, trailing: @Compos
 @Composable
 fun Badge(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.primary) {
     Box(
-        modifier.clip(RoundedCornerShape(2.dp)).background(color.copy(alpha = 0.14f)).padding(horizontal = 6.dp, vertical = 2.dp),
+        modifier.clip(RoundedCornerShape(7.dp)).background(color.copy(alpha = 0.13f)).padding(horizontal = 7.dp, vertical = 3.dp),
     ) {
         Text(text, style = MaterialTheme.typography.labelSmall, color = color)
     }
@@ -159,9 +165,9 @@ fun Badge(text: String, modifier: Modifier = Modifier, color: Color = MaterialTh
 @Composable
 fun IconTile(icon: ImageVector, modifier: Modifier = Modifier, tint: Color = MaterialTheme.colorScheme.primary, size: Dp = 40.dp) {
     Box(
-        modifier.size(size).clip(RoundedCornerShape(4.dp)).background(tint.copy(alpha = 0.13f)),
+        modifier.size(size).clip(RoundedCornerShape(size * 0.32f)).background(tint.copy(alpha = 0.12f)),
         contentAlignment = Alignment.Center,
-    ) { Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.55f)) }
+    ) { Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.52f)) }
 }
 
 /** Kept for older call sites; prefer [IconTile]. */
@@ -173,23 +179,23 @@ fun IconCircle(icon: ImageVector, modifier: Modifier = Modifier, tint: Color = M
 @Composable
 fun QtCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(
-        modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp)),
+        modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
     ) { content() }
 }
 
-/** Selectable squared chip used for filters (library, search results). */
+/** Selectable pill used for filters (library, search results). */
 @Composable
 fun QtChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
     val cs = MaterialTheme.colorScheme
     Row(
         modifier
-            .height(32.dp)
-            .clip(RoundedCornerShape(4.dp))
+            .height(36.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(if (selected) cs.primary else cs.surfaceContainerHigh)
-            .pressable(scaleDown = 0.94f, onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .pressable(scaleDown = 0.95f, onClick = onClick)
+            .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {

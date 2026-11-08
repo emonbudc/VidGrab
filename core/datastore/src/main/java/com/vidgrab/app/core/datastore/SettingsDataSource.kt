@@ -11,6 +11,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.vidgrab.app.core.model.AppSettings
+import com.vidgrab.app.core.model.PreferredFormat
+import com.vidgrab.app.core.model.PreferredQuality
 import com.vidgrab.app.core.model.ThemeAccent
 import com.vidgrab.app.core.model.ThemeMode
 import com.vidgrab.app.core.model.VideoEndMode
@@ -34,6 +36,9 @@ class SettingsDataSource(private val context: Context) {
         val mobileTasks = intPreferencesKey("max_mobile")
         val speed = intPreferencesKey("speed_limit")
         val mobileData = booleanPreferencesKey("mobile_data")
+        val clipboard = booleanPreferencesKey("clipboard_detection")
+        val defaultQuality = stringPreferencesKey("default_quality")
+        val defaultFormat = stringPreferencesKey("default_format")
         val nProgress = booleanPreferencesKey("n_progress")
         val nCompleted = booleanPreferencesKey("n_completed")
         val nRecommended = booleanPreferencesKey("n_recommended")
@@ -82,6 +87,9 @@ class SettingsDataSource(private val context: Context) {
             p[K.mobileTasks] = s.maxTasksMobile
             p[K.speed] = s.speedLimitKbps
             p[K.mobileData] = s.allowMobileData
+            p[K.clipboard] = s.clipboardDetection
+            p[K.defaultQuality] = s.defaultQuality.name
+            p[K.defaultFormat] = s.defaultFormat.name
             p[K.nProgress] = s.notifyProgress
             p[K.nCompleted] = s.notifyCompleted
             p[K.nRecommended] = s.notifyRecommended
@@ -121,6 +129,9 @@ class SettingsDataSource(private val context: Context) {
         maxTasksMobile = p[K.mobileTasks] ?: 2,
         speedLimitKbps = p[K.speed] ?: 0,
         allowMobileData = p[K.mobileData] ?: true,
+        clipboardDetection = p[K.clipboard] ?: true,
+        defaultQuality = p[K.defaultQuality]?.let { runCatching { PreferredQuality.valueOf(it) }.getOrNull() } ?: PreferredQuality.P720,
+        defaultFormat = p[K.defaultFormat]?.let { runCatching { PreferredFormat.valueOf(it) }.getOrNull() } ?: PreferredFormat.MP4,
         notifyProgress = p[K.nProgress] ?: true,
         notifyCompleted = p[K.nCompleted] ?: true,
         notifyRecommended = p[K.nRecommended] ?: true,

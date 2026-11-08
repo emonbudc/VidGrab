@@ -87,8 +87,11 @@ import org.koin.compose.koinInject
 private val tabs = listOf(
     NavTab(HomeRoute, "Home", QtIcons.Home, QtIcons.HomeFilled),
     NavTab(LibraryRoute, "Downloads", QtIcons.Download, QtIcons.DownloadDone),
+    NavTab(BrowserTabRoute, "Browser", QtIcons.Public, QtIcons.Explore),
     NavTab(SettingsRoute, "Settings", QtIcons.Settings, QtIcons.SettingsFilled),
 )
+
+private const val BROWSER_HOME = "https://m.youtube.com/"
 
 private fun tabIndexFor(dest: androidx.navigation.NavDestination?): Int = when {
     dest == null -> -1
@@ -96,7 +99,8 @@ private fun tabIndexFor(dest: androidx.navigation.NavDestination?): Int = when {
     dest.hierarchy.any {
         it.hasRoute(LibraryRoute::class) || it.hasRoute(DownloadingRoute::class)
     } -> 1
-    dest.hierarchy.any { it.hasRoute(SettingsRoute::class) } -> 2
+    dest.hierarchy.any { it.hasRoute(BrowserTabRoute::class) } -> 2
+    dest.hierarchy.any { it.hasRoute(SettingsRoute::class) } -> 3
     else -> -1
 }
 
@@ -176,6 +180,13 @@ fun AppNavHost(nav: NavHostController) {
                         openChannel = { nav.navigate(ChannelRoute(it)) },
                         openHowTo = { nav.navigate(HowToRoute(it)) },
                         openSites = { nav.navigate(SitesRoute) },
+                        openSettings = {
+                            nav.navigate(SettingsRoute) {
+                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                         openLibrary = {
                             nav.navigate(LibraryRoute) {
                                 popUpTo(nav.graph.findStartDestination().id) { saveState = true }
@@ -277,6 +288,25 @@ fun AppNavHost(nav: NavHostController) {
                     onOpenBookmarks = { nav.navigate(BookmarksRoute) },
                 )
             }
+            composable<BrowserTabRoute>(
+                enterTransition = QtTransitions.tabEnter, exitTransition = QtTransitions.tabExit,
+                popEnterTransition = QtTransitions.tabEnter, popExitTransition = QtTransitions.tabExit,
+            ) {
+                BrowserScreen(
+                    startUrl = BROWSER_HOME,
+                    isTab = true,
+                    onClose = {
+                        nav.navigate(HomeRoute) {
+                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onOpenVideo = { nav.navigate(VideoRoute(it)) },
+                    onOpenHistory = { nav.navigate(BrowserHistoryRoute) },
+                    onOpenBookmarks = { nav.navigate(BookmarksRoute) },
+                )
+            }
             composable<SitesRoute> { SitesScreen(nav::popBackStack, onOpen = ::openUrl, onHistory = { nav.navigate(BrowserHistoryRoute) }) }
             composable<BrowserHistoryRoute> { HistoryScreen(nav::popBackStack, onOpen = ::openUrl) }
             composable<BookmarksRoute> { BookmarksScreen(nav::popBackStack, onOpen = ::openUrl) }
@@ -306,6 +336,7 @@ fun AppNavHost(nav: NavHostController) {
                         val atRoot = when (i) {
                             0 -> dest?.hasRoute(HomeRoute::class) == true
                             1 -> dest?.hasRoute(LibraryRoute::class) == true
+                            2 -> dest?.hasRoute(BrowserTabRoute::class) == true
                             else -> dest?.hasRoute(SettingsRoute::class) == true
                         }
                         if (!atRoot) nav.navigate(tabs[i].route) {

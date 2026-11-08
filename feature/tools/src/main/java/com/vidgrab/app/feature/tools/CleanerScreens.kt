@@ -68,10 +68,10 @@ fun StorageCleanScreen(onBack: () -> Unit) {
         else Column(Modifier.fillMaxSize().padding(pad)) {
             Column(Modifier.padding(20.dp)) {
                 Text("${Format.bytes(storage.first)}", style = MaterialTheme.typography.headlineMedium)
-                Text("used of ${Format.bytes(storage.second)}", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                Text("used of ${Format.bytes(storage.second)}", style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 LinearProgressIndicator(progress = { if (storage.second > 0) storage.first.toFloat() / storage.second else 0f },
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(6.dp), strokeCap = androidx.compose.ui.graphics.StrokeCap.Butt, gapSize = 0.dp)
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(6.dp), strokeCap = androidx.compose.ui.graphics.StrokeCap.Round, gapSize = 0.dp)
             }
             QtCard {
                 list.forEachIndexed { i, c ->
@@ -86,7 +86,7 @@ fun StorageCleanScreen(onBack: () -> Unit) {
                             Text(c.title, style = MaterialTheme.typography.bodyLarge)
                             Text(c.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Format.bytes(c.bytes), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp)
+                        Text(Format.bytes(c.bytes), style = MaterialTheme.typography.labelSmall)
                         Checkbox(c.key in selected, { selected = if (c.key in selected) selected - c.key else selected + c.key })
                     }
                 }
@@ -133,8 +133,8 @@ fun LargeFilesScreen(onBack: () -> Unit) {
             list == null -> LoadingBox(Modifier.fillMaxSize().padding(pad))
             list.isEmpty() -> EmptyBox("No large files", "Nothing over 10 MB was found", Modifier.fillMaxSize().padding(pad))
             else -> LazyColumn(Modifier.fillMaxSize().padding(pad)) {
-                item { Text("${list.size} FILES · ${Format.bytes(list.sumOf { it.size })}", modifier = Modifier.padding(18.dp),
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp, letterSpacing = 0.8.sp) }
+                item { Text("${list.size} files · ${Format.bytes(list.sumOf { it.size })}", modifier = Modifier.padding(18.dp),
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 items(list, key = { it.uri.toString() }) { f ->
                     Row(
                         Modifier.fillMaxWidth().clickable { selected = if (f.uri in selected) selected - f.uri else selected + f.uri }.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -165,8 +165,8 @@ fun AppManagerScreen(onBack: () -> Unit) {
         val list = apps
         if (list == null) LoadingBox(Modifier.fillMaxSize().padding(pad))
         else LazyColumn(Modifier.fillMaxSize().padding(pad)) {
-            item { Text("${list.size} INSTALLED APPS", modifier = Modifier.padding(18.dp),
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 9.sp, letterSpacing = 0.8.sp) }
+            item { Text("${list.size} installed apps", modifier = Modifier.padding(18.dp),
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             items(list, key = { it.packageName }) { a ->
                 Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -175,7 +175,7 @@ fun AppManagerScreen(onBack: () -> Unit) {
                             listOf(a.version.takeIf { it.isNotBlank() }?.let { "v$it" }, Format.bytes(a.apkSize),
                                 if (a.installed > 0) DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(a.installed)) else null)
                                 .filterNotNull().joinToString(" · "),
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }

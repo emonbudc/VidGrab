@@ -31,6 +31,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vidgrab.app.core.model.PreferredFormat
+import com.vidgrab.app.core.model.PreferredQuality
 import com.vidgrab.app.core.designsystem.BrandTitle
 import com.vidgrab.app.core.designsystem.LocalQtExtras
 import com.vidgrab.app.core.designsystem.QtCard
@@ -49,6 +51,21 @@ private fun speedLabel(kbps: Int) = when {
     else -> "$kbps KB/s"
 }
 
+private fun qualityLabel(q: PreferredQuality) = when (q) {
+    PreferredQuality.BEST -> "Best available"
+    PreferredQuality.P1080 -> "1080p"
+    PreferredQuality.P720 -> "720p"
+    PreferredQuality.P480 -> "480p"
+    PreferredQuality.AUDIO -> "Audio only"
+}
+
+private fun formatLabel(f: PreferredFormat) = when (f) {
+    PreferredFormat.MP4 -> "MP4"
+    PreferredFormat.WEBM -> "WebM"
+    PreferredFormat.M4A -> "M4A"
+    PreferredFormat.ANY -> "Auto"
+}
+
 private val speedSteps = listOf(0, 128, 256, 512, 1024, 2048, 5120)
 
 @Composable
@@ -62,7 +79,13 @@ fun DownloadSettingsScreen(onBack: () -> Unit) {
     }
     var dialog by remember { mutableStateOf<String?>(null) }
     Scaffold(topBar = { QtTopBar("Download settings", onBack) }) { pad ->
-        Column(Modifier.fillMaxSize().padding(pad)) {
+        Column(Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState())) {
+            GroupLabel("New downloads")
+            QtCard {
+                NavRow(QtIcons.Hd, "Preferred quality", trailing = qualityLabel(s.defaultQuality)) { dialog = "quality" }
+                RowDivider()
+                NavRow(QtIcons.Movie, "Preferred format", trailing = formatLabel(s.defaultFormat)) { dialog = "format" }
+            }
             GroupLabel("Storage")
             QtCard {
                 NavRow(QtIcons.Folder, "Download path", s.downloadDir.removePrefix("/storage/emulated/0")) { dialog = "path" }
@@ -88,6 +111,48 @@ fun DownloadSettingsScreen(onBack: () -> Unit) {
         }
     }
     when (dialog) {
+        "quality" -> AlertDialog(
+            onDismissRequest = { dialog = null },
+            title = { Text("Preferred quality") },
+            text = {
+                Column {
+                    Text(
+                        "Picked by default in the download sheet. You can still change it per download.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                    PreferredQuality.entries.forEach { q ->
+                        RadioRow(qualityLabel(q), s.defaultQuality == q) {
+                            vm.update { it.copy(defaultQuality = q) }
+                            dialog = null
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { dialog = null }) { Text("Close") } },
+        )
+        "format" -> AlertDialog(
+            onDismissRequest = { dialog = null },
+            title = { Text("Preferred format") },
+            text = {
+                Column {
+                    Text(
+                        "Auto keeps the original stream. Some qualities only exist in one container.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                    PreferredFormat.entries.forEach { f ->
+                        RadioRow(formatLabel(f), s.defaultFormat == f) {
+                            vm.update { it.copy(defaultFormat = f) }
+                            dialog = null
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { dialog = null }) { Text("Close") } },
+        )
         "path" -> {
             val options = listOf(
                 vm.defaultDir,

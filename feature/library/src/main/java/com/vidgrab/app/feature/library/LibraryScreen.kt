@@ -139,26 +139,28 @@ fun LibraryScreen(
                                 focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             ),
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(14.dp),
                         )
                     }
                 }
                 else -> Row(
-                    Modifier.fillMaxWidth().height(64.dp).padding(start = 18.dp, end = 8.dp),
+                    Modifier.fillMaxWidth().height(72.dp).padding(start = 20.dp, end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column {
-                        Text(
-                            "LIBRARY / ON DEVICE",
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                            fontSize = 8.sp,
-                            letterSpacing = 1.1.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    Column(Modifier.weight(1f)) {
                         Text(
                             "Downloads",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            when {
+                                ui.active.isNotEmpty() -> "${ui.active.size} active · ${ui.done.size} saved"
+                                ui.done.isNotEmpty() -> "${ui.done.size} saved offline"
+                                else -> "Videos, music and photos you keep"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 2.dp),
                         )
                     }
@@ -167,25 +169,66 @@ fun LibraryScreen(
         }
 
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 16.dp + LocalBottomBarHeight.current)) {
-            if (ui.active.isNotEmpty() && sel == null && !searching) item {
-                ActiveCard(ui.active.first(), ui.active.size, speeds[ui.active.first().id] ?: 0, onOpenDownloading)
+            if (ui.active.isNotEmpty() && sel == null && !searching) {
+                item(key = "active-header") {
+                    Row(
+                        Modifier.fillMaxWidth().padding(start = 18.dp, end = 6.dp, top = 8.dp, bottom = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Downloading",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (ui.active.size > 1) Text(
+                            "${ui.active.size} active",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = signalInk(QtColors.LiveMint),
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+                        QtIconButton(QtIcons.ChevronRight, "All downloads", onOpenDownloading, size = 38.dp, iconSize = 20.dp)
+                    }
+                }
+                items(ui.active, key = { "active-${it.id}" }) { task ->
+                    DownloadCard(
+                        task,
+                        speeds[task.id] ?: 0,
+                        Modifier.padding(horizontal = 16.dp, vertical = 4.dp).animateItem(),
+                        onClick = onOpenDownloading,
+                        onPause = { vm.pause(task.id) },
+                        onResume = { vm.resume(task.id) },
+                        onCancel = { confirmDelete = listOf(task.id) },
+                    )
+                }
             }
             if (sel == null && ui.done.isNotEmpty()) item(key = "downloaded-header") {
                 Row(
                     Modifier.fillMaxWidth().padding(start = 18.dp, end = 6.dp, top = 18.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        "DOWNLOADED · ${ui.done.size}",
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        fontSize = 9.sp,
-                        letterSpacing = 1.1.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Saved",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "${ui.done.size}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 7.dp)
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
                     QtIconButton(QtIcons.BookmarkBorder, "Watch later", onOpenSaved, size = 38.dp, iconSize = 20.dp)
                     Box {
-                        QtIconButton(QtIcons.FilterList, "Filter", { filterOpen = true }, size = 38.dp, iconSize = 20.dp)
+                        QtIconButton(
+                            QtIcons.FilterList, "Filter", { filterOpen = true }, size = 38.dp, iconSize = 20.dp,
+                            tint = if (ui.filter == LibraryFilter.ALL) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                        )
                         DropdownMenu(expanded = filterOpen, onDismissRequest = { filterOpen = false }) {
                             LibraryFilter.entries.forEach { f ->
                                 DropdownMenuItem(
@@ -266,55 +309,18 @@ fun LibraryScreen(
     }
 }
 
-/** Thin blue progress bar used for both active downloads and watched progress. */
+/** Thin brand progress bar used for both active downloads and watched progress. */
 @Composable
 fun GradientProgress(progress: Float, modifier: Modifier = Modifier, indeterminate: Boolean = false) {
-    Box(modifier.height(4.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.20f))) {
-        if (!indeterminate) Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary))
-        else Box(Modifier.fillMaxSize().clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary))
+    Box(modifier.height(5.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))) {
+        if (!indeterminate) Box(
+            Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).clip(CircleShape)
+                .background(com.vidgrab.app.core.designsystem.LocalQtExtras.current.brand),
+        )
+        else Box(Modifier.fillMaxSize().clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)))
     }
 }
 
-@Composable
-private fun ActiveCard(task: DownloadTask, count: Int, speed: Long, onClick: () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
-            .clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
-            .pressable(scaleDown = 0.985f, onClick = onClick).padding(12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    "TRANSFER / $count ACTIVE",
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                    fontSize = 8.sp,
-                    letterSpacing = 1.sp,
-                    color = signalInk(QtColors.LiveMint),
-                )
-                Text("Downloading", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 2.dp))
-            }
-            Icon(QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-        }
-        Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            FileThumb(task, Modifier.width(112.dp).aspectRatio(16f / 9f))
-            Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(task.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                GradientProgress(task.progress, Modifier.fillMaxWidth().padding(top = 7.dp))
-                Row(Modifier.padding(top = 5.dp)) {
-                    Text(statusText(task, speed), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-                        color = when {
-                            task.status == DownloadStatus.FAILED -> MaterialTheme.colorScheme.error
-                            task.status == DownloadStatus.RUNNING -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        modifier = Modifier.weight(1f), maxLines = 1)
-                    Text("${(task.progress * 100).toInt()}%", fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp, color = MaterialTheme.colorScheme.primary)
-                }
-            }
-        }
-    }
-}
 /** "1.0 / 5.7 GB" (one unit when both share it) so the status line fits small screens. */
 private fun compactProgress(done: Long, total: Long?): String {
     val d = Format.bytes(done)
@@ -337,7 +343,7 @@ fun statusText(task: DownloadTask, speed: Long): String = when (task.status) {
 
 @Composable
 fun FileThumb(task: DownloadTask, modifier: Modifier) {
-    Box(modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
+    Box(modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
         val file = File(task.filePath)
         val model: Any? = when {
             task.type == ContentType.IMAGE && file.exists() -> file
@@ -352,10 +358,10 @@ fun FileThumb(task: DownloadTask, modifier: Modifier) {
             contentAlignment = Alignment.Center,
         ) { Icon(QtIcons.MusicNote, null, tint = Color.White, modifier = Modifier.size(13.dp)) }
         if (task.durationSec > 0 && task.type == ContentType.VIDEO) Text(
-            Format.duration(task.durationSec), color = Color(0xFFE7E9EE),
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(2.dp))
-                .background(Color(0xCC0D0F13)).padding(horizontal = 5.dp, vertical = 2.dp),
+            Format.duration(task.durationSec), color = Color(0xFFF8FAFC),
+            style = MaterialTheme.typography.labelSmall, fontSize = 10.sp,
+            modifier = Modifier.align(Alignment.BottomEnd).padding(5.dp).clip(RoundedCornerShape(6.dp))
+                .background(Color(0xCC0D1526)).padding(horizontal = 6.dp, vertical = 2.dp),
         )
     }
 }
@@ -376,7 +382,7 @@ private fun DoneRow(task: DownloadTask, watched: Float?, selected: Boolean?, onC
                 Text(
                     listOf(if (task.durationSec > 0) Format.duration(task.durationSec) else "", Format.bytes(task.totalBytes))
                         .filter { it.isNotBlank() }.joinToString(" · "),
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             val progress = watched ?: if (task.lastPlayedPositionMs > 0 && task.durationSec > 0) task.lastPlayedPositionMs / 1000f / task.durationSec else null
@@ -386,8 +392,8 @@ private fun DoneRow(task: DownloadTask, watched: Float?, selected: Boolean?, onC
             )
         }
         if (selected != null) Box(
-            Modifier.padding(end = 10.dp).size(22.dp).clip(RoundedCornerShape(4.dp))
-                .border(2.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+            Modifier.padding(end = 10.dp).size(22.dp).clip(RoundedCornerShape(8.dp))
+                .border(2.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
                 .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent),
             contentAlignment = Alignment.Center,
         ) { if (selected) Icon(QtIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp)) }
@@ -411,16 +417,21 @@ private fun ItemMenu(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
         Row(Modifier.padding(horizontal = 20.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             FileThumb(task, Modifier.width(100.dp).aspectRatio(16f / 9f))
             Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
                 Text(task.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
                 task.sourceHost?.let {
-                    Text(it.uppercase(), color = signalInk(QtColors.LiveMint), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        fontSize = 8.sp, letterSpacing = 0.5.sp,
-                        modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(2.dp)).pressable(onClick = { onSource(); onDismiss() }))
+                    Text(
+                        it, color = signalInk(QtColors.LiveMint),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(6.dp))
+                            .background(signalInk(QtColors.LiveMint).copy(alpha = 0.10f))
+                            .pressable(onClick = { onSource(); onDismiss() })
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
                 }
             }
             QtIconButton(QtIcons.Edit, "Rename", { onRename(); onDismiss() }, container = MaterialTheme.colorScheme.surfaceContainerHigh)

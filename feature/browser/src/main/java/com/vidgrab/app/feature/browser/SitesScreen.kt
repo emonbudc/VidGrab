@@ -71,10 +71,11 @@ fun SitesScreen(onBack: () -> Unit, onOpen: (String) -> Unit, onHistory: () -> U
             items(sites.size) { i ->
                 val s = sites[i]
                 Row(
-                    Modifier.fillMaxWidth().clickable {
-                        val d = deleting
-                        if (d != null) deleting = if (s.id in d) d - s.id else d + s.id else onOpen(s.url)
-                    }.padding(horizontal = 16.dp, vertical = 10.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow).clickable {
+                            val d = deleting
+                            if (d != null) deleting = if (s.id in d) d - s.id else d + s.id else onOpen(s.url)
+                        }.padding(horizontal = 14.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SiteIcon(s.name, s.url)
@@ -121,11 +122,17 @@ fun HistoryScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
         if (history.isEmpty()) EmptyBox("No browsing history", modifier = Modifier.fillMaxSize().padding(pad), icon = QtIcons.History)
         else LazyColumn(Modifier.fillMaxSize().padding(pad)) {
             items(history, key = { it.id }) { h ->
-                Row(Modifier.fillMaxWidth().clickable { onOpen(h.url) }.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
-                        Text(h.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow).clickable { onOpen(h.url) }
+                        .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SiteIcon(h.title, h.url)
+                    Column(Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 6.dp)) {
+                        Text(h.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
                         Text(Urls.host(h.url).orEmpty() + " · " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(h.visitedAt)),
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     QtIconButton(QtIcons.Close, "Remove", { vm.deleteHistory(h.id) })
                 }
@@ -143,10 +150,16 @@ fun BookmarksScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
         if (list.isEmpty()) EmptyBox("Nothing saved yet", "Use “Save page” or “Watch later” to keep pages here", Modifier.fillMaxSize().padding(pad))
         else LazyColumn(Modifier.fillMaxSize().padding(pad)) {
             items(list, key = { it.id }) { b ->
-                Row(Modifier.fillMaxWidth().clickable { onOpen(b.url) }.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
-                        Text(b.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text(Urls.host(b.url).orEmpty(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow).clickable { onOpen(b.url) }
+                        .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SiteIcon(b.title, b.url)
+                    Column(Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 6.dp)) {
+                        Text(b.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+                        Text(Urls.host(b.url).orEmpty(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     QtIconButton(QtIcons.Close, "Remove", { vm.removeBookmark(b.url) })
                 }

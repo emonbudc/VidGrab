@@ -92,7 +92,7 @@ fun SearchScreen(
                 leadingIcon = { Icon(QtIcons.Search, null, Modifier.size(20.dp)) },
                 singleLine = true,
                 modifier = Modifier.weight(1f).focusRequester(focus),
-                shape = RoundedCornerShape(4.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -144,7 +144,7 @@ fun SearchScreen(
                             "Facebook" to "https://m.facebook.com/", "TikTok" to "https://www.tiktok.com/", "Twitter/X" to "https://x.com/",
                         ).forEach { (n, u) ->
                             Row(
-                                Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                     .pressable(scaleDown = 0.94f, onClick = { onOpenUrl(u) }).padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {

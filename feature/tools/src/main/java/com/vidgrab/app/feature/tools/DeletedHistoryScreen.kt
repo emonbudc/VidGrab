@@ -197,13 +197,13 @@ fun DeletedHistoryScreen(onBack: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Box(
-                                Modifier.size(22.dp).clip(RoundedCornerShape(4.dp))
-                                    .border(2.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+                                Modifier.size(22.dp).clip(RoundedCornerShape(6.dp))
+                                    .border(2.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
                                     .background(if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background),
                                 contentAlignment = Alignment.Center,
                             ) { if (on) Icon(QtIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp)) }
                             Box(
-                                Modifier.padding(start = 14.dp).width(96.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(4.dp))
+                                Modifier.padding(start = 14.dp).width(96.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(10.dp))
                                     .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -219,13 +219,13 @@ fun DeletedHistoryScreen(onBack: () -> Unit) {
                                 Text(
                                     listOfNotNull(Format.duration(d.durationSec), Format.bytes(d.sizeBytes), Urls.host(d.pageUrl ?: d.url))
                                         .filter { it.isNotBlank() && it != "--" }.joinToString("  ·  "),
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 8.sp,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp),
                                 )
                                 // Files found on the phone (not downloaded here) have no web address to fetch again.
                                 if (d.pageUrl != null || d.url.startsWith("http")) Row(
-                                    Modifier.padding(top = 8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f))
+                                    Modifier.padding(top = 8.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f))
                                         .pressable(scaleDown = 0.94f, onClick = { downloadAgain(d) }).padding(horizontal = 12.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
