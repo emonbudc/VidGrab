@@ -55,7 +55,6 @@ import com.vidgrab.app.core.playerui.PlayerOption
 import com.vidgrab.app.core.playerui.SeekBar
 import com.vidgrab.app.core.playerui.SpeedButton
 import com.vidgrab.app.core.playerui.VideoPlayerBox
-import com.vidgrab.app.core.playerui.VlcVideoSurface
 import com.vidgrab.app.core.playerui.AutoPipEffect
 import com.vidgrab.app.core.playerui.LocalPipMode
 import kotlinx.coroutines.launch
@@ -237,12 +236,8 @@ fun MiniPlayer(onExpand: () -> Unit, onPip: () -> Unit = {}, modifier: Modifier 
     ) {
         Row(Modifier.padding(start = 8.dp, end = 4.dp, top = 8.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(width = 64.dp, height = 40.dp).clip(RoundedCornerShape(10.dp)).background(Color.Black), contentAlignment = Alignment.Center) {
-                if (current.isVideo && !state.audioOnly) {
-                    VlcVideoSurface(controller, Modifier.fillMaxSize())
-                } else {
-                    Icon(QtIcons.MusicNote, null, tint = Color.White)
-                    if (current.artwork != null) AsyncImage(current.artwork, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                }
+                Icon(QtIcons.MusicNote, null, tint = Color.White)
+                if (current.artwork != null) AsyncImage(current.artwork, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(current.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)

@@ -161,14 +161,6 @@ class VlcEngine private constructor(private val context: Context) {
         runCatching { p.attachViews(layout, null, true, true) }
         p.setVideoTrackEnabled(!audioOnly)
         updateVideoSize()
-        if (continueAfterDetach) {
-            continueAfterDetach = false
-            val s = _snapshot.value
-            if (currentItem != null && !s.ended && !p.isPlaying) {
-                p.play()
-                p.setTime(s.timeMs)
-            }
-        }
         _snapshot.value = _snapshot.value.copy(hasVideo = !audioOnly && _snapshot.value.hasVideo)
     }
 
@@ -178,6 +170,14 @@ class VlcEngine private constructor(private val context: Context) {
         continueAfterDetach = !audioOnly && currentItem != null && !s.ended && (s.isPlaying || s.isBuffering)
         attached = null
         runCatching { player?.detachViews() }
+        if (!continueAfterDetach) return
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val p = player ?: return@postDelayed
+            if (continueAfterDetach && currentItem != null && !_snapshot.value.ended && !p.isPlaying) {
+                p.play()
+                p.setTime(s.timeMs)
+            }
+        }, 250)
     }
 
     fun addSubtitle(uri: Uri, mimeType: String): Boolean = runCatching {
