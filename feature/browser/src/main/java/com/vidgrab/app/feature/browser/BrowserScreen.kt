@@ -688,12 +688,14 @@ private fun Shortcut(label: String, url: String, onOpen: (String) -> Unit, modif
 private fun ShortcutIcon(label: String, url: String) {
     val cs = MaterialTheme.colorScheme
     val spec = brandFor(label.ifBlank { url }) ?: brandFor(url)
+    val icon = spec?.icon
+    val tint = spec?.tint ?: cs.onSurfaceVariant
     Box(
         Modifier.size(48.dp).clip(CircleShape)
             .background(spec?.background ?: SolidColor(cs.surfaceContainerHigh)),
         contentAlignment = Alignment.Center,
     ) {
-        if (spec?.icon != null) Icon(spec.icon, null, tint = spec.tint, modifier = Modifier.size(24.dp))
+        if (icon != null) Icon(icon, null, tint = tint, modifier = Modifier.size(24.dp))
         else Text(
             label.trim().take(1).uppercase(), style = MaterialTheme.typography.titleMedium,
             color = cs.onSurfaceVariant, fontWeight = FontWeight.SemiBold,
