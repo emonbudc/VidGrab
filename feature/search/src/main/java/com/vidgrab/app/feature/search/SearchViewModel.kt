@@ -28,8 +28,6 @@ class SearchViewModel(
         if (q.isBlank()) emptyList() else runCatching { media.suggestions(q) }.getOrDefault(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val hot = listOf("Top hits", "Trending songs", "Lofi", "Workout music", "Cartoon", "Natok", "Cricket highlights", "Taylor Swift")
-
     fun remember(q: String) = viewModelScope.launch { history.add(q) }
     fun forget(q: String) = viewModelScope.launch { history.remove(q) }
     fun clearHistory() = viewModelScope.launch { history.clear() }

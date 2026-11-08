@@ -14,21 +14,21 @@ enum class HomeCategory(
         "Music", "music", SearchFilter.MUSIC,
         listOf(
             "song", "songs", "music", "singer", "album", "lofi", "remix", "cover", "band", "concert",
-            "playlist", "audio", "instrumental", "beats", "গান", "সঙ্গীত", "শিল্পী", "অ্যালবাম", "সুর",
+            "playlist", "audio", "instrumental", "beats",
         ),
     ),
     NEWS(
         "News", "news", SearchFilter.VIDEOS,
         listOf(
             "news", "breaking", "headline", "headlines", "politics", "election", "parliament", "weather",
-            "report", "bulletin", "খবর", "সংবাদ", "রাজনীতি", "নির্বাচন", "আন্তর্জাতিক", "প্রতিবেদন",
+            "report", "bulletin",
         ),
     ),
     MOVIES(
         "Movies", "movies", SearchFilter.VIDEOS,
         listOf(
             "movie", "movies", "film", "films", "cinema", "trailer", "teaser", "bollywood", "tollywood",
-            "hollywood", "ott", "web series", "picture", "সিনেমা", "চলচ্চিত্র", "মুভি", "ট্রেইলার",
+            "hollywood", "ott", "web series", "picture",
         ),
     );
 

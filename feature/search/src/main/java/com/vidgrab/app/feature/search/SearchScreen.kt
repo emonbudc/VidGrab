@@ -1,18 +1,11 @@
 package com.vidgrab.app.feature.search
 
 import com.vidgrab.app.core.designsystem.icon.QtIcons
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import com.vidgrab.app.core.designsystem.IconTile
-import com.vidgrab.app.core.designsystem.QtChip
 import com.vidgrab.app.core.designsystem.QtColors
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.pressable
-import com.vidgrab.app.core.ui.BrandTile
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,9 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -54,15 +44,12 @@ import com.vidgrab.app.core.common.Urls
 import com.vidgrab.app.core.designsystem.SectionHeader
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(
     initial: String,
     onBack: () -> Unit,
     onSearch: (String) -> Unit,
-    onOpenUrl: (String) -> Unit,
-    onViewSites: () -> Unit,
-    onDownloadUrl: (String) -> Unit = onOpenUrl,
+    onDownloadUrl: (String) -> Unit,
 ) {
     val vm = koinViewModel<SearchViewModel>()
     var field by remember { mutableStateOf(TextFieldValue(initial, TextRange(initial.length))) }
@@ -124,34 +111,6 @@ fun SearchScreen(
                     }
                     items(recent) { q ->
                         SuggestionRow(QtIcons.History, q, onClick = { submit(q) }, onRemove = { vm.forget(q) })
-                    }
-                }
-                item { SectionHeader("Hot searches") }
-                item {
-                    FlowRow(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        vm.hot.forEachIndexed { i, h ->
-                            QtChip(h, false, { submit(h) }, icon = if (i < 3) QtIcons.TrendingUp else null)
-                        }
-                    }
-                }
-                item {
-                    SectionHeader("View sites") { TextButton(onClick = onViewSites) { Text("View all") } }
-                }
-                item {
-                    FlowRow(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(
-                            "YouTube" to "https://m.youtube.com/", "Instagram" to "https://www.instagram.com/",
-                            "Facebook" to "https://m.facebook.com/", "TikTok" to "https://www.tiktok.com/", "Twitter/X" to "https://x.com/",
-                        ).forEach { (n, u) ->
-                            Row(
-                                Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                    .pressable(scaleDown = 0.94f, onClick = { onOpenUrl(u) }).padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                BrandTile(n, size = 26.dp)
-                                Text(n, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp))
-                            }
-                        }
                     }
                 }
             }

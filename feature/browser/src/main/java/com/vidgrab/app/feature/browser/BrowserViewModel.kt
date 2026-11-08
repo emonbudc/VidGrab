@@ -47,6 +47,7 @@ data class BrowserUi(
     val title: String = "",
     val progress: Int = 0,
     val canGoBack: Boolean = false,
+    val canGoForward: Boolean = false,
     /** The video the user is actually watching; null on listing pages or before playback starts. */
     val mainVideo: PageVideo? = null,
     /** The video the page declares in its player data (known before playback starts). */
@@ -71,6 +72,8 @@ class BrowserViewModel(
 
     val bookmarked = currentUrl.flatMapLatest { repo.isBookmarked(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    val sites = repo.sites.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val history = repo.history.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private fun sessionHeaders(mediaUrl: String): Map<String, String> = buildMap {
         put("Referer", _ui.value.url)
@@ -143,7 +146,21 @@ class BrowserViewModel(
         return true
     }
 
-    fun onProgress(p: Int, canGoBack: Boolean) = _ui.update { it.copy(progress = p, canGoBack = canGoBack) }
+    fun onProgress(p: Int, canGoBack: Boolean, canGoForward: Boolean) =
+        _ui.update { it.copy(progress = p, canGoBack = canGoBack, canGoForward = canGoForward) }
+
+    fun onNavState(canGoBack: Boolean, canGoForward: Boolean) =
+        _ui.update { it.copy(canGoBack = canGoBack, canGoForward = canGoForward) }
+
+    /** The in-app new-tab page: forget the page that was open beneath it. */
+    fun onHome() {
+        currentUrl.value = ""
+        frames.clear()
+        autoDownload = false
+        autoDone = false
+        instagramFailed = null
+        _ui.value = BrowserUi()
+    }
 
     /** Network-level sniffing: playlists and media files the page requests. */
     fun onMediaRequest(url: String) {

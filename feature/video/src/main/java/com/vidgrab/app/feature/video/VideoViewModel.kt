@@ -10,7 +10,6 @@ import com.vidgrab.app.core.data.MediaRepository
 import com.vidgrab.app.core.media.PlayItem
 import com.vidgrab.app.core.media.PlayerController
 import com.vidgrab.app.core.model.ChannelDetails
-import com.vidgrab.app.core.model.Comment
 import com.vidgrab.app.core.model.FormatKind
 import com.vidgrab.app.core.model.ItemKind
 import com.vidgrab.app.core.model.MediaItem
@@ -25,8 +24,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class CommentsUi(val items: List<Comment> = emptyList(), val loading: Boolean = false, val next: Any? = null, val error: String? = null)
-
 private const val AUTO = "Auto"
 
 class VideoViewModel(
@@ -36,8 +33,6 @@ class VideoViewModel(
 ) : ViewModel() {
     private val _details = MutableStateFlow<LoadState<VideoDetails>>(LoadState.Loading)
     val details: StateFlow<LoadState<VideoDetails>> = _details
-    private val _comments = MutableStateFlow(CommentsUi())
-    val comments: StateFlow<CommentsUi> = _comments
     private var url: String? = null
     private val pageUrl = MutableStateFlow<String?>(null)
     /** Whether this video is in Watch later. One flow for the screen's lifetime, following the loaded URL. */
@@ -49,7 +44,6 @@ class VideoViewModel(
         if (this.url == url && !force && _details.value !is LoadState.Error) return
         this.url = url
         _details.value = LoadState.Loading
-        _comments.value = CommentsUi()
         viewModelScope.launch {
             val r = loadCatching { media.details(url, force) }
             _details.value = r
@@ -58,7 +52,6 @@ class VideoViewModel(
                 pageUrl.value = r.data.item.url
                 // Coming back from the mini player: this video is already playing (maybe in listen mode); keep it going.
                 if (force || player.state.value.current?.id != "web:" + r.data.item.url) play(r.data, audioOnly = false)
-                loadComments()
             }
         }
     }
@@ -138,18 +131,6 @@ class VideoViewModel(
         val d = (details.value as? LoadState.Success)?.data ?: return AUTO
         val h = d.options.filter { it.kind == FormatKind.VIDEO && it.audioUrl != null && it.height in 361..720 }.maxOfOrNull { it.height }
         return if (h != null) "$AUTO (${h}p)" else AUTO
-    }
-
-    fun loadComments() {
-        val u = url ?: return
-        val s = _comments.value
-        if (s.loading || (s.items.isNotEmpty() && s.next == null)) return
-        _comments.update { it.copy(loading = true) }
-        viewModelScope.launch {
-            runCatching { media.comments(u, s.next) }
-                .onSuccess { p -> _comments.update { it.copy(items = it.items + p.items, next = p.nextPage, loading = false) } }
-                .onFailure { e -> _comments.update { it.copy(loading = false, error = e.message, next = null) } }
-        }
     }
 
     /** Watch later: saves the video (or removes it) for the Saved screen. */

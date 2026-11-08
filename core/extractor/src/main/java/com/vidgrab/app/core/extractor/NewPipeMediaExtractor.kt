@@ -370,7 +370,27 @@ class NewPipeMediaExtractor(
     }
 
     private fun List<Image>.best(): String? =
-        maxByOrNull { if (it.height > 0) it.height else it.estimatedResolutionLevel.ordinal * 100 }?.url
+        maxByOrNull { if (it.height > 0) it.height else it.estimatedResolutionLevel.ordinal * 100 }?.url?.let(::highQualityThumbnail)
+
+    /**
+     * Music search (and some related feeds) hand back small album art variants: a 120px ytimg thumbnail or a
+     * googleusercontent URL with =w120-h120. Ask for the large variant instead; the UI drops back to smaller sizes
+     * when a video has no high-resolution frame.
+     */
+    private fun highQualityThumbnail(url: String): String {
+        ytThumbnailVariant.find(url)?.let { match ->
+            if (match.groupValues[1] == "maxresdefault") return url
+            return url.replaceRange(match.range, "/maxresdefault.jpg")
+        }
+        if (!url.contains("lh3.googleusercontent.com")) return url
+        return googleImageWidth.replace(url) { m -> m.groupValues[1] + "1440" }
+            .let { widened ->
+                googleImageHeight.replace(widened) { m -> m.groupValues[1] + "1440" }
+            }
+            .let { sized ->
+                googleImageSquare.replace(sized) { m -> m.groupValues[1] + "1440" }
+            }
+    }
 
     private suspend fun <T> io(block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }
 
@@ -390,6 +410,14 @@ class NewPipeMediaExtractor(
     }
 
     private companion object {
+        val ytThumbnailVariant = Regex(
+            """/(default|mqdefault|hqdefault|sddefault|hq720|maxresdefault)\.(?:jpg|jpeg|png|webp)""",
+            RegexOption.IGNORE_CASE,
+        )
+        val googleImageWidth = Regex("""(=w)\d+""")
+        val googleImageHeight = Regex("""(=h)\d+""")
+        val googleImageSquare = Regex("""(=s)\d+""")
+
         /** Broad topics; the feed picks a few at random so it never repeats yesterday's kiosk order. */
         val DISCOVER_QUERIES = listOf(
             "new music", "gaming highlights", "tech review", "movie trailer", "football skills",

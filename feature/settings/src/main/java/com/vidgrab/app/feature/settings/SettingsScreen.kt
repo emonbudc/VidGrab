@@ -33,6 +33,7 @@ class SettingsActions(
     val deletedHistory: () -> Unit,
     val statusSaver: () -> Unit,
     val vault: () -> Unit,
+    val sites: () -> Unit,
     val about: () -> Unit,
 )
 
@@ -83,9 +84,7 @@ fun SettingsScreen(actions: SettingsActions) {
                     ThemeMode.SYSTEM -> "System"; ThemeMode.LIGHT -> "Light"; ThemeMode.DARK -> "Dark"
                 }, onClick = actions.theme)
                 RowDivider()
-                SwitchRow("Clipboard detection", "Offer a copied link when you open the app", s.clipboardDetection, QtIcons.ContentPaste) { v ->
-                    vm.update { it.copy(clipboardDetection = v) }
-                }
+                NavRow(QtIcons.Language, "Site settings", "Add, remove and arrange saved sites", onClick = actions.sites)
             }
         }
         item { GroupLabel("Download tools") }

@@ -2,7 +2,6 @@ package com.vidgrab.app.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vidgrab.app.core.data.MediaRepository
 import com.vidgrab.app.core.data.PlaybackHistoryRepository
 import com.vidgrab.app.core.data.RecommendationRepository
 import com.vidgrab.app.core.data.SearchHistoryRepository
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -31,9 +29,7 @@ data class FeedUi(
 )
 
 class HomeViewModel(
-    private val media: MediaRepository,
     private val recommendations: RecommendationRepository,
-    private val settings: com.vidgrab.app.core.data.SettingsRepository,
     private val history: SearchHistoryRepository,
     private val playHistory: PlaybackHistoryRepository,
     private val downloads: com.vidgrab.app.core.download.DownloadManager,
@@ -45,22 +41,8 @@ class HomeViewModel(
     private val _category = MutableStateFlow(HomeCategory.ALL)
     val category: StateFlow<HomeCategory> = _category.asStateFlow()
 
-    val clipboardDetection = settings.settings.map { it.clipboardDetection }
-        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
-
     fun pause(id: Long) = downloads.pause(id)
     fun resume(id: Long) = downloads.resume(id)
-
-    /**
-     * Links the plain download sheet can't handle by itself: playlists and channels (their page lists the videos) and
-     * Instagram posts (read in the browser, photos included). These open in the app instead.
-     */
-    fun opensInApp(url: String): Boolean {
-        val u = com.vidgrab.app.core.common.Urls.normalize(url)
-        val kind = media.linkKind(u)
-        return kind == com.vidgrab.app.core.model.ItemKind.PLAYLIST || kind == com.vidgrab.app.core.model.ItemKind.CHANNEL ||
-            com.vidgrab.app.core.common.Urls.platformOf(u) == com.vidgrab.app.core.common.Platform.INSTAGRAM
-    }
 
     private val _feed = MutableStateFlow(FeedUi())
     val feed: StateFlow<FeedUi> = _feed

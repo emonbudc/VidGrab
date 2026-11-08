@@ -18,12 +18,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -94,8 +92,8 @@ class PlayerOption(val icon: ImageVector, val label: String, val selected: Boole
 /** The Quality row of the settings sheet: [current] ("Auto (720p)", "1080p"…) and the [options] to switch to. */
 class QualityMenu(val current: String, val options: List<String>, val onSelect: (String) -> Unit)
 
-/** What autoplay plays when the video ends: shown with a countdown over the finished video. */
-class UpNext(val title: String, val thumbnail: String?, val onPlay: () -> Unit)
+/** What autoplay plays when the video ends. */
+class UpNext(val onPlay: () -> Unit)
 
 /**
  * The app's video player, laid out like YouTube's: collapse at the top left, autoplay / picture-in-picture / captions /
@@ -280,9 +278,11 @@ fun VideoPlayerBox(
             }
         }
         if (!LocalPipMode.current) GestureOverlays(feedback, state.durationMs, controller.prefs)
-        val atEnd = state.ended && !state.isPlaying && (state.durationMs <= 0 || state.positionMs >= state.durationMs - 1_000)
+        // Autoplay: start the next suggestion the moment the video ends, with no countdown overlay.
         // Sleep timer "End of video" means stop here, not autoplay the next one.
-        if (overlayControls && upNext != null && autoplay == true && atEnd && sleepAt != -1L) UpNextOverlay(upNext, fullscreen)
+        if (state.ended && overlayControls && upNext != null && autoplay == true && sleepAt != -1L) {
+            LaunchedEffect(state.ended) { upNext.onPlay() }
+        }
     }
     if (sheetOpen) YtSettingsSheet(
         state = state, controller = controller, quality = quality, onPip = onPip, extra = options,
@@ -409,34 +409,6 @@ private fun YtSeekBar(
         bar((buffered.toFloat() / d).coerceIn(0f, 1f), Color.White.copy(alpha = 0.5f))
         bar(fraction, YtRed)
         drawCircle(YtRed, radius = (if (dragFraction != null) 9.dp else 6.dp).toPx(), center = Offset(size.width * fraction, y))
-    }
-}
-
-/** End of the video with autoplay on: the next suggestion, playing by itself after a short countdown. */
-@Composable
-private fun UpNextOverlay(next: UpNext, fullscreen: Boolean) {
-    var cancelled by remember(next) { mutableStateOf(false) }
-    var left by remember(next) { mutableIntStateOf(5) }
-    LaunchedEffect(next, cancelled) {
-        if (cancelled) return@LaunchedEffect
-        while (left > 0) { delay(1000); left-- }
-        next.onPlay()
-    }
-    if (cancelled) return
-    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.75f)), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 32.dp)) {
-            Text("Up next in $left", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelLarge)
-            Text(next.title, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
-                style = if (fullscreen) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(vertical = 8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Cancel", color = Color.White, style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.clip(CircleShape).background(Color.White.copy(alpha = 0.18f)).pressable(onClick = { cancelled = true })
-                        .padding(horizontal = 20.dp, vertical = 10.dp))
-                Text("Play now", color = Color.Black, style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.clip(CircleShape).background(Color.White).pressable(onClick = next.onPlay).padding(horizontal = 20.dp, vertical = 10.dp))
-            }
-        }
     }
 }
 

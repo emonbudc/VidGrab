@@ -20,11 +20,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -33,11 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.vidgrab.app.core.common.Format
-import com.vidgrab.app.core.common.Platform
-import com.vidgrab.app.core.common.Urls
 import com.vidgrab.app.core.designsystem.QtColors
 import com.vidgrab.app.core.designsystem.QtIconButton
-import com.vidgrab.app.core.designsystem.icon.BrandIcons
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.model.ItemKind
@@ -50,10 +50,31 @@ fun Thumbnail(
     corner: Int = 14,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
+    var model by remember(url) { mutableStateOf(url) }
     Box(modifier.clip(RoundedCornerShape(corner.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
-        AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        AsyncImage(
+            model = model,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            onError = { model = smallerThumbnail(model) ?: model },
+        )
         overlay()
     }
+}
+
+/** Some videos have no high-resolution frame; step the CDN URL down instead of leaving the card blank. */
+private fun smallerThumbnail(url: String?): String? {
+    if (url == null) return null
+    if (url.contains("maxresdefault.jpg")) return url.replace("maxresdefault.jpg", "hqdefault.jpg")
+    var changed = false
+    val half = Regex("""([=][swh])(\d+)""").replace(url) { match ->
+        val size = match.groupValues[2].toIntOrNull()
+        if (size == null || size <= 480) return@replace match.value
+        changed = true
+        match.groupValues[1] + (size / 2)
+    }
+    return if (changed) half else null
 }
 
 /** Small dark chip in the corner of a thumbnail (duration, LIVE, count). */
@@ -77,21 +98,6 @@ fun BoxScope.CornerLabel(text: String, modifier: Modifier = Modifier, live: Bool
             letterSpacing = 0.4.sp,
         )
     }
-}
-
-/** Source stamp in the top-left of a thumbnail. */
-@Composable
-fun BoxScope.SourceChip(text: String, modifier: Modifier = Modifier) {
-    if (text.isBlank()) return
-    Text(
-        text,
-        modifier.align(Alignment.TopStart).padding(5.dp).clip(RoundedCornerShape(7.dp))
-            .background(Color(0xCC0D0F13)).padding(horizontal = 5.dp, vertical = 2.dp),
-        color = QtColors.LiveMint,
-        fontFamily = FontFamily.Monospace,
-        fontSize = 7.sp,
-        letterSpacing = 0.5.sp,
-    )
 }
 
 @Composable
@@ -137,7 +143,6 @@ fun VideoFeedCard(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, 
     val cs = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.995f, role = null, onClick = onClick)) {
         Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(16f / 9f), corner = 20) {
-            FeedSourceBadge(item.url)
             FeedDurationBadge(
                 text = when {
                     item.isLive -> "LIVE"
@@ -195,31 +200,6 @@ fun VideoFeedCard(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, 
 }
 
 @Composable
-private fun FeedSourceBadge(url: String) {
-    val source = feedSource(url)
-    Box(
-        Modifier.padding(10.dp).height(24.dp).clip(RoundedCornerShape(8.dp))
-            .background(Color(0xB312141A)).padding(horizontal = 7.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (source.icon != null) {
-                Icon(source.icon, null, tint = Color.White, modifier = Modifier.size(12.dp))
-                Spacer(Modifier.width(4.dp))
-            }
-            Text(
-                source.label,
-                color = Color.White,
-                fontSize = 9.sp,
-                lineHeight = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp,
-            )
-        }
-    }
-}
-
-@Composable
 private fun BoxScope.FeedDurationBadge(text: String, live: Boolean) {
     if (text.isBlank()) return
     Box(
@@ -261,19 +241,6 @@ private fun FeedDownloadButton(onClick: () -> Unit) {
     }
 }
 
-private data class FeedSource(val label: String, val icon: ImageVector?)
-
-private fun feedSource(url: String): FeedSource = when (Urls.platformOf(url)) {
-    Platform.YOUTUBE -> FeedSource("YT", BrandIcons.YouTube)
-    Platform.INSTAGRAM -> FeedSource("IG", BrandIcons.Instagram)
-    Platform.FACEBOOK -> FeedSource("FB", BrandIcons.Facebook)
-    Platform.TIKTOK -> FeedSource("TT", BrandIcons.TikTok)
-    Platform.TWITTER -> FeedSource("X", BrandIcons.X)
-    Platform.WHATSAPP -> FeedSource("WA", BrandIcons.WhatsApp)
-    Platform.SOUNDCLOUD -> FeedSource("SC", BrandIcons.SoundCloud)
-    Platform.OTHER -> FeedSource("WEB", null)
-}
-
 /** Compact list row: thumbnail on the left. Used for search results and related videos. */
 @Composable
 fun MediaRow(
@@ -290,7 +257,6 @@ fun MediaRow(
             Box(Modifier.width(132.dp), contentAlignment = Alignment.Center) { Avatar(item.thumbnail, 70) }
         } else {
             Thumbnail(item.thumbnail, Modifier.width(132.dp).aspectRatio(16f / 9f), corner = 14) {
-                SourceChip(platformTag(item.url))
                 if (item.kind == ItemKind.PLAYLIST) {
                     CornerLabel(if (item.streamCount >= 0) "${item.streamCount} videos" else "PLAYLIST")
                 } else {
@@ -345,15 +311,4 @@ fun MediaTile(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, modi
             modifier = Modifier.padding(top = 3.dp),
         )
     }
-}
-
-private fun platformTag(url: String): String = when (Urls.platformOf(url)) {
-    Platform.YOUTUBE -> "YT"
-    Platform.INSTAGRAM -> "IG"
-    Platform.FACEBOOK -> "FB"
-    Platform.TIKTOK -> "TT"
-    Platform.TWITTER -> "X"
-    Platform.WHATSAPP -> "WA"
-    Platform.SOUNDCLOUD -> "SC"
-    Platform.OTHER -> "WEB"
 }

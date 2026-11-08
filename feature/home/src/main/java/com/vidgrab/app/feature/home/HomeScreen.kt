@@ -1,10 +1,7 @@
 package com.vidgrab.app.feature.home
 
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,16 +25,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -45,15 +36,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vidgrab.app.core.common.Urls
 import com.vidgrab.app.core.designsystem.LocalBottomBarHeight
 import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.downloadsheet.DownloadSheetController
 import com.vidgrab.app.core.model.MediaItem
-import com.vidgrab.app.core.ui.BrandTile
 import com.vidgrab.app.core.ui.EmptyBox
+import com.vidgrab.app.core.designsystem.R as DsR
 import com.vidgrab.app.core.ui.ErrorBox
 import com.vidgrab.app.core.ui.FeedSkeleton
 import com.vidgrab.app.core.ui.FooterLoading
@@ -66,12 +56,9 @@ import org.koin.compose.viewmodel.koinViewModel
 class HomeActions(
     val openSearch: (String) -> Unit,
     val openSearchResults: (String) -> Unit,
-    /** A link the user pasted/copied: go straight to downloading it. */
-    val downloadUrl: (String) -> Unit,
     val openItem: (MediaItem) -> Unit,
     val openChannel: (String) -> Unit,
     val openHowTo: (String) -> Unit,
-    val openSites: () -> Unit,
     val openSettings: () -> Unit = {},
     val openLibrary: () -> Unit = {},
     val openVault: () -> Unit = {},
@@ -81,20 +68,8 @@ class HomeActions(
 fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
     val vm = koinViewModel<HomeViewModel>()
     val sheet = koinInject<DownloadSheetController>()
-    val context = LocalContext.current
     val category by vm.category.collectAsStateWithLifecycle()
-    val clipboardOn by vm.clipboardDetection.collectAsStateWithLifecycle()
-    var clip by remember { mutableStateOf<String?>(null) }
-    var dismissedClip by rememberSaveable { mutableStateOf<String?>(null) }
-    val focused = LocalWindowInfo.current.isWindowFocused
 
-    LaunchedEffect(focused, clipboardOn) {
-        if (!focused || !clipboardOn) {
-            clip = null
-            return@LaunchedEffect
-        }
-        clip = readClipboardUrl(context)?.takeIf { it != dismissedClip }
-    }
     LaunchedEffect(Unit) { vm.ensureFeed() }
 
     Column(
@@ -106,16 +81,6 @@ fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
         )
         HomeSearchBar(onClick = { actions.openSearch("") })
         CategoryRow(selected = category, onSelect = vm::selectCategory)
-        if (clipboardOn && clip != null) ClipboardSuggestion(
-            url = clip.orEmpty(),
-            onDownload = { url ->
-                if (vm.opensInApp(url)) actions.downloadUrl(url) else sheet.open(Urls.normalize(url))
-            },
-            onDismiss = {
-                dismissedClip = clip
-                clip = null
-            },
-        )
         HomeFeed(
             vm = vm,
             actions = actions,
@@ -133,7 +98,7 @@ private fun HomeHeader(onLogoClick: () -> Unit, onSearch: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painterResource(R.drawable.vidgrab_wordmark),
+            painterResource(DsR.drawable.vidgrab_wordmark),
             contentDescription = "VidGrab. Search or paste a link",
             contentScale = ContentScale.Fit,
             modifier = Modifier.height(30.dp).pressable(scaleDown = 0.96f, role = Role.Button, onClick = onLogoClick),
@@ -199,44 +164,6 @@ private fun CategoryRow(selected: HomeCategory, onSelect: (HomeCategory) -> Unit
 }
 
 @Composable
-private fun ClipboardSuggestion(
-    url: String,
-    onDownload: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val cs = MaterialTheme.colorScheme
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp)
-            .clip(RoundedCornerShape(16.dp)).background(cs.surface)
-            .border(1.dp, cs.outlineVariant, RoundedCornerShape(16.dp))
-            .padding(start = 10.dp, top = 7.dp, bottom = 7.dp, end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        BrandTile(url, size = 30.dp)
-        Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-            Text(
-                "Link copied",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = cs.primary,
-            )
-            Text(
-                Urls.host(url) ?: url,
-                style = MaterialTheme.typography.bodySmall,
-                color = cs.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        QtIconButton(
-            QtIcons.Download, "Download copied link", { onDownload(url) },
-            tint = cs.primary, container = cs.primaryContainer, size = 38.dp, iconSize = 18.dp,
-        )
-        QtIconButton(QtIcons.Close, "Dismiss", onDismiss, tint = cs.onSurfaceVariant, size = 32.dp, iconSize = 15.dp)
-    }
-}
-
-@Composable
 private fun HomeFeed(
     vm: HomeViewModel,
     actions: HomeActions,
@@ -285,9 +212,3 @@ private fun HomeFeed(
         }
     }
 }
-
-private fun readClipboardUrl(context: Context): String? = runCatching {
-    val cm = context.getSystemService(ClipboardManager::class.java)
-    val text = cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString()
-    Urls.extractUrl(text)
-}.getOrNull()

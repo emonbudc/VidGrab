@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.draw.clip
@@ -27,13 +26,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.model.PreferredFormat
 import com.vidgrab.app.core.model.PreferredQuality
-import com.vidgrab.app.core.designsystem.BrandTitle
-import com.vidgrab.app.core.designsystem.LocalQtExtras
 import com.vidgrab.app.core.designsystem.QtCard
 import com.vidgrab.app.core.designsystem.QtTopBar
 import com.vidgrab.app.core.designsystem.icon.QtIcons
@@ -232,48 +228,6 @@ fun NotificationSettingsScreen(onBack: () -> Unit) {
 
 @Composable
 fun ThemeSettingsScreen(onBack: () -> Unit) = AppearanceScreen(onBack)
-
-@Composable
-fun AboutScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-    Scaffold(topBar = { QtTopBar("About", onBack) }) { pad ->
-        Column(
-            Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState()).padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            androidx.compose.foundation.layout.Box(
-                Modifier.padding(top = 12.dp, bottom = 16.dp).size(84.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp))
-                    .background(LocalQtExtras.current.brand),
-                contentAlignment = Alignment.Center,
-            ) { androidx.compose.material3.Icon(QtIcons.Download, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(44.dp)) }
-            Text("VidGrab", style = BrandTitle.copy(brush = LocalQtExtras.current.brand))
-            Text("Version ${appVersion(context)}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
-                "Search, watch and download videos and music from YouTube and the web. " +
-                    "Share any link to VidGrab to download without leaving the app you're in.",
-                textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = 24.dp),
-            )
-            Text("Open-source software", style = MaterialTheme.typography.titleSmall)
-            Text(
-                "Based on QuickTube by devgalib (GPL-3.0).",
-                textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            )
-            Text(
-                "NewPipe Extractor (GPLv3) · AndroidX Media3 (Apache 2.0) · AndroidX Room, Navigation, DataStore (Apache 2.0) · Koin (Apache 2.0) · " +
-                    "Coil (Apache 2.0) · OkHttp (Apache 2.0) · Kotlin Coroutines & Serialization (Apache 2.0)",
-                textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            )
-            Text(
-                "Only download content you have the right to save. Respect the terms of the sites you use.",
-                textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 24.dp),
-            )
-        }
-    }
-}
-
 
 /** Shown on Android 13+ when notifications are blocked; opens the system screen to allow them. */
 @Composable

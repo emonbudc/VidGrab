@@ -48,6 +48,7 @@ import com.vidgrab.app.core.model.ItemKind
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.navigation.*
 import com.vidgrab.app.feature.browser.BookmarksScreen
+import com.vidgrab.app.feature.browser.BROWSER_HOME
 import com.vidgrab.app.feature.browser.BrowserScreen
 import com.vidgrab.app.feature.browser.HistoryScreen
 import com.vidgrab.app.feature.browser.SitesScreen
@@ -87,8 +88,6 @@ private val tabs = listOf(
     NavTab(SettingsRoute, "Settings", QtIcons.Settings, QtIcons.SettingsFilled),
 )
 
-private const val BROWSER_HOME = "https://m.youtube.com/"
-
 private fun tabIndexFor(dest: androidx.navigation.NavDestination?): Int = when {
     dest == null -> -1
     dest.hierarchy.any { it.hasRoute(HomeRoute::class) } -> 0
@@ -126,7 +125,6 @@ fun AppNavHost(nav: NavHostController) {
     }.collectAsStateWithLifecycle(0)
 
     fun openUrl(url: String) = nav.navigate(router.routeFor(url))
-    fun downloadUrl(url: String) = nav.navigate(router.routeForPasted(url))
     fun openItem(item: MediaItem) = nav.navigate(
         when (item.kind) {
             ItemKind.VIDEO -> VideoRoute(item.url, item.title.ifBlank { null }, item.thumbnail)
@@ -171,11 +169,9 @@ fun AppNavHost(nav: NavHostController) {
                     HomeActions(
                         openSearch = { nav.navigate(SearchRoute(it)) },
                         openSearchResults = { nav.navigate(SearchResultsRoute(it)) },
-                        downloadUrl = ::downloadUrl,
                         openItem = ::openItem,
                         openChannel = { nav.navigate(ChannelRoute(it)) },
                         openHowTo = { nav.navigate(HowToRoute(it)) },
-                        openSites = { nav.navigate(SitesRoute) },
                         openSettings = {
                             nav.navigate(SettingsRoute) {
                                 popUpTo(nav.graph.findStartDestination().id) { saveState = true }
@@ -219,6 +215,7 @@ fun AppNavHost(nav: NavHostController) {
                         deletedHistory = { nav.navigate(DeletedHistoryRoute) },
                         statusSaver = { nav.navigate(StatusSaverRoute) },
                         vault = { nav.navigate(VaultRoute) },
+                        sites = { nav.navigate(SitesRoute) },
                         about = { nav.navigate(AboutRoute) },
                     ),
                 )
@@ -236,8 +233,6 @@ fun AppNavHost(nav: NavHostController) {
                     e.toRoute<SearchRoute>().initial,
                     onBack = nav::popBackStack,
                     onSearch = { q -> nav.navigate(SearchResultsRoute(q)) { popUpTo<SearchRoute> { inclusive = true } } },
-                    onOpenUrl = { u -> nav.navigate(router.routeFor(u)) { popUpTo<SearchRoute> { inclusive = true } } },
-                    onViewSites = { nav.navigate(SitesRoute) },
                     onDownloadUrl = { u -> nav.navigate(router.routeForPasted(u)) { popUpTo<SearchRoute> { inclusive = true } } },
                 )
             }
@@ -271,9 +266,9 @@ fun AppNavHost(nav: NavHostController) {
                     r.url,
                     autoDownload = r.autoDownload,
                     onClose = nav::popBackStack,
-                    onOpenVideo = { nav.navigate(VideoRoute(it)) },
                     onOpenHistory = { nav.navigate(BrowserHistoryRoute) },
                     onOpenBookmarks = { nav.navigate(BookmarksRoute) },
+                    onOpenSites = { nav.navigate(SitesRoute) },
                 )
             }
             composable<BrowserTabRoute>(
@@ -290,9 +285,9 @@ fun AppNavHost(nav: NavHostController) {
                             restoreState = true
                         }
                     },
-                    onOpenVideo = { nav.navigate(VideoRoute(it)) },
                     onOpenHistory = { nav.navigate(BrowserHistoryRoute) },
                     onOpenBookmarks = { nav.navigate(BookmarksRoute) },
+                    onOpenSites = { nav.navigate(SitesRoute) },
                 )
             }
             composable<SitesRoute> { SitesScreen(nav::popBackStack, onOpen = ::openUrl, onHistory = { nav.navigate(BrowserHistoryRoute) }) }

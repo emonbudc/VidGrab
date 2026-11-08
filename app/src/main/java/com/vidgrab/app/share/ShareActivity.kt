@@ -51,7 +51,7 @@ class ShareActivity : ComponentActivity() {
                         Box(Modifier.fillMaxSize().alpha(0f)) {
                             BrowserScreen(
                                 startUrl = url, autoDownload = true, silent = true, stateKey = "share-$run",
-                                onClose = {}, onOpenVideo = {}, onOpenHistory = {}, onOpenBookmarks = {},
+                                onClose = {}, onOpenHistory = {}, onOpenBookmarks = {},
                             )
                         }
                         // The page is invisible: never let a tap reach it.

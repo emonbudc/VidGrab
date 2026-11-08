@@ -35,8 +35,6 @@ data class AppSettings(
     /** KB/s, 0 = unlimited. */
     val speedLimitKbps: Int = 0,
     val allowMobileData: Boolean = true,
-    /** Show a "link copied" suggestion on Home when the clipboard holds a video URL. */
-    val clipboardDetection: Boolean = true,
     val defaultQuality: PreferredQuality = PreferredQuality.P720,
     val defaultFormat: PreferredFormat = PreferredFormat.MP4,
     val notifyProgress: Boolean = true,

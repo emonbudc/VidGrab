@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -54,13 +53,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.common.LoadState
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.designsystem.SectionHeader
 import com.vidgrab.app.core.downloadsheet.DownloadSheetController
-import com.vidgrab.app.core.model.Comment
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.model.VideoDetails
 import com.vidgrab.app.core.playerui.FullscreenEffect
@@ -73,14 +72,12 @@ import com.vidgrab.app.core.playerui.LocalPipMode
 import com.vidgrab.app.core.playerui.VideoPlayerBox
 import com.vidgrab.app.core.ui.Avatar
 import com.vidgrab.app.core.ui.ErrorBox
-import com.vidgrab.app.core.ui.FooterLoading
 import com.vidgrab.app.core.ui.LoadingBox
 import com.vidgrab.app.core.designsystem.shimmer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import com.vidgrab.app.core.ui.MediaRow
-import com.vidgrab.app.core.ui.OnNearEnd
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -105,7 +102,6 @@ fun VideoScreen(
     val sheet = koinInject<DownloadSheetController>()
     var fullscreen by rememberSaveable { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
-    var showComments by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     FullscreenEffect(fullscreen && !LocalPipMode.current)
@@ -132,12 +128,12 @@ fun VideoScreen(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val currentQuality by vm.quality.collectAsStateWithLifecycle()
     val related = (details as? LoadState.Success)?.data?.related.orEmpty().firstOrNull { it.kind == com.vidgrab.app.core.model.ItemKind.VIDEO && !it.isLive }
-    // YouTube's player extras: Quality, the autoplay switch, Next = the first suggestion (with "Up next" at the end).
+    // YouTube's player extras: Quality, the autoplay switch, Next = the first suggestion (autoplay starts it instantly).
     val qualityMenu = vm.qualities().takeIf { it.isNotEmpty() }?.let { q ->
         QualityMenu(if (currentQuality == "Auto") vm.autoLabel() else currentQuality, q) { vm.setQuality(it) }
     }
     val nextVideo: (() -> Unit)? = related?.let { r -> { onPlayNext(r) } }
-    val upNext = related?.let { r -> UpNext(r.title, r.thumbnail) { onPlayNext(r) } }
+    val upNext = related?.let { r -> UpNext { onPlayNext(r) } }
     val onAutoplay: (Boolean) -> Unit = { v -> scope.launch { settingsRepo.update { it.copy(autoplayNext = v) } } }
     val playerOptions = listOf(
         PlayerOption(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, if (saved) "Saved to Watch later" else "Watch later", saved) {
@@ -170,7 +166,6 @@ fun VideoScreen(
                 is LoadState.Error -> ErrorBox(d.message, vm::retry, Modifier.fillMaxWidth().weight(1f))
                 is LoadState.Success -> {
                     val v = d.data
-                    val comments by vm.comments.collectAsStateWithLifecycle()
                     LazyColumn(Modifier.weight(1f), contentPadding = WindowInsets.navigationBars.asPaddingValues()) {
                         item {
                             Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp).clickable { showAbout = true }) {
@@ -184,32 +179,16 @@ fun VideoScreen(
                             }
                         }
                         item {
-                            Row(
-                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 14.dp),
-                                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                            ) {
-                                WatchAction(QtIcons.Download, "Download", filled = true, enabled = !v.item.isLive) {
-                                    sheet.open(v.item.url, v.item)
-                                }
-                                WatchAction(QtIcons.Image, "Thumbnail") {
-                                    scope.launch {
-                                        val name = saveThumbnail(context, v.item.thumbnail, v.item.title)
-                                        Toast.makeText(
-                                            context,
-                                            if (name != null) "Thumbnail saved to Pictures/VidGrab" else "Couldn't save the thumbnail",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                    }
-                                }
-                                WatchAction(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, if (saved) "Saved" else "Watch later", selected = saved) {
+                            VideoActions(
+                                v = v,
+                                saved = saved,
+                                audioOnly = playback.audioOnly,
+                                onDownload = { sheet.open(v.item.url, v.item) },
+                                onSave = {
                                     vm.toggleSaved()
                                     Toast.makeText(context, if (saved) "Removed from Watch later" else "Saved to Watch later", Toast.LENGTH_SHORT).show()
-                                }
-                                WatchAction(
-                                    if (playback.audioOnly) QtIcons.Videocam else QtIcons.Headphones,
-                                    if (playback.audioOnly) "Watch" else "Listen",
-                                    selected = playback.audioOnly,
-                                ) {
+                                },
+                                onListen = {
                                     val listening = playback.audioOnly
                                     vm.toggleBackground()
                                     Toast.makeText(
@@ -217,17 +196,17 @@ fun VideoScreen(
                                         if (listening) "Video back on" else "Listening in the background",
                                         Toast.LENGTH_SHORT,
                                     ).show()
-                                }
-                                WatchAction(QtIcons.Share, "Share") {
+                                },
+                                onShare = {
                                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
                                         .putExtra(Intent.EXTRA_TEXT, v.item.url), "Share"))
-                                }
-                                WatchAction(QtIcons.PictureInPicture, "Picture-in-picture") {
+                                },
+                                onPip = {
                                     vm.player.setAudioOnly(false)
                                     leave(toPip = true)
-                                }
-                                WatchAction(QtIcons.MoreHoriz, "More") { showAbout = true }
-                            }
+                                },
+                                onMore = { showAbout = true },
+                            )
                         }
                         item {
                             Row(
@@ -246,43 +225,12 @@ fun VideoScreen(
                                 Icon(QtIcons.ChevronRight, "Open channel", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                        item {
-                            Column(
-                                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(18.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainer)
-                                    .clickable { showComments = true }.padding(14.dp),
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Comments", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-                                    Text("View all", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                                }
-                                val preview = comments.items.take(2)
-                                if (preview.isEmpty()) Text(
-                                    if (comments.loading) "Loading…" else comments.error?.let { "Comments unavailable" } ?: "No comments",
-                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 8.dp),
-                                )
-                                preview.forEach { c ->
-                                    Row(Modifier.padding(top = 10.dp)) {
-                                        Avatar(c.authorAvatar, 26)
-                                        Column(Modifier.padding(start = 10.dp)) {
-                                            Text(c.author, style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(c.text, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall,
-                                                modifier = Modifier.padding(top = 2.dp))
-                                        }
-                                    }
-                                }
-                            }
-                        }
                         item { SectionHeader("Up next") }
                         items(v.related, key = { it.url }) { r ->
                             MediaRow(r, onClick = { onOpen(r) }, onDownload = { sheet.open(r) })
                         }
                     }
                     if (showAbout) AboutSheet(v, vm, onDismiss = { showAbout = false }, onChannel = onChannel)
-                    if (showComments) CommentsSheet(vm, onDismiss = { showComments = false })
                 }
             }
         }
@@ -310,34 +258,109 @@ fun VideoScreen(
 }
 
 @Composable
-private fun WatchAction(
+private fun VideoActions(
+    v: VideoDetails,
+    saved: Boolean,
+    audioOnly: Boolean,
+    onDownload: () -> Unit,
+    onSave: () -> Unit,
+    onListen: () -> Unit,
+    onShare: () -> Unit,
+    onPip: () -> Unit,
+    onMore: () -> Unit,
+) {
+    val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val plainDescription = remember(v.description) {
+        v.description.replace(Regex("<br\\s*/?>"), "\n").replace(Regex("<[^>]+>"), "")
+    }
+    fun saveThumb() = scope.launch {
+        val name = saveThumbnail(context, v.item.thumbnail, v.item.title)
+        Toast.makeText(
+            context,
+            if (name != null) "Thumbnail saved to Pictures/VidGrab" else "Couldn't save the thumbnail",
+            Toast.LENGTH_SHORT,
+        ).show()
+    }
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            com.vidgrab.app.core.designsystem.PillButton(
+                "Download", onDownload, Modifier.weight(1f), icon = QtIcons.Download, enabled = !v.item.isLive,
+            )
+            QtIconButton(
+                QtIcons.MoreHoriz, "More actions", onMore, size = 48.dp,
+                container = MaterialTheme.colorScheme.surfaceContainerHigh,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ActionTile(QtIcons.Image, "Thumbnail", onClick = { saveThumb() }, modifier = Modifier.weight(1f))
+            ActionTile(QtIcons.ContentCopy, "Copy title", onClick = { copyText(context, "Title", v.item.title) }, modifier = Modifier.weight(1f))
+            ActionTile(QtIcons.ContentCopy, "Description", onClick = { copyText(context, "Description", plainDescription) }, modifier = Modifier.weight(1f))
+            ActionTile(
+                QtIcons.Link, "Tags", enabled = v.tags.isNotEmpty(),
+                onClick = { copyText(context, "Tags", v.tags.joinToString("\n") { "#$it" }) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ActionTile(
+                if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder,
+                if (saved) "Saved" else "Watch later",
+                selected = saved, onClick = onSave, modifier = Modifier.weight(1f),
+            )
+            ActionTile(
+                if (audioOnly) QtIcons.Videocam else QtIcons.Headphones,
+                if (audioOnly) "Watch" else "Listen",
+                selected = audioOnly, onClick = onListen, modifier = Modifier.weight(1f),
+            )
+            ActionTile(QtIcons.Share, "Share", onClick = onShare, modifier = Modifier.weight(1f))
+            ActionTile(QtIcons.PictureInPicture, "PiP", onClick = onPip, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun ActionTile(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    filled: Boolean = false,
+    modifier: Modifier = Modifier,
     selected: Boolean = false,
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
-    val background = when {
-        !enabled -> cs.surfaceContainerHigh
-        filled -> cs.primary
-        selected -> cs.primary.copy(alpha = 0.14f)
-        else -> cs.surfaceContainerHigh
-    }
-    val content = when {
-        !enabled -> cs.onSurfaceVariant.copy(alpha = 0.5f)
-        filled -> cs.onPrimary
-        selected -> cs.primary
-        else -> cs.onSurface
-    }
-    Row(
-        Modifier.height(42.dp).clip(RoundedCornerShape(14.dp)).background(background)
-            .pressable(enabled = enabled, scaleDown = 0.94f, onClick = onClick).padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier.height(56.dp).clip(RoundedCornerShape(14.dp))
+            .background(if (selected) cs.primary.copy(alpha = 0.12f) else cs.surfaceContainerHigh)
+            .pressable(enabled = enabled, scaleDown = 0.95f, onClick = onClick).padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Icon(icon, null, tint = content, modifier = Modifier.size(18.dp))
-        Text(label, color = content, style = MaterialTheme.typography.labelLarge, maxLines = 1, modifier = Modifier.padding(start = 7.dp))
+        Icon(
+            icon, null,
+            tint = when {
+                !enabled -> cs.onSurfaceVariant.copy(alpha = 0.38f)
+                selected -> cs.primary
+                else -> cs.onSurface
+            },
+            modifier = Modifier.size(17.dp),
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 10.sp,
+            color = when {
+                !enabled -> cs.onSurfaceVariant.copy(alpha = 0.38f)
+                selected -> cs.primary
+                else -> cs.onSurfaceVariant
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 3.dp),
+        )
     }
 }
 
@@ -454,43 +477,6 @@ private fun copyText(context: Context, label: String, text: String) {
     Toast.makeText(context, "$label copied", Toast.LENGTH_SHORT).show()
 }
 
-@Composable
-private fun CommentsSheet(vm: VideoViewModel, onDismiss: () -> Unit) {
-    val ui by vm.comments.collectAsStateWithLifecycle()
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
-    ) {
-        Text("Comments", style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-        val state = rememberLazyListState()
-        state.OnNearEnd { vm.loadComments() }
-        LazyColumn(state = state, modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp, max = 640.dp)) {
-            items(ui.items) { CommentRow(it) }
-            if (ui.loading) item { FooterLoading() }
-            if (!ui.loading && ui.items.isEmpty()) item { Text("No comments", Modifier.padding(16.dp)) }
-        }
-    }
-}
-
-@Composable
-private fun CommentRow(c: Comment) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-        Avatar(c.authorAvatar, 32)
-        Column(Modifier.padding(start = 12.dp)) {
-            Text(listOfNotNull(c.author, c.date).joinToString(" · "), style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(QtIcons.ThumbUp, null, Modifier.padding(end = 4.dp).heightIn(max = 14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(if (c.likeCount > 0) Format.count(c.likeCount.toLong()) else "", style = MaterialTheme.typography.labelSmall)
-                if (c.replyCount > 0) Text("   ${c.replyCount} replies", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-            }
-        }
-    }
-}
-
 /** The player area while the page loads: the video's thumbnail (when known) under the loading ring. */
 @Composable
 private fun PlayerLoading(thumbnail: String?) {
@@ -505,7 +491,7 @@ private fun PlayerLoading(thumbnail: String?) {
 
 /**
  * The page's shape while it loads: title (the real one when the tapped card had it), channel, the action buttons,
- * comments and the "Up next" list, all as soft shimmering blocks.
+ * and the "Up next" list, all as soft shimmering blocks.
  */
 @Composable
 private fun VideoPageSkeleton(title: String?, modifier: Modifier) {
@@ -527,7 +513,6 @@ private fun VideoPageSkeleton(title: String?, modifier: Modifier) {
             Box(Modifier.weight(1f).height(48.dp).bone(RoundedCornerShape(12.dp)))
             repeat(3) { Box(Modifier.padding(start = 10.dp).size(48.dp).bone(RoundedCornerShape(12.dp))) }
         }
-        Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(76.dp).bone(RoundedCornerShape(12.dp)))
         Box(Modifier.padding(start = 16.dp, top = 20.dp, bottom = 12.dp).width(80.dp).height(16.dp).bone())
         repeat(5) {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
