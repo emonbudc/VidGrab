@@ -20,7 +20,7 @@ object Permissions {
     val legacyRead: Array<String>
         get() = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE) else emptyArray()
 
-    /** Reading media libraries (large files cleaner). */
+    /** Reading media libraries for gallery import. */
     val mediaRead: Array<String>
         get() = when {
             Build.VERSION.SDK_INT >= 34 -> arrayOf(

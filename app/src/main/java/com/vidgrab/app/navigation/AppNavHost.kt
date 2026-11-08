@@ -62,12 +62,9 @@ import com.vidgrab.app.feature.settings.PlayerSettingsScreen
 import com.vidgrab.app.feature.settings.SettingsActions
 import com.vidgrab.app.feature.settings.SettingsScreen
 import com.vidgrab.app.feature.settings.ThemeSettingsScreen
-import com.vidgrab.app.feature.tools.AppManagerScreen
 import com.vidgrab.app.feature.tools.DeletedHistoryScreen
-import com.vidgrab.app.feature.tools.LargeFilesScreen
 import com.vidgrab.app.feature.tools.RecycleBinScreen
 import com.vidgrab.app.feature.tools.StatusSaverScreen
-import com.vidgrab.app.feature.tools.StorageCleanScreen
 import com.vidgrab.app.feature.tools.VaultScreen
 import com.vidgrab.app.feature.home.HomeScreen
 import com.vidgrab.app.feature.home.HowToScreen
@@ -223,9 +220,6 @@ fun AppNavHost(nav: NavHostController) {
                         deletedHistory = { nav.navigate(DeletedHistoryRoute) },
                         statusSaver = { nav.navigate(StatusSaverRoute) },
                         vault = { nav.navigate(VaultRoute) },
-                        storageClean = { nav.navigate(StorageCleanRoute) },
-                        largeFiles = { nav.navigate(LargeFilesRoute) },
-                        appManager = { nav.navigate(AppManagerRoute) },
                         about = { nav.navigate(AboutRoute) },
                     ),
                 )
@@ -238,9 +232,6 @@ fun AppNavHost(nav: NavHostController) {
             composable<RecycleBinRoute> { RecycleBinScreen(nav::popBackStack, onHistory = { nav.navigate(DeletedHistoryRoute) }) }
             composable<DeletedHistoryRoute> { DeletedHistoryScreen(nav::popBackStack) }
             composable<VaultRoute> { VaultScreen(nav::popBackStack, onOpenPlayer = { nav.navigate(PlayerRoute) { launchSingleTop = true } }) }
-            composable<StorageCleanRoute> { StorageCleanScreen(nav::popBackStack) }
-            composable<LargeFilesRoute> { LargeFilesScreen(nav::popBackStack) }
-            composable<AppManagerRoute> { AppManagerScreen(nav::popBackStack) }
             composable<SearchRoute> { e ->
                 SearchScreen(
                     e.toRoute<SearchRoute>().initial,

@@ -94,6 +94,27 @@
   <symbol id="icon-chevron" viewBox="0 0 24 24">
     <path d="m6 9 6 6 6-6"/>
   </symbol>
+  <symbol id="icon-link" viewBox="0 0 24 24">
+    <path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.1 1.1"/>
+    <path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.1-1.1"/>
+  </symbol>
+  <symbol id="icon-paste" viewBox="0 0 24 24">
+    <path d="M9 5h6M9 3h6a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1V5a2 2 0 0 1 2-2Z"/>
+    <path d="M8 12h8M8 16h5"/>
+  </symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24">
+    <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/>
+    <circle cx="15" cy="7" r="2"/>
+    <circle cx="9" cy="17" r="2"/>
+  </symbol>
+  <symbol id="icon-home" viewBox="0 0 24 24">
+    <path d="m4 11 8-7 8 7v9H4v-9Z"/>
+    <path d="M9 20v-6h6v6"/>
+  </symbol>
+  <symbol id="icon-pause" viewBox="0 0 24 24">
+    <rect x="7" y="5" width="3.5" height="14" rx="1"/>
+    <rect x="13.5" y="5" width="3.5" height="14" rx="1"/>
+  </symbol>
 </svg>
 
 <header class="site-header" id="top">
@@ -114,7 +135,7 @@
         GitHub
       </a>
     </nav>
-    <a class="btn btn-primary btn-small header-cta" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9.apk">
+    <a class="btn btn-primary btn-small header-cta" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35.apk">
       Download
     </a>
   </div>
@@ -128,9 +149,9 @@
       <div class="hero-copy">
         <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Open source · No ads · No account</p>
         <h1>Download anything.<br><span class="gradient-text">Keep everything.</span></h1>
-        <p class="hero-lede">Videos, music, playlists and channels from YouTube and 1,800+ sites — in up to 4K, straight to your phone. No sign-in, no clutter, no limits on what you keep.</p>
+        <p class="hero-lede">Videos, music, playlists and channels from YouTube and 1,800+ sites — in up to 4K, straight to your phone. A redesigned home, a real in-app browser, and no sign-in, clutter or limits on what you keep.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary btn-large" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9.apk">
+          <a class="btn btn-primary btn-large" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35.apk">
             <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
             Download APK
           </a>
@@ -140,7 +161,7 @@
           </a>
         </div>
         <div class="hero-meta">
-          <span><svg class="icon icon-tiny" aria-hidden="true"><use href="#icon-check"></use></svg>Latest <strong data-version>v1.0.9</strong></span>
+          <span><svg class="icon icon-tiny" aria-hidden="true"><use href="#icon-check"></use></svg>Latest <strong data-version>v1.0.35</strong></span>
           <span>Android 7.0+</span>
           <span>Desktop preview</span>
           <span>GPL-3.0</span>
@@ -158,72 +179,82 @@
               <span>9:41</span>
               <span class="status-icons"><i></i><i></i><i></i></span>
             </div>
-            <div class="app-top">
+            <div class="app-topbar">
               <div class="app-brand">
-                <img src="assets/app-icon.png" alt="" width="512" height="512">
-                <span>VidGrab</span>
+                <span class="app-logo"><svg class="icon"><use href="#icon-play"></use></svg></span>
+                <span class="app-wordmark"><b>Vid</b><em>Grab</em></span>
               </div>
-              <span class="app-quality">4K</span>
+              <div class="app-topbar-right">
+                <span class="app-live"><i></i>1 active</span>
+                <span class="app-gear"><svg class="icon"><use href="#icon-settings"></use></svg></span>
+              </div>
             </div>
-            <div class="app-tabs">
-              <span class="app-tab is-active">Download</span>
-              <span class="app-tab">Play</span>
-              <span class="app-tab">Settings</span>
+            <div class="app-segmented">
+              <span class="is-active">Discover</span>
+              <span>YouTube</span>
+              <span>Music</span>
             </div>
-            <div class="app-search">
-              <svg class="icon"><use href="#icon-search"></use></svg>
-              <span>Paste a link or search</span>
-              <span class="search-go"><svg class="icon"><use href="#icon-download"></use></svg></span>
+            <div class="app-hero">
+              <i class="app-orb app-orb-one"></i>
+              <i class="app-orb app-orb-two"></i>
+              <span class="app-hero-kicker">DOWNLOAD · WATCH · ENJOY</span>
+              <strong>Your Videos.<br>Your Way.</strong>
+              <small>Download, save and enjoy videos in one place.</small>
+              <span class="app-hero-play"><svg class="icon"><use href="#icon-play"></use></svg></span>
             </div>
-            <div class="app-section"><span>Downloading</span><span class="app-count">1</span></div>
-            <div class="download-item">
-              <div class="video-thumb thumb-one"><span class="thumb-play"><svg class="icon"><use href="#icon-play"></use></svg></span><span class="thumb-time">12:08</span></div>
-              <div class="download-copy">
+            <div class="app-link-input">
+              <span class="link-tile"><svg class="icon"><use href="#icon-link"></use></svg></span>
+              <span class="link-placeholder">Paste a link or search...</span>
+              <span class="link-paste"><svg class="icon"><use href="#icon-paste"></use></svg></span>
+            </div>
+            <div class="app-download-cta"><svg class="icon"><use href="#icon-download"></use></svg>Download</div>
+            <div class="app-row-title">Quick download</div>
+            <div class="source-row">
+              <span class="source-tile yt">YT</span>
+              <span class="source-tile tt">TT</span>
+              <span class="source-tile fb">f</span>
+              <span class="source-tile ig">IG</span>
+              <span class="source-tile music"><svg class="icon"><use href="#icon-music"></use></svg></span>
+            </div>
+            <div class="app-row-title">Downloading <span class="app-count">1</span></div>
+            <div class="active-download">
+              <span class="active-thumb app-thumb-one"><svg class="icon"><use href="#icon-play"></use></svg><i>12:08</i></span>
+              <div class="active-copy">
                 <strong>Night drive · Tokyo</strong>
-                <span class="download-meta">1.2 GB · 720p</span>
-                <span class="progress-track"><i></i></span>
-                <span class="progress-label">Downloading · 64%</span>
+                <span>720p · 64% · 4.2 MB/s</span>
+                <span class="active-track"><i></i></span>
               </div>
+              <span class="active-pause"><svg class="icon"><use href="#icon-pause"></use></svg></span>
             </div>
-            <div class="app-section"><span>Downloaded</span><span class="app-count muted">2</span></div>
-            <div class="done-item">
-              <div class="video-thumb thumb-two"><span class="thumb-play"><svg class="icon"><use href="#icon-play"></use></svg></span><span class="thumb-time">09:16</span></div>
-              <div class="done-copy">
-                <strong>Coffee &amp; lo-fi</strong>
-                <span><svg class="icon"><use href="#icon-play"></use></svg>09:16 <b>·</b> 86 MB <b>·</b> 1080p</span>
-              </div>
-            </div>
-            <div class="done-item">
-              <div class="video-thumb thumb-three"><span class="thumb-play"><svg class="icon"><use href="#icon-play"></use></svg></span><span class="thumb-time">04:42</span></div>
-              <div class="done-copy">
-                <strong>Weekend in the hills</strong>
-                <span><svg class="icon"><use href="#icon-play"></use></svg>04:42 <b>·</b> 44 MB <b>·</b> 4K</span>
-              </div>
-            </div>
-            <div class="done-item extra-done">
-              <div class="video-thumb thumb-four"><span class="thumb-play"><svg class="icon"><use href="#icon-play"></use></svg></span><span class="thumb-time">18:30</span></div>
-              <div class="done-copy">
-                <strong>Lo-fi study session</strong>
-                <span><svg class="icon"><use href="#icon-play"></use></svg>18:30 <b>·</b> 72 MB <b>·</b> 1080p</span>
-              </div>
-            </div>
-            <div class="app-section"><span>Trending now</span><span class="app-count muted">2</span></div>
-            <div class="suggest-row">
-              <div class="suggest-card">
-                <span class="suggest-thumb thumb-five"></span>
+            <div class="app-row-title trend-title">Trending now <span class="see-all">See all</span></div>
+            <div class="trend-row">
+              <div class="trend-card">
+                <span class="trend-thumb app-thumb-two"><i>08:24</i></span>
                 <strong>Design in motion</strong>
-                <small>08:24 · 4K</small>
+                <small>YouTube · 4K</small>
               </div>
-              <div class="suggest-card">
-                <span class="suggest-thumb thumb-six"></span>
+              <div class="trend-card">
+                <span class="trend-thumb app-thumb-three"><i>12:08</i></span>
                 <strong>City after rain</strong>
-                <small>12:08 · HD</small>
+                <small>TikTok · HD</small>
               </div>
+            </div>
+            <div class="app-row-title saved-title">Recently saved <span class="see-all">Library</span></div>
+            <div class="saved-row">
+              <span class="saved-pill">
+                <i class="saved-thumb app-thumb-three"></i>
+                <span><strong>Coffee &amp; lo-fi</strong><small>1080p · 86 MB</small></span>
+              </span>
+              <span class="saved-pill">
+                <i class="saved-thumb app-thumb-two"></i>
+                <span><strong>Weekend in the hills</strong><small>4K · 44 MB</small></span>
+              </span>
             </div>
             <div class="phone-nav">
-              <span class="phone-nav-item is-active"><svg class="icon"><use href="#icon-download"></use></svg>Download</span>
-              <span class="phone-nav-item"><svg class="icon"><use href="#icon-play"></use></svg>Play</span>
-              <span class="phone-nav-item"><svg class="icon"><use href="#icon-lock"></use></svg>Settings</span>
+              <span class="phone-nav-item is-active"><svg class="icon"><use href="#icon-home"></use></svg>Home</span>
+              <span class="phone-nav-item"><svg class="icon"><use href="#icon-download"></use></svg>Downloads</span>
+              <span class="phone-nav-item"><svg class="icon"><use href="#icon-browser"></use></svg>Browser</span>
+              <span class="phone-nav-item"><svg class="icon"><use href="#icon-settings"></use></svg>Settings</span>
             </div>
             <div class="home-bar"></div>
           </div>
@@ -246,7 +277,7 @@
       <div class="section-head">
         <p class="eyebrow">Everything in one app</p>
         <h2>Built for saving,<br><span class="gradient-text">not scrolling.</span></h2>
-        <p>From the first copied link to the finished file, VidGrab handles the messy parts. Extract, merge, queue, organise and play — all on your device.</p>
+        <p>From the first copied link to the finished file, VidGrab handles the messy parts. The new home puts Discover, YouTube and Music one tap apart, with smart link detection and downloads that stay out of your way.</p>
       </div>
       <div class="feature-grid">
         <article class="feature-card">
@@ -282,7 +313,7 @@
         <article class="feature-card">
           <span class="feature-icon"><svg class="icon"><use href="#icon-image"></use></svg></span>
           <h3>Gallery and tools</h3>
-          <p>Browse photos by album, trim clips, extract audio, save WhatsApp statuses, clean storage and keep private files in a PIN vault.</p>
+          <p>Browse photos by album, trim clips, extract audio, save WhatsApp statuses and keep private files in a PIN vault.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon"><svg class="icon"><use href="#icon-refresh"></use></svg></span>
@@ -384,7 +415,7 @@
         </div>
         <a class="release-pill" data-release-link href="https://github.com/emonbudc/VidGrab/releases/latest" target="_blank" rel="noopener">
           <span class="live-dot" aria-hidden="true"></span>
-          <span>Latest release <strong data-version>v1.0.9</strong></span>
+          <span>Latest release <strong data-version>v1.0.35</strong></span>
           <svg class="icon icon-tiny" aria-hidden="true"><use href="#icon-external"></use></svg>
         </a>
       </div>
@@ -396,9 +427,9 @@
           </div>
           <h3>Universal</h3>
           <p>Works on every supported Android phone. The safest choice if you are not sure.</p>
-          <div class="file-meta"><span data-size="universal">81.7 MB</span><span>Android 7.0+</span></div>
-          <a class="btn btn-primary btn-block" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9.apk">Download universal</a>
-          <a class="sha-link" data-sha="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9.apk.sha256">SHA-256 checksum</a>
+          <div class="file-meta"><span data-size="universal">77.9 MB</span><span>Android 7.0+</span></div>
+          <a class="btn btn-primary btn-block" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35.apk">Download universal</a>
+          <a class="sha-link" data-sha="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35.apk.sha256">SHA-256 checksum</a>
         </article>
         <article class="download-card">
           <div class="download-card-top">
@@ -407,9 +438,9 @@
           </div>
           <h3>arm64-v8a</h3>
           <p>Smaller download for most phones released since 2017. Fast and battery-friendly.</p>
-          <div class="file-meta"><span data-size="arm64">48.2 MB</span><span>64-bit ARM</span></div>
-          <a class="btn btn-outline btn-block" data-download="arm64" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9-arm64-v8a.apk">Download arm64</a>
-          <a class="sha-link" data-sha="arm64" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9-arm64-v8a.apk.sha256">SHA-256 checksum</a>
+          <div class="file-meta"><span data-size="arm64">46.0 MB</span><span>64-bit ARM</span></div>
+          <a class="btn btn-outline btn-block" data-download="arm64" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35-arm64-v8a.apk">Download arm64</a>
+          <a class="sha-link" data-sha="arm64" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35-arm64-v8a.apk.sha256">SHA-256 checksum</a>
         </article>
         <article class="download-card">
           <div class="download-card-top">
@@ -418,9 +449,9 @@
           </div>
           <h3>armeabi-v7a</h3>
           <p>For older or budget devices that still run 32-bit Android.</p>
-          <div class="file-meta"><span data-size="armv7">43.0 MB</span><span>32-bit ARM</span></div>
-          <a class="btn btn-outline btn-block" data-download="armv7" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9-armeabi-v7a.apk">Download armv7</a>
-          <a class="sha-link" data-sha="armv7" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9-armeabi-v7a.apk.sha256">SHA-256 checksum</a>
+          <div class="file-meta"><span data-size="armv7">41.0 MB</span><span>32-bit ARM</span></div>
+          <a class="btn btn-outline btn-block" data-download="armv7" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35-armeabi-v7a.apk">Download armv7</a>
+          <a class="sha-link" data-sha="armv7" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35-armeabi-v7a.apk.sha256">SHA-256 checksum</a>
         </article>
       </div>
       <div class="install-note">
@@ -443,6 +474,24 @@
       <div class="release-list">
         <article class="release">
           <div class="release-side">
+            <span class="release-version">v1.0.35</span>
+            <time datetime="2026-11-08">Nov 8, 2026</time>
+            <span class="tag tag-blue">Latest</span>
+          </div>
+          <div class="release-body">
+            <h3>The premium redesign.</h3>
+            <ul>
+              <li>New design system: navy, blue and teal, Plus Jakarta Sans, plus light, dark and AMOLED themes.</li>
+              <li>Home rebuilt around Discover, YouTube and Music, with a hero, smart link input, quick sources and trending.</li>
+              <li>Four-tab navigation adds a real in-app browser; Downloads and Settings get the same card-first treatment.</li>
+              <li>Preferred quality and format, clipboard detection, pause/resume controls, refreshed player and tools.</li>
+              <li>Fixed a startup crash in the Home hero caused by negative Compose padding.</li>
+            </ul>
+            <a class="release-link" href="https://github.com/emonbudc/VidGrab/releases/tag/v1.0.35" target="_blank" rel="noopener">Release notes<svg class="icon icon-tiny"><use href="#icon-arrow"></use></svg></a>
+          </div>
+        </article>
+        <article class="release">
+          <div class="release-side">
             <span class="release-version">Desktop</span>
             <time datetime="2026-11-07">Nov 7, 2026</time>
             <span class="tag tag-blue">Preview</span>
@@ -462,7 +511,6 @@
           <div class="release-side">
             <span class="release-version">v1.0.9</span>
             <time datetime="2026-11-06">Nov 6, 2026</time>
-            <span class="tag tag-blue">Latest</span>
           </div>
           <div class="release-body">
             <h3>Playback rebuilt. Interface reimagined.</h3>
@@ -537,7 +585,7 @@
           <p>No account, no ads, no subscription. Just the media you want, saved where you want it.</p>
         </div>
         <div class="cta-actions">
-          <a class="btn btn-white btn-large" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.9/VidGrab-v1.0.9.apk">
+          <a class="btn btn-white btn-large" data-download="universal" href="https://github.com/emonbudc/VidGrab/releases/download/v1.0.35/VidGrab-v1.0.35.apk">
             <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
             Download APK
           </a>

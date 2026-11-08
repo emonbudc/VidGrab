@@ -28,7 +28,7 @@ feature/
   player                 Full player + mini player
   browser                WebView browser with media sniffing, sites, history, saved pages
   settings               Settings + sub-screens
-  tools                  Recycle bin, vault, status saver, cleaners, app uninstaller
+  tools                  Recycle bin, vault, status saver
   gallery                Gallery tab: photos by month, albums, full-screen viewer (MediaStore via GalleryRepository)
 ```
 

@@ -59,7 +59,7 @@ The feeds are paged, deduplicated and capped per channel so one creator cannot t
 - Downloaded library with filters, search, multi-select, rename, share, delete and vault.
 - Play downloads as audio or convert video to audio.
 - Gallery with photos by month, albums, zoomable viewer, photo editor and video/audio playback.
-- Recycle bin, deleted-download history, WhatsApp status saver, PIN vault, storage cleaner, large-file finder and app uninstaller.
+- Recycle bin, deleted-download history, WhatsApp status saver and PIN vault.
 - Appearance options: system/light/dark, AMOLED black, Material You and eight accent palettes.
 
 ## Requirements

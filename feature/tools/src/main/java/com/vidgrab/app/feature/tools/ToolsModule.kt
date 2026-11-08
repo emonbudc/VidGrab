@@ -8,7 +8,4 @@ val toolsModule = module {
     viewModel { DeletedHistoryViewModel(get(), get(), get()) }
     viewModel { VaultViewModel(get(), get(), get()) }
     viewModel { StatusSaverViewModel(get(), get(), get()) }
-    viewModel { LargeFilesViewModel(get()) }
-    viewModel { AppManagerViewModel(get()) }
-    viewModel { StorageCleanViewModel(get(), get(), get()) }
 }

@@ -33,9 +33,6 @@ class SettingsActions(
     val deletedHistory: () -> Unit,
     val statusSaver: () -> Unit,
     val vault: () -> Unit,
-    val storageClean: () -> Unit,
-    val largeFiles: () -> Unit,
-    val appManager: () -> Unit,
     val about: () -> Unit,
 )
 
@@ -101,16 +98,6 @@ fun SettingsScreen(actions: SettingsActions) {
                 NavRow(BrandIcons.WhatsApp, "WhatsApp status saver", onClick = actions.statusSaver)
                 RowDivider()
                 NavRow(QtIcons.Lock, "Vault", "Hide private files behind a PIN", onClick = actions.vault)
-            }
-        }
-        item { GroupLabel("Phone clean") }
-        item {
-            com.vidgrab.app.core.designsystem.QtCard {
-                NavRow(QtIcons.CleaningServices, "Storage clean", "Temporary files, cache and leftovers", onClick = actions.storageClean)
-                RowDivider()
-                NavRow(QtIcons.FolderZip, "Large files clean", "Find big videos, music and photos", onClick = actions.largeFiles)
-                RowDivider()
-                NavRow(QtIcons.Apps, "App uninstaller", onClick = actions.appManager)
             }
         }
         item { GroupLabel("Privacy") }

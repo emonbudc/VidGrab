@@ -49,6 +49,3 @@ const val GALLERY_AUDIOS = Long.MIN_VALUE + 3
 @Serializable data object DeletedHistoryRoute
 @Serializable data object StatusSaverRoute
 @Serializable data object VaultRoute
-@Serializable data object LargeFilesRoute
-@Serializable data object AppManagerRoute
-@Serializable data object StorageCleanRoute
