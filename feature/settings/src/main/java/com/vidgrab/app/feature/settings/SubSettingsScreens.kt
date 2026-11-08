@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -43,7 +42,6 @@ import android.os.Build
 import android.os.Environment
 import org.koin.compose.viewmodel.koinViewModel
 import java.io.File
-import java.util.Locale
 
 private fun speedLabel(kbps: Int) = when {
     kbps <= 0 -> "Unlimited"
@@ -234,28 +232,6 @@ fun NotificationSettingsScreen(onBack: () -> Unit) {
 
 @Composable
 fun ThemeSettingsScreen(onBack: () -> Unit) = AppearanceScreen(onBack)
-
-@Composable
-fun RegionScreen(onBack: () -> Unit) {
-    val vm = koinViewModel<SettingsViewModel>()
-    val s by vm.settings.collectAsStateWithLifecycle()
-    val countries = remember {
-        listOf("") + Locale.getISOCountries().sortedBy { Locale("", it).displayCountry }
-    }
-    Scaffold(topBar = { QtTopBar("Content region", onBack) }) { pad ->
-        LazyColumn(Modifier.fillMaxSize().padding(pad)) {
-            item {
-                Text("Trending and music feeds follow this region. Pull to refresh the feed after changing it.", style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
-            }
-            items(countries) { c ->
-                RadioRow(if (c.isEmpty()) "Auto (SIM / network)" else Locale("", c).displayCountry, s.contentRegion == c) {
-                    vm.update { it.copy(contentRegion = c) }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {

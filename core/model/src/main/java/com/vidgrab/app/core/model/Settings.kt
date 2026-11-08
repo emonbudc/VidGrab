@@ -71,8 +71,6 @@ data class AppSettings(
     val autoPip: Boolean = true,
     /** Online videos: play the next suggested video when one ends (the player's autoplay switch). */
     val autoplayNext: Boolean = true,
-    /** The "Trending now" row on the Download tab's home page (off unless turned on in Settings). */
-    val showTrending: Boolean = false,
     val onboarded: Boolean = false,
     /** Crash reports + anonymous usage stats (official builds only). */
     val analyticsEnabled: Boolean = true,

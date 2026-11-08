@@ -47,6 +47,7 @@ class VlcEngine private constructor(private val context: Context) {
     private var attached: VLCVideoLayout? = null
     private var activeEqualizer: MediaPlayer.Equalizer? = null
     private var videoRetry = 0
+    private var continueAfterDetach = false
 
     val currentTimeMs: Long get() = _snapshot.value.timeMs.coerceAtLeast(0)
     val currentLengthMs: Long get() = _snapshot.value.lengthMs.coerceAtLeast(0)
@@ -93,6 +94,7 @@ class VlcEngine private constructor(private val context: Context) {
     }
 
     fun pause() {
+        continueAfterDetach = false
         player?.pause()
     }
 
@@ -102,6 +104,7 @@ class VlcEngine private constructor(private val context: Context) {
 
     fun stop() {
         videoRetry++
+        continueAfterDetach = false
         player?.stop()
         releaseCurrentMedia()
         currentItem = null
@@ -158,11 +161,21 @@ class VlcEngine private constructor(private val context: Context) {
         runCatching { p.attachViews(layout, null, true, true) }
         p.setVideoTrackEnabled(!audioOnly)
         updateVideoSize()
+        if (continueAfterDetach) {
+            continueAfterDetach = false
+            val s = _snapshot.value
+            if (currentItem != null && !s.ended && !p.isPlaying) {
+                p.play()
+                p.setTime(s.timeMs)
+            }
+        }
         _snapshot.value = _snapshot.value.copy(hasVideo = !audioOnly && _snapshot.value.hasVideo)
     }
 
     fun detachVideo(layout: VLCVideoLayout) {
         if (attached !== layout) return
+        val s = _snapshot.value
+        continueAfterDetach = !audioOnly && currentItem != null && !s.ended && (s.isPlaying || s.isBuffering)
         attached = null
         runCatching { player?.detachViews() }
     }
@@ -204,6 +217,7 @@ class VlcEngine private constructor(private val context: Context) {
 
     fun release() {
         videoRetry++
+        continueAfterDetach = false
         runCatching { player?.setEventListener(null) }
         runCatching { player?.detachViews() }
         attached = null
@@ -297,11 +311,19 @@ class VlcEngine private constructor(private val context: Context) {
             )
             MediaPlayer.Event.TimeChanged -> {
                 val t = event.timeChanged.coerceAtLeast(0)
-                if (t != _snapshot.value.timeMs) _snapshot.value = _snapshot.value.copy(timeMs = t)
+                val cur = _snapshot.value
+                val ended = cur.ended && (cur.lengthMs <= 0 || t >= cur.lengthMs - 1_000)
+                if (t != cur.timeMs || ended != cur.ended) _snapshot.value = cur.copy(timeMs = t, ended = ended)
             }
             MediaPlayer.Event.LengthChanged -> {
                 val length = event.lengthChanged.coerceAtLeast(0)
-                if (length > 0) _snapshot.value = _snapshot.value.copy(lengthMs = length)
+                if (length > 0) {
+                    val cur = _snapshot.value
+                    _snapshot.value = cur.copy(
+                        lengthMs = length,
+                        ended = cur.ended && cur.timeMs >= length - 1_000,
+                    )
+                }
             }
             MediaPlayer.Event.PositionChanged -> {
                 val length = _snapshot.value.lengthMs

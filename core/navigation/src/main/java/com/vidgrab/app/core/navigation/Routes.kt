@@ -42,7 +42,6 @@ const val GALLERY_AUDIOS = Long.MIN_VALUE + 3
 @Serializable data object PlayerSettingsRoute
 @Serializable data object NotificationSettingsRoute
 @Serializable data object ThemeSettingsRoute
-@Serializable data object LanguageRoute
 @Serializable data object AboutRoute
 
 // Tools

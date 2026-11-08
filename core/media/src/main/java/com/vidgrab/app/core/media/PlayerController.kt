@@ -115,7 +115,8 @@ class PlayerController(
         scope.launch {
             engine.snapshot.collect { snapshot ->
                 sync(snapshot)
-                if (snapshot.ended && !endedHandled) {
+                val ended = snapshot.atEnd()
+                if (ended && !endedHandled) {
                     endedHandled = true
                     onEnded()
                 } else if (!snapshot.ended) {
@@ -333,6 +334,9 @@ class PlayerController(
         markOpened(next)
     }
 
+    private fun VlcSnapshot.atEnd(): Boolean =
+        ended && !isPlaying && (lengthMs <= 0 || timeMs >= lengthMs - 1_500)
+
     private fun sync(snapshot: VlcSnapshot) {
         if (queue.isEmpty()) return
         val buffered = when {
@@ -346,7 +350,7 @@ class PlayerController(
                 index = index,
                 isPlaying = snapshot.isPlaying,
                 isBuffering = snapshot.isBuffering,
-                ended = snapshot.ended,
+                ended = snapshot.atEnd(),
                 positionMs = snapshot.timeMs,
                 durationMs = snapshot.lengthMs,
                 bufferedMs = buffered,

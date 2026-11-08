@@ -273,6 +273,7 @@ private fun HomeFeed(
             modifier = modifier.fillMaxSize(),
         ) {
             val state = rememberLazyListState()
+            LaunchedEffect(ui.refreshing) { if (!ui.refreshing) state.scrollToItem(0) }
             state.OnNearEnd { vm.loadMoreFeed() }
             LazyColumn(
                 state = state,

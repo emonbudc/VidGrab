@@ -64,7 +64,6 @@ class SettingsDataSource(private val context: Context) {
         val backgroundPlay = booleanPreferencesKey("background_play")
         val autoPip = booleanPreferencesKey("auto_pip")
         val autoplayNext = booleanPreferencesKey("autoplay_next")
-        val showTrending = booleanPreferencesKey("show_trending")
     }
 
     val defaultDownloadDir: String
@@ -115,7 +114,6 @@ class SettingsDataSource(private val context: Context) {
             p[K.backgroundPlay] = s.backgroundPlay
             p[K.autoPip] = s.autoPip
             p[K.autoplayNext] = s.autoplayNext
-            p[K.showTrending] = s.showTrending
         }
     }
 
@@ -157,7 +155,6 @@ class SettingsDataSource(private val context: Context) {
         backgroundPlay = p[K.backgroundPlay] ?: false,
         autoPip = p[K.autoPip] ?: true,
         autoplayNext = p[K.autoplayNext] ?: true,
-        showTrending = p[K.showTrending] ?: false,
     )
 }
 

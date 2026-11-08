@@ -36,7 +36,6 @@ class SettingsActions(
     val storageClean: () -> Unit,
     val largeFiles: () -> Unit,
     val appManager: () -> Unit,
-    val region: () -> Unit,
     val about: () -> Unit,
 )
 
@@ -86,12 +85,6 @@ fun SettingsScreen(actions: SettingsActions) {
                 NavRow(QtIcons.Palette, "Theme", trailing = when (s.themeMode) {
                     ThemeMode.SYSTEM -> "System"; ThemeMode.LIGHT -> "Light"; ThemeMode.DARK -> "Dark"
                 }, onClick = actions.theme)
-                RowDivider()
-                NavRow(QtIcons.Public, "Content region", trailing = s.contentRegion.ifBlank { "Auto" }, onClick = actions.region)
-                RowDivider()
-                SwitchRow("Trending on home", "Show trending videos on Home", s.showTrending, QtIcons.TrendingUp) { v ->
-                    vm.update { it.copy(showTrending = v) }
-                }
                 RowDivider()
                 SwitchRow("Clipboard detection", "Offer a copied link when you open the app", s.clipboardDetection, QtIcons.ContentPaste) { v ->
                     vm.update { it.copy(clipboardDetection = v) }

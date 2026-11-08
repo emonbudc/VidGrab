@@ -13,10 +13,25 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
 
-/** A "For you" feed built from what was searched for and what was watched lately. */
+/** The search shape of a Home tab. [keywords] help match searches and watched titles to the tab. */
+data class RecommendationTopic(
+    val query: String,
+    val filter: SearchFilter,
+    val keywords: List<String> = emptyList(),
+)
+
+/** A home feed built from what was searched for and what was watched lately. */
 interface RecommendationRepository {
-    /** Returns one page; [page] is the cursor from the previous page. */
-    suspend fun feed(page: Any? = null): Page<MediaItem>
+    /**
+     * Returns one page; [page] is the cursor from the previous page. With a [topic] the feed stays inside that tab:
+     * the topic query is always searched, matching history is used directly and other recent searches are narrowed
+     * with the topic query.
+     */
+    suspend fun feed(
+        page: Any? = null,
+        topic: RecommendationTopic? = null,
+        exclude: Set<String> = emptySet(),
+    ): Page<MediaItem>
 }
 
 /**
@@ -34,6 +49,7 @@ internal class RecommendationRepositoryImpl(
     private class Source(
         val query: String? = null,
         val videoUrl: String? = null,
+        val filter: SearchFilter = SearchFilter.VIDEOS,
         val weight: Double,
         var next: Any? = null,
         var started: Boolean = false,
@@ -44,16 +60,21 @@ internal class RecommendationRepositoryImpl(
 
     private data class Cursor(
         val sources: List<Source>,
+        val topic: RecommendationTopic? = null,
         val pool: MutableList<Scored> = mutableListOf(),
         val seen: MutableSet<String> = mutableSetOf(),
     )
 
-    private data class FallbackCursor(val next: Any)
+    private data class FallbackCursor(
+        val next: Any,
+        val topic: RecommendationTopic? = null,
+        val exclude: Set<String> = emptySet(),
+    )
 
-    override suspend fun feed(page: Any?): Page<MediaItem> {
-        if (page is FallbackCursor) return fallback(page.next)
-        val cursor = (page as? Cursor) ?: newCursor()
-        if (cursor.sources.isEmpty()) return fallback(null)
+    override suspend fun feed(page: Any?, topic: RecommendationTopic?, exclude: Set<String>): Page<MediaItem> {
+        if (page is FallbackCursor) return fallback(page.next, page.topic, page.exclude)
+        val cursor = (page as? Cursor) ?: newCursor(topic, exclude)
+        if (cursor.sources.isEmpty()) return fallback(null, topic, exclude)
 
         // A page can be thinned out by the short/duplicate filters; top it up from the next search pages.
         var rounds = 0
@@ -63,26 +84,35 @@ internal class RecommendationRepositoryImpl(
             fetchAll(cursor, onlyNext = true)
             if (cursor.pool.size == before) break
         }
-        if (cursor.pool.isEmpty() && cursor.sources.all { it.exhausted }) return fallback(null)
+        if (cursor.pool.isEmpty() && cursor.sources.all { it.exhausted }) return fallback(null, cursor.topic, cursor.seen)
         return buildPage(cursor)
     }
 
-    private suspend fun newCursor(): Cursor {
-        val queries = searches.recent.first()
+    private suspend fun newCursor(topic: RecommendationTopic?, exclude: Set<String>): Cursor {
+        val recentQueries = searches.recent.first()
             .map { it.trim() }
             .filter { it.isNotBlank() && !Urls.looksLikeUrl(it) }
             .distinct()
-            .take(MAX_SEARCH_SEEDS)
+        val relevantQueries = recentQueries
+            .filter { topic == null || topic.matches(it) }
+            .take(if (topic == null) MAX_SEARCH_SEEDS else MAX_TOPIC_SEARCH_SEEDS)
+        val broadQueries = if (topic == null) {
+            emptyList()
+        } else {
+            recentQueries.filterNot { topic.matches(it) }.take(MAX_BROAD_SEEDS)
+        }
         val history = playback.all().sortedByDescending { it.openedAt }
         val watched = history.mapNotNull { entry ->
             val url = entry.key.removePrefix("web:")
             if (entry.key.startsWith("web:") && Urls.youtubeVideoId(url) != null) entry to url else null
         }
-        if (queries.isEmpty() && watched.isEmpty()) return Cursor(emptyList())
+        val topicalWatched = watched.filter { (entry, _) -> topic == null || topic.matches(entry.title) }
+        if (topic == null && relevantQueries.isEmpty() && topicalWatched.isEmpty()) return Cursor(emptyList())
 
         val cursor = Cursor(
             sources = buildList<Source> {
-                watched.take(MAX_WATCH_SEEDS).forEach { (entry, url) ->
+                topic?.let { add(Source(query = it.query, filter = it.filter, weight = TOPIC_SEED_WEIGHT)) }
+                topicalWatched.take(MAX_WATCH_SEEDS).forEach { (entry, url) ->
                     val ageDays = (now() - entry.openedAt).coerceAtLeast(0L) / DAY_MS.toDouble()
                     val recency = max(0.25, exp(-ageDays / RECENCY_DAYS))
                     val completion = if (entry.durationMs > 0) {
@@ -90,12 +120,30 @@ internal class RecommendationRepositoryImpl(
                     } else 0.5
                     add(Source(videoUrl = url, weight = (2.4 + 2.2 * completion) * recency))
                 }
-                queries.forEachIndexed { index, query ->
-                    add(Source(query = query, weight = 1.2 + (queries.size - index) * 0.35))
+                relevantQueries.forEachIndexed { index, query ->
+                    add(
+                        Source(
+                            query = query,
+                            filter = topic?.filter ?: SearchFilter.VIDEOS,
+                            weight = 1.2 + (relevantQueries.size - index) * 0.35,
+                        ),
+                    )
+                }
+                if (topic != null) {
+                    broadQueries.forEachIndexed { index, query ->
+                        add(
+                            Source(
+                                query = "$query ${topic.query}",
+                                filter = topic.filter,
+                                weight = 0.9 + (broadQueries.size - index) * 0.2,
+                            ),
+                        )
+                    }
                 }
             },
-            // Don't put videos that were already opened straight back into the feed.
-            seen = watched.mapTo(mutableSetOf<String>()) { it.second },
+            topic = topic,
+            // Don't put videos that were already opened straight back into any feed.
+            seen = watched.mapTo(mutableSetOf<String>()) { it.second }.apply { addAll(exclude) },
         )
         fetchAll(cursor, onlyNext = false)
         return cursor
@@ -127,7 +175,7 @@ internal class RecommendationRepositoryImpl(
             // Related videos are one-shot; the stream page doesn't expose a cursor for them.
             Page(media.details(video).related)
         } else {
-            media.search(source.query.orEmpty(), SearchFilter.VIDEOS, source.next)
+            media.search(source.query.orEmpty(), source.filter, source.next)
         }
     }
 
@@ -169,9 +217,26 @@ internal class RecommendationRepositoryImpl(
         return Page(picked.map { it.item }, if (hasMore) cursor else null)
     }
 
-    private suspend fun fallback(page: Any?): Page<MediaItem> {
-        val p = media.discover(page)
-        return p.copy(nextPage = p.nextPage?.let(::FallbackCursor))
+    private suspend fun fallback(page: Any?, topic: RecommendationTopic?, exclude: Set<String>): Page<MediaItem> {
+        var cursor = page
+        repeat(3) {
+            val p = if (topic == null) {
+                media.discover(cursor)
+            } else {
+                media.search(topic.query, topic.filter, cursor)
+            }
+            val items = if (exclude.isEmpty()) p.items else p.items.filterNot { it.url in exclude }
+            if (items.isNotEmpty() || p.nextPage == null) {
+                return p.copy(items = items, nextPage = p.nextPage?.let { FallbackCursor(it, topic, exclude) })
+            }
+            cursor = p.nextPage
+        }
+        return Page(emptyList(), null)
+    }
+
+    private fun RecommendationTopic.matches(text: String): Boolean {
+        val lower = text.lowercase()
+        return lower.contains(query.lowercase()) || keywords.any { lower.contains(it.lowercase()) }
     }
 
     private fun freshness(date: String?): Double {
@@ -196,8 +261,11 @@ internal class RecommendationRepositoryImpl(
     private companion object {
         const val PAGE_SIZE = 20
         const val MAX_SEARCH_SEEDS = 5
+        const val MAX_TOPIC_SEARCH_SEEDS = 3
+        const val MAX_BROAD_SEEDS = 2
         const val MAX_WATCH_SEEDS = 2
         const val MAX_PER_CHANNEL = 2
+        const val TOPIC_SEED_WEIGHT = 1.7
         const val RECENCY_DAYS = 14.0
         const val DAY_MS = 24L * 60 * 60 * 1000
     }

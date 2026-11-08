@@ -59,7 +59,6 @@ import com.vidgrab.app.feature.settings.AboutScreen
 import com.vidgrab.app.feature.settings.DownloadSettingsScreen
 import com.vidgrab.app.feature.settings.NotificationSettingsScreen
 import com.vidgrab.app.feature.settings.PlayerSettingsScreen
-import com.vidgrab.app.feature.settings.RegionScreen
 import com.vidgrab.app.feature.settings.SettingsActions
 import com.vidgrab.app.feature.settings.SettingsScreen
 import com.vidgrab.app.feature.settings.ThemeSettingsScreen
@@ -227,7 +226,6 @@ fun AppNavHost(nav: NavHostController) {
                         storageClean = { nav.navigate(StorageCleanRoute) },
                         largeFiles = { nav.navigate(LargeFilesRoute) },
                         appManager = { nav.navigate(AppManagerRoute) },
-                        region = { nav.navigate(LanguageRoute) },
                         about = { nav.navigate(AboutRoute) },
                     ),
                 )
@@ -236,7 +234,6 @@ fun AppNavHost(nav: NavHostController) {
             composable<PlayerSettingsRoute> { PlayerSettingsScreen(nav::popBackStack) }
             composable<NotificationSettingsRoute> { NotificationSettingsScreen(nav::popBackStack) }
             composable<ThemeSettingsRoute> { ThemeSettingsScreen(nav::popBackStack) }
-            composable<LanguageRoute> { RegionScreen(nav::popBackStack) }
             composable<AboutRoute> { AboutScreen(nav::popBackStack) }
             composable<RecycleBinRoute> { RecycleBinScreen(nav::popBackStack, onHistory = { nav.navigate(DeletedHistoryRoute) }) }
             composable<DeletedHistoryRoute> { DeletedHistoryScreen(nav::popBackStack) }

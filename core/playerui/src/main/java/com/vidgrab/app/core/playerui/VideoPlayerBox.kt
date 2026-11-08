@@ -254,8 +254,9 @@ fun VideoPlayerBox(
             }
         }
         GestureOverlays(feedback, state.durationMs, controller.prefs)
+        val atEnd = state.ended && !state.isPlaying && (state.durationMs <= 0 || state.positionMs >= state.durationMs - 1_000)
         // Sleep timer "End of video" means stop here, not autoplay the next one.
-        if (overlayControls && upNext != null && autoplay == true && state.ended && sleepAt != -1L) UpNextOverlay(upNext, fullscreen)
+        if (overlayControls && upNext != null && autoplay == true && atEnd && sleepAt != -1L) UpNextOverlay(upNext, fullscreen)
     }
     if (sheetOpen) YtSettingsSheet(
         state = state, controller = controller, quality = quality, onPip = onPip, extra = options,

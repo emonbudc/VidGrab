@@ -51,10 +51,7 @@ class HomeViewModel(
 ) : ViewModel() {
     private var feedLoadedAt = 0L
     private var feedRequest = 0
-
-    /** Settings → Trending on home (off by default). */
-    val showTrending = settings.settings.map { it.showTrending }
-        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
+    private val feedServed = linkedSetOf<String>()
 
     private val _category = MutableStateFlow(HomeCategory.ALL)
     val category: StateFlow<HomeCategory> = _category.asStateFlow()
@@ -117,19 +114,13 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
-            settings.settings.map { it.showTrending }.distinctUntilChanged().drop(1).collect {
-                if (_category.value == HomeCategory.ALL) loadFeed(refresh = _feed.value.items.isNotEmpty())
-            }
-        }
-        // A new search or a newly opened video changes the "For you" feed on the next visit.
-        viewModelScope.launch {
             merge(
                 history.recent.map { list -> "s:" + list.joinToString("\u0000") }.distinctUntilChanged().drop(1),
                 playHistory.entries.map { list -> "p:" + list.joinToString("\u0000") { "${it.key}:${it.openedAt}" } }
                     .distinctUntilChanged().drop(1),
             ).conflate().collect {
                 delay(1_500)
-                if (feedLoadedAt == 0L || _category.value != HomeCategory.ALL) return@collect
+                if (feedLoadedAt == 0L) return@collect
                 if (!_feed.value.loading && !_feed.value.refreshing) {
                     loadFeed(refresh = _feed.value.items.isNotEmpty())
                 }
@@ -141,6 +132,7 @@ class HomeViewModel(
         if (_category.value == category) return
         _category.value = category
         feedLoadedAt = 0L
+        feedServed.clear()
         _feed.value = FeedUi(loading = true)
         loadFeed(refresh = false)
     }
@@ -155,13 +147,23 @@ class HomeViewModel(
     fun loadFeed(refresh: Boolean) {
         val requested = _category.value
         val request = ++feedRequest
+        val exclude = if (refresh) feedServed.toSet() else emptySet()
+        if (!refresh) feedServed.clear()
         _feed.update { it.copy(loading = !refresh, refreshing = refresh, error = null, loadingMore = false) }
         viewModelScope.launch {
-            runCatching { pageFor(requested, null) }
-                .onSuccess { p ->
+            runCatching { pageFor(requested, null, exclude) }
+                .onSuccess { first ->
+                    if (request != feedRequest || requested != _category.value) return@onSuccess
+                    val p = if (refresh && first.items.isEmpty() && exclude.isNotEmpty()) {
+                        pageFor(requested, null, emptySet())
+                    } else {
+                        first
+                    }
                     if (request != feedRequest || requested != _category.value) return@onSuccess
                     feedLoadedAt = android.os.SystemClock.elapsedRealtime()
-                    _feed.value = FeedUi(items = p.items.distinctBy { it.url }, nextPage = p.nextPage)
+                    val items = p.items.distinctBy { it.url }
+                    rememberServed(items.map { it.url })
+                    _feed.value = FeedUi(items = items, nextPage = p.nextPage)
                 }
                 .onFailure { e ->
                     if (request != feedRequest || requested != _category.value) return@onFailure
@@ -180,6 +182,7 @@ class HomeViewModel(
             runCatching { pageFor(requested, s.nextPage) }
                 .onSuccess { p ->
                     if (request != feedRequest || requested != _category.value) return@onSuccess
+                    rememberServed(p.items.map { it.url })
                     _feed.update { it.copy(items = (it.items + p.items).distinctBy { i -> i.url }, nextPage = p.nextPage, loadingMore = false) }
                 }
                 .onFailure {
@@ -189,13 +192,17 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun pageFor(category: HomeCategory, page: Any?): Page<MediaItem> {
-        val result = if (category == HomeCategory.ALL) {
-            if (showTrending.value) media.trending(page) else recommendations.feed(page)
-        } else {
-            media.search(category.query.orEmpty(), category.filter, page)
-        }
+    private suspend fun pageFor(category: HomeCategory, page: Any?, exclude: Set<String> = emptySet()): Page<MediaItem> {
+        val result = recommendations.feed(page, category.topic, exclude)
         return result.copy(items = result.items.filter { it.kind == com.vidgrab.app.core.model.ItemKind.VIDEO && !it.isShort })
+    }
+
+    private fun rememberServed(urls: List<String>) {
+        feedServed.addAll(urls)
+        while (feedServed.size > MAX_SERVED_URLS) {
+            val oldest = feedServed.first()
+            feedServed.remove(oldest)
+        }
     }
 
     fun ensureMusic() {
@@ -204,6 +211,7 @@ class HomeViewModel(
 
     private companion object {
         const val FEED_MAX_AGE_MS = 2L * 60 * 1000
+        const val MAX_SERVED_URLS = 200
     }
 
     fun loadMusic() {
