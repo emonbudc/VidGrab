@@ -151,13 +151,16 @@ class PlaybackService : Service() {
 
     private fun updateSession(state: VlcSnapshot, info: NowPlaying) {
         val s = session ?: return
-        s.setMetadata(
-            MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, info.title)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, info.artist)
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, state.lengthMs)
-                .build(),
-        )
+        val metadata = MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, info.title)
+            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, info.artist)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, state.lengthMs)
+        info.artwork?.takeIf { it.isNotBlank() }?.let { art ->
+            metadata.putString(MediaMetadataCompat.METADATA_KEY_ART_URI, art)
+            metadata.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, art)
+            metadata.putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, art)
+        }
+        s.setMetadata(metadata.build())
         val playbackState = when {
             state.error != null -> PlaybackStateCompat.STATE_ERROR
             state.isBuffering -> PlaybackStateCompat.STATE_BUFFERING
@@ -181,7 +184,7 @@ class PlaybackService : Service() {
 
     private fun render(state: VlcSnapshot, info: NowPlaying) {
         val key = listOf(
-            info.title, info.artist, info.hasNext, info.hasPrevious, state.isPlaying, state.isBuffering,
+            info.title, info.artist, info.artwork, info.hasNext, info.hasPrevious, state.isPlaying, state.isBuffering,
             state.ended, state.error, state.timeMs / 5_000,
         ).joinToString("|")
         if (key == lastRendered) return

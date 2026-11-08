@@ -81,11 +81,12 @@ fun PlayerSettingsScreen(onBack: () -> Unit) {
                 SwitchRow("Keep screen on", "While a video is playing", s.keepScreenOn, QtIcons.LightMode) { v -> set { it.copy(keepScreenOn = v) } }
                 RowDivider()
                 SwitchRow(
-                    "Picture-in-picture", "Leaving a playing video keeps it in a small floating window", s.autoPip, QtIcons.PictureInPicture,
+                    "Picture-in-picture", "Leaving a playing video keeps it in a small floating window (when background play is off)",
+                    s.autoPip, QtIcons.PictureInPicture,
                 ) { v -> set { it.copy(autoPip = v) } }
                 RowDivider()
                 SwitchRow(
-                    "Background play", "Keep the sound playing after leaving the app (when not in picture-in-picture)",
+                    "Background play", "Keep the sound playing after leaving the app instead of opening picture-in-picture",
                     s.backgroundPlay, QtIcons.Headphones,
                 ) { v -> set { it.copy(backgroundPlay = v) } }
             }

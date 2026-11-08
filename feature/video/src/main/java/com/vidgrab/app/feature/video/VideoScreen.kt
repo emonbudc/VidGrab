@@ -144,9 +144,19 @@ fun VideoScreen(
             vm.toggleSaved()
             Toast.makeText(context, if (saved) "Removed from Watch later" else "Saved to Watch later", Toast.LENGTH_SHORT).show()
         },
-        PlayerOption(QtIcons.Headphones, "Play in background") {
-            vm.playInBackground()
-            Toast.makeText(context, "Playing audio in background", Toast.LENGTH_SHORT).show()
+        PlayerOption(
+            QtIcons.Headphones,
+            if (appSettings.backgroundPlay) "Background play on" else "Play in background",
+            appSettings.backgroundPlay,
+        ) {
+            val turnOn = !appSettings.backgroundPlay
+            scope.launch { settingsRepo.update { it.copy(backgroundPlay = turnOn) } }
+            if (turnOn) vm.playInBackground()
+            Toast.makeText(
+                context,
+                if (turnOn) "Sound keeps playing after leaving the app" else "Background play off",
+                Toast.LENGTH_SHORT,
+            ).show()
         },
     )
 

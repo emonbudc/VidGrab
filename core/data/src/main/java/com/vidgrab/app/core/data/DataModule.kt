@@ -15,5 +15,6 @@ val dataModule = module {
     single<SearchHistoryRepository> { SearchHistoryRepositoryImpl(get()) }
     single<GalleryRepository> { MediaStoreGalleryRepository(androidContext()) }
     single<PlaybackHistoryRepository> { PlaybackHistoryRepositoryImpl(get()) }
+    single<RecommendationRepository> { RecommendationRepositoryImpl(get(), get(), get()) }
     single<SavedVideosRepository> { SavedVideosRepositoryImpl(get()) }
 }

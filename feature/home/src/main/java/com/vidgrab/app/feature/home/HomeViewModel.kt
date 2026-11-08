@@ -3,21 +3,26 @@ package com.vidgrab.app.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vidgrab.app.core.data.MediaRepository
+import com.vidgrab.app.core.data.PlaybackHistoryRepository
+import com.vidgrab.app.core.data.RecommendationRepository
 import com.vidgrab.app.core.data.SearchHistoryRepository
 import com.vidgrab.app.core.model.DownloadStatus
 import com.vidgrab.app.core.model.DownloadTask
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.model.MediaSection
 import com.vidgrab.app.core.model.Page
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class FeedUi(
@@ -37,9 +42,11 @@ data class MusicUi(
 
 class HomeViewModel(
     private val media: MediaRepository,
+    private val recommendations: RecommendationRepository,
     library: com.vidgrab.app.core.data.LibraryRepository,
     private val settings: com.vidgrab.app.core.data.SettingsRepository,
     private val history: SearchHistoryRepository,
+    private val playHistory: PlaybackHistoryRepository,
     private val downloads: com.vidgrab.app.core.download.DownloadManager,
 ) : ViewModel() {
     private var feedLoadedAt = 0L
@@ -114,6 +121,20 @@ class HomeViewModel(
                 if (_category.value == HomeCategory.ALL) loadFeed(refresh = _feed.value.items.isNotEmpty())
             }
         }
+        // A new search or a newly opened video changes the "For you" feed on the next visit.
+        viewModelScope.launch {
+            merge(
+                history.recent.map { list -> "s:" + list.joinToString("\u0000") }.distinctUntilChanged().drop(1),
+                playHistory.entries.map { list -> "p:" + list.joinToString("\u0000") { "${it.key}:${it.openedAt}" } }
+                    .distinctUntilChanged().drop(1),
+            ).conflate().collect {
+                delay(1_500)
+                if (feedLoadedAt == 0L || _category.value != HomeCategory.ALL) return@collect
+                if (!_feed.value.loading && !_feed.value.refreshing) {
+                    loadFeed(refresh = _feed.value.items.isNotEmpty())
+                }
+            }
+        }
     }
 
     fun selectCategory(category: HomeCategory) {
@@ -170,7 +191,7 @@ class HomeViewModel(
 
     private suspend fun pageFor(category: HomeCategory, page: Any?): Page<MediaItem> {
         val result = if (category == HomeCategory.ALL) {
-            if (showTrending.value) media.trending(page) else media.discover(page)
+            if (showTrending.value) media.trending(page) else recommendations.feed(page)
         } else {
             media.search(category.query.orEmpty(), category.filter, page)
         }

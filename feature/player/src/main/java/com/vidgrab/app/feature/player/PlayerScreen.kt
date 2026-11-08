@@ -47,18 +47,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.media.RepeatMode
 import coil3.compose.AsyncImage
 import com.vidgrab.app.core.common.Format
+import com.vidgrab.app.core.data.SettingsRepository
 import com.vidgrab.app.core.media.PlayerController
+import com.vidgrab.app.core.model.AppSettings
 import com.vidgrab.app.core.playerui.FullscreenEffect
+import com.vidgrab.app.core.playerui.PlayerOption
 import com.vidgrab.app.core.playerui.SeekBar
 import com.vidgrab.app.core.playerui.SpeedButton
 import com.vidgrab.app.core.playerui.VideoPlayerBox
 import com.vidgrab.app.core.playerui.AutoPipEffect
 import com.vidgrab.app.core.playerui.LocalPipMode
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
 fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
     val controller = koinInject<PlayerController>()
+    val settings = koinInject<SettingsRepository>()
+    val appSettings by settings.settings.collectAsStateWithLifecycle(AppSettings())
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val state by controller.state.collectAsStateWithLifecycle()
     var fullscreen by rememberSaveable { mutableStateOf(false) }
     var showQueue by remember { mutableStateOf(false) }
@@ -74,10 +81,20 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
     }
     BackHandler(!fullscreen) { leave() }
     val current = state.current ?: return
+    val backgroundOption = if (current.isVideo) listOf(
+        PlayerOption(
+            QtIcons.Headphones,
+            if (appSettings.backgroundPlay) "Background play on" else "Background play",
+            appSettings.backgroundPlay,
+        ) {
+            scope.launch { settings.update { it.copy(backgroundPlay = !it.backgroundPlay) } }
+        },
+    ) else emptyList()
 
     if (fullscreen || inPip) {
         VideoPlayerBox(controller, state, Modifier.fillMaxSize(), fullscreen = true, onToggleFullscreen = { fullscreen = false },
-            overlayControls = !inPip, onPip = { if (state.audioOnly) controller.setAudioOnly(false); leave(toPip = true) })
+            overlayControls = !inPip, onPip = { if (state.audioOnly) controller.setAudioOnly(false); leave(toPip = true) },
+            options = backgroundOption)
         return
     }
     val showVideo = current.isVideo && !state.audioOnly
@@ -103,6 +120,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
                         .aspectRatio(if (state.videoWidth > 0 && state.videoHeight > 0) (state.videoWidth.toFloat() / state.videoHeight).coerceIn(0.5f, 2f) else 16f / 9f),
                     onToggleFullscreen = { fullscreen = true },
                     overlayControls = false,
+                    options = backgroundOption,
                 )
             } else {
                 Box(
@@ -205,7 +223,7 @@ fun PlayerScreen(onBack: () -> Unit, onPip: () -> Unit = {}) {
 
 /** Floating card shown above the bottom navigation while something is playing. */
 @Composable
-fun MiniPlayer(onExpand: () -> Unit, modifier: Modifier = Modifier) {
+fun MiniPlayer(onExpand: () -> Unit, onPip: () -> Unit = {}, modifier: Modifier = Modifier) {
     val controller = koinInject<PlayerController>()
     val state by controller.state.collectAsStateWithLifecycle()
     val current = state.current ?: return
@@ -226,6 +244,9 @@ fun MiniPlayer(onExpand: () -> Unit, modifier: Modifier = Modifier) {
                 if (current.artist.isNotBlank()) Text(current.artist, maxLines = 1, style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            if (current.isVideo && !state.audioOnly) QtIconButton(
+                QtIcons.PictureInPicture, "Picture-in-picture", onPip, tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             QtIconButton(
                 if (state.isPlaying) QtIcons.Pause else QtIcons.Play, "Play/Pause", controller::togglePlay,
                 tint = MaterialTheme.colorScheme.onPrimary, container = MaterialTheme.colorScheme.primary, size = 40.dp, iconSize = 22.dp,

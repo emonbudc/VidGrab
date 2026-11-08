@@ -40,10 +40,13 @@ val LocalFloatingPlayer = compositionLocalOf { false }
 /** True while the hosting activity is in picture-in-picture: player screens then draw only the video. */
 val LocalPipMode = compositionLocalOf { false }
 
-/** Whether leaving the video now should continue it in picture-in-picture (Settings → Player → Picture-in-picture). */
+/**
+ * Whether leaving the video now should continue it in picture-in-picture (Settings → Player → Picture-in-picture).
+ * Background play wins: when it is on there is no floating window, the sound simply keeps playing.
+ */
 fun PlayerController.shouldPip(state: PlaybackState): Boolean =
-    prefs.autoPip && state.isPlaying && !state.audioOnly && state.current?.isVideo == true && state.error == null &&
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+    prefs.autoPip && !prefs.backgroundPlay && state.isPlaying && !state.audioOnly &&
+        state.current?.isVideo == true && state.error == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 
 fun PlaybackState.videoRatio(): Float = if (videoWidth > 0 && videoHeight > 0) videoWidth.toFloat() / videoHeight else 0f
 

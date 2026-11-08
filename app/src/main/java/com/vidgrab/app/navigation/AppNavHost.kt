@@ -114,7 +114,8 @@ fun AppNavHost(nav: NavHostController) {
     val selectedTab = tabIndexFor(dest)
     val onTab = selectedTab >= 0
     // A gallery video is already on screen (its own player or picture-in-picture); gallery audio reopens that player.
-    val playing by koinInject<com.vidgrab.app.core.media.PlayerController>().state.collectAsStateWithLifecycle()
+    val player = koinInject<com.vidgrab.app.core.media.PlayerController>()
+    val playing by player.state.collectAsStateWithLifecycle()
     val galleryId = playing.current?.id?.takeIf { it.startsWith("gallery:") }?.removePrefix("gallery:")?.toLongOrNull()
     val galleryVideo = galleryId != null && !playing.audioOnly
     // The floating window is showing the video instead.
@@ -328,7 +329,7 @@ fun AppNavHost(nav: NavHostController) {
                     ) { launchSingleTop = true }
                     else -> nav.navigate(PlayerRoute) { launchSingleTop = true }
                 }
-            })
+            }, onPip = { FloatingPlayerActivity.start(context) })
             if (onTab && !barHidden.value) {
                 FloatingNavBar(
                     tabs, selectedTab,

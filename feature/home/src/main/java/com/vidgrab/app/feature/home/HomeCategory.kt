@@ -7,7 +7,7 @@ enum class HomeCategory(
     val query: String? = null,
     val filter: SearchFilter = SearchFilter.VIDEOS,
 ) {
-    ALL("All"),
+    ALL("For you"),
     MUSIC("Music", "music", SearchFilter.MUSIC),
     NEWS("News", "news", SearchFilter.VIDEOS),
     MUSIC_OF_BENGAL("Music of Bengal", "bangla music", SearchFilter.MUSIC),
