@@ -424,7 +424,7 @@ private fun DiscoverTab(
         }
 
         when {
-            showTrending && feed.loading && feed.items.isEmpty() -> gridItems(4) { GridSkeleton() }
+            showTrending && feed.loading && feed.items.isEmpty() -> items(4) { GridSkeleton() }
 
             showTrending && feed.error != null && feed.items.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
                 InlineError(feed.error.orEmpty()) { vm.loadFeed(false) }
