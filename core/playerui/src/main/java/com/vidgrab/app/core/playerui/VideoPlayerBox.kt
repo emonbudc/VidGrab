@@ -69,10 +69,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.media.PlaybackState
@@ -160,6 +163,17 @@ fun VideoPlayerBox(
     val ratio = if (state.videoWidth > 0 && state.videoHeight > 0) state.videoWidth.toFloat() / state.videoHeight else 16f / 9f
     // The video is in the floating window: only that window draws it (one surface per player).
     val floating by PipState.floating.collectAsStateWithLifecycle()
+    val windowView = LocalView.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(floating) {
+        if (!floating || LocalFloatingPlayer.current) return@LaunchedEffect
+        // Coming back to the player while its floating window is open: bring the picture back automatically.
+        // The window loses focus while leaving the app, so this doesn't close it on the way out.
+        delay(250)
+        if (PipState.floating.value && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+            windowView.hasWindowFocus()
+        ) PipState.recall.value++
+    }
     if (floating && !LocalFloatingPlayer.current) {
         FloatingPlaceholder(state.current?.artwork, modifier)
         return
@@ -182,7 +196,7 @@ fun VideoPlayerBox(
         androidx.compose.animation.AnimatedVisibility(poster != null && state.videoWidth == 0, enter = fadeIn(tween(0)), exit = fadeOut(tween(300))) {
             coil3.compose.AsyncImage(poster, null, contentScale = androidx.compose.ui.layout.ContentScale.Fit, modifier = Modifier.fillMaxSize())
         }
-        Box(Modifier.fillMaxSize().playerGestures(gestures))
+        if (!LocalPipMode.current) Box(Modifier.fillMaxSize().playerGestures(gestures))
         if ((state.isBuffering || (poster != null && state.videoWidth == 0 && state.error == null)) && !(controlsVisible && overlayControls)) PlayerSpinner()
         state.error?.let { err ->
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
@@ -253,7 +267,7 @@ fun VideoPlayerBox(
                 }
             }
         }
-        GestureOverlays(feedback, state.durationMs, controller.prefs)
+        if (!LocalPipMode.current) GestureOverlays(feedback, state.durationMs, controller.prefs)
         val atEnd = state.ended && !state.isPlaying && (state.durationMs <= 0 || state.positionMs >= state.durationMs - 1_000)
         // Sleep timer "End of video" means stop here, not autoplay the next one.
         if (overlayControls && upNext != null && autoplay == true && atEnd && sleepAt != -1L) UpNextOverlay(upNext, fullscreen)
@@ -265,23 +279,14 @@ fun VideoPlayerBox(
     )
 }
 
-/** Where the player was, while the video plays in the floating window: its picture and a way to bring it back. */
+/** Where the player was while the floating window finishes handing the picture back to the app. */
 @Composable
 private fun FloatingPlaceholder(artwork: String?, modifier: Modifier) {
     Box(modifier.background(Color.Black), contentAlignment = Alignment.Center) {
         if (artwork != null) coil3.compose.AsyncImage(
-            artwork, null, contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.fillMaxSize(), alpha = 0.35f,
+            artwork, null, contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.fillMaxSize(), alpha = 0.25f,
         )
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(QtIcons.PictureInPicture, null, tint = Color.White, modifier = Modifier.size(32.dp))
-            Text("Playing in picture-in-picture", color = Color.White, style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp))
-            Text(
-                "Show here", color = Color.Black, style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(top = 14.dp).clip(CircleShape).background(Color.White)
-                    .pressable(onClick = { PipState.recall.value++ }).padding(horizontal = 18.dp, vertical = 9.dp),
-            )
-        }
+        PlayerSpinner()
     }
 }
 

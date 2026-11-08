@@ -120,8 +120,11 @@ class MediaEngine private constructor(private val context: Context) {
 
         override fun onVideoSizeChanged(videoSize: VideoSize) {
             if (videoSize.width <= 0 || videoSize.height <= 0) return
+            val turned = videoSize.unappliedRotationDegrees == 90 || videoSize.unappliedRotationDegrees == 270
             _snapshot.value = _snapshot.value.copy(
-                videoWidth = videoSize.width, videoHeight = videoSize.height,
+                videoWidth = if (turned) videoSize.height else videoSize.width,
+                videoHeight = if (turned) videoSize.width else videoSize.height,
+                hasVideo = !audioOnly,
             )
         }
 
