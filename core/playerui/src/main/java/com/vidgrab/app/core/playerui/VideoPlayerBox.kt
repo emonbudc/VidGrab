@@ -165,8 +165,9 @@ fun VideoPlayerBox(
     val floating by PipState.floating.collectAsStateWithLifecycle()
     val windowView = LocalView.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val inFloatingPlayer = LocalFloatingPlayer.current
     LaunchedEffect(floating) {
-        if (!floating || LocalFloatingPlayer.current) return@LaunchedEffect
+        if (!floating || inFloatingPlayer) return@LaunchedEffect
         // Coming back to the player while its floating window is open: bring the picture back automatically.
         // The window loses focus while leaving the app, so this doesn't close it on the way out.
         delay(250)
@@ -174,7 +175,7 @@ fun VideoPlayerBox(
             windowView.hasWindowFocus()
         ) PipState.recall.value++
     }
-    if (floating && !LocalFloatingPlayer.current) {
+    if (floating && !inFloatingPlayer) {
         FloatingPlaceholder(state.current?.artwork, modifier)
         return
     }
