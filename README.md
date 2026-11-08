@@ -35,7 +35,7 @@ VidGrab is a GPL-3.0 Android app built on [QuickTube](https://github.com/devgali
 
 ### <img src="https://api.iconify.design/material-symbols:home.svg?color=4f46e5" width="22" height="22" align="center" /> Home feeds that learn what you watch
 
-**For you**, **Music**, **News**, **Movies** and **Natok** each build their own feed from the same signals:
+**For you**, **Music**, **News** and **Movies** each build their own feed from the same signals:
 
 - Recently searched topics become search seeds. On a themed tab, searches that do not match the tab are narrowed with its subject instead of leaking into it.
 - Recently opened YouTube videos become related-video seeds when their titles fit the tab.

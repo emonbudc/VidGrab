@@ -6,11 +6,9 @@ import com.vidgrab.app.core.model.DownloadOption
 import com.vidgrab.app.core.model.FormatKind
 import com.vidgrab.app.core.model.ItemKind
 import com.vidgrab.app.core.model.MediaItem
-import com.vidgrab.app.core.model.MediaSection
 import com.vidgrab.app.core.model.Page
 import com.vidgrab.app.core.model.PlaylistDetails
 import com.vidgrab.app.core.model.SearchFilter
-import com.vidgrab.app.core.model.SectionStyle
 import com.vidgrab.app.core.model.VideoDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -27,8 +25,6 @@ import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
 import org.schabi.newpipe.extractor.comments.CommentsInfo
-import org.schabi.newpipe.extractor.kiosk.KioskInfo
-import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
@@ -46,17 +42,12 @@ import org.schabi.newpipe.extractor.MediaFormat as NpFormat
 class NewPipeMediaExtractor(
     client: OkHttpClient,
     language: String = java.util.Locale.getDefault().language.ifBlank { "en" },
-    country: String = java.util.Locale.getDefault().country.ifBlank { "US" },
 ) : MediaExtractor {
 
     private val yt: StreamingService = ServiceList.YouTube
 
     init {
-        NewPipe.init(OkHttpDownloader(client), Localization(language, country), ContentCountry(country))
-    }
-
-    fun setRegion(language: String, country: String) {
-        NewPipe.setupLocalization(Localization(language, country), ContentCountry(country))
+        NewPipe.init(OkHttpDownloader(client), Localization(language))
     }
 
     private fun serviceFor(url: String): StreamingService = serviceByHost(url) ?: yt
@@ -122,44 +113,6 @@ class NewPipeMediaExtractor(
         }
     }
 
-    /** Paging cursor across several kiosks (music, gaming, live…). */
-    private data class MultiPage(val pages: Map<String, NpPage>)
-
-    override suspend fun trending(page: Any?): Page<MediaItem> = coroutineScope {
-        val kiosks = yt.kioskList
-        val ids = kiosks.availableKiosks.toList()
-        val results = if (page == null) {
-            ids.map { id ->
-                async {
-                    runCatching {
-                        val url = kiosks.getListLinkHandlerFactoryByType(id).fromId(id).url
-                        val info = io { KioskInfo.getInfo(yt, url) }
-                        Triple(id, info.relatedItems.mapNotNull { it.toItem() }, info.nextPage)
-                    }.getOrNull()
-                }
-            }.awaitAll().filterNotNull()
-        } else {
-            (page as MultiPage).pages.map { (id, p) ->
-                async {
-                    runCatching {
-                        val url = kiosks.getListLinkHandlerFactoryByType(id).fromId(id).url
-                        val more = io { KioskInfo.getMoreItems(yt, url, p) }
-                        Triple(id, more.items.mapNotNull { it.toItem() }, more.nextPage)
-                    }.getOrNull()
-                }
-            }.awaitAll().filterNotNull()
-        }
-        if (page == null && results.isEmpty()) error("Couldn't load trending videos")
-        // Interleave so the feed mixes categories instead of showing one block per kiosk.
-        val lists = results.map { it.second.filter { item -> !item.isShort } }
-        val mixed = buildList {
-            var i = 0
-            while (lists.any { i < it.size }) { lists.forEach { l -> l.getOrNull(i)?.let(::add) }; i++ }
-        }
-        val next = results.mapNotNull { (id, _, np) -> np?.let { id to it } }.toMap()
-        Page(mixed.distinctBy { it.url }, if (next.isEmpty()) null else MultiPage(next))
-    }
-
     private data class DiscoverCursor(val queries: List<String>, val pages: Map<String, NpPage>)
 
     override suspend fun discover(page: Any?): Page<MediaItem> = coroutineScope {
@@ -188,26 +141,6 @@ class NewPipeMediaExtractor(
         }
         val next = results.mapNotNull { (query, _, np) -> np?.let { query to it } }.toMap()
         Page(mixed.distinctBy { it.url }, if (next.isEmpty()) null else DiscoverCursor(queries, next))
-    }
-
-    override suspend fun musicHome(): List<MediaSection> = coroutineScope {
-        val queries = listOf(
-            "Top hits" to SearchFilter.MUSIC,
-            "Trending community playlists" to SearchFilter.PLAYLISTS,
-            "Bollywood hits" to SearchFilter.PLAYLISTS,
-            "Romantic songs" to SearchFilter.MUSIC,
-            "Lofi & chill" to SearchFilter.PLAYLISTS,
-            "Ghazal & Sufi essentials" to SearchFilter.PLAYLISTS,
-            "Workout music" to SearchFilter.PLAYLISTS,
-        )
-        queries.map { (title, filter) ->
-            async {
-                runCatching {
-                    val items = search(title, filter).items.take(12)
-                    MediaSection(title, items, SectionStyle.ROW)
-                }.getOrNull()
-            }
-        }.awaitAll().filterNotNull().filter { it.items.isNotEmpty() }
     }
 
     /** Strips playlist/radio/tracking parameters: watch?v=ID&list=…&pp=… → watch?v=ID. */

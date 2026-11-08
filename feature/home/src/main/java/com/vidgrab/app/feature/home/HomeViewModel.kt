@@ -6,14 +6,10 @@ import com.vidgrab.app.core.data.MediaRepository
 import com.vidgrab.app.core.data.PlaybackHistoryRepository
 import com.vidgrab.app.core.data.RecommendationRepository
 import com.vidgrab.app.core.data.SearchHistoryRepository
-import com.vidgrab.app.core.model.DownloadStatus
-import com.vidgrab.app.core.model.DownloadTask
 import com.vidgrab.app.core.model.MediaItem
-import com.vidgrab.app.core.model.MediaSection
 import com.vidgrab.app.core.model.Page
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.conflate
@@ -34,16 +30,9 @@ data class FeedUi(
     val nextPage: Any? = null,
 )
 
-data class MusicUi(
-    val sections: List<MediaSection> = emptyList(),
-    val loading: Boolean = false,
-    val error: String? = null,
-)
-
 class HomeViewModel(
     private val media: MediaRepository,
     private val recommendations: RecommendationRepository,
-    library: com.vidgrab.app.core.data.LibraryRepository,
     private val settings: com.vidgrab.app.core.data.SettingsRepository,
     private val history: SearchHistoryRepository,
     private val playHistory: PlaybackHistoryRepository,
@@ -73,46 +62,10 @@ class HomeViewModel(
             com.vidgrab.app.core.common.Urls.platformOf(u) == com.vidgrab.app.core.common.Platform.INSTAGRAM
     }
 
-    /** Latest finished downloads for the "Recent downloads" row. */
-    val recent = library.downloads
-        .map { l -> l.filter { it.status == DownloadStatus.COMPLETED && !it.inVault && it.deletedAt == 0L }.take(10) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val activeCount = library.downloads
-        .map { l -> l.count { it.status.isActive && it.deletedAt == 0L } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-
-    val savedCount = library.downloads
-        .map { l -> l.count { it.status == DownloadStatus.COMPLETED && !it.inVault && it.deletedAt == 0L } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-
-    val activeTask: StateFlow<DownloadTask?> = library.downloads
-        .map { l -> l.firstOrNull { it.status.isActive && it.deletedAt == 0L } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
-    val recentSearches = history.recent
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    fun recordSearch(query: String) {
-        if (query.isNotBlank()) viewModelScope.launch { history.add(query) }
-    }
-
-    fun clearRecentSearches() = viewModelScope.launch { history.clear() }
-
-    fun forgetSearch(query: String) = viewModelScope.launch { history.remove(query) }
-
     private val _feed = MutableStateFlow(FeedUi())
     val feed: StateFlow<FeedUi> = _feed
-    private val _music = MutableStateFlow(MusicUi())
-    val music: StateFlow<MusicUi> = _music
 
     init {
-        viewModelScope.launch {
-            settings.settings.map { it.contentRegion }.distinctUntilChanged().drop(1).collect {
-                if (_feed.value.items.isNotEmpty()) loadFeed(refresh = true)
-                if (_music.value.sections.isNotEmpty()) loadMusic()
-            }
-        }
         viewModelScope.launch {
             merge(
                 history.recent.map { list -> "s:" + list.joinToString("\u0000") }.distinctUntilChanged().drop(1),
@@ -205,21 +158,8 @@ class HomeViewModel(
         }
     }
 
-    fun ensureMusic() {
-        if (_music.value.sections.isEmpty() && !_music.value.loading) loadMusic()
-    }
-
     private companion object {
         const val FEED_MAX_AGE_MS = 2L * 60 * 1000
         const val MAX_SERVED_URLS = 200
-    }
-
-    fun loadMusic() {
-        _music.value = MusicUi(loading = true)
-        viewModelScope.launch {
-            runCatching { media.musicHome() }
-                .onSuccess { _music.value = MusicUi(sections = it, error = if (it.isEmpty()) "Nothing to show right now" else null) }
-                .onFailure { e -> _music.value = MusicUi(error = e.message ?: "Error") }
-        }
     }
 }

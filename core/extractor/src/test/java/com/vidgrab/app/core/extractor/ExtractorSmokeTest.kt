@@ -17,16 +17,12 @@ class ExtractorSmokeTest {
         println("search: ${s.items.size} first=${s.items.firstOrNull()?.title} more=${s.hasMore}")
         assertTrue(s.items.isNotEmpty())
         println("suggest: ${ex.suggestions("coldp").take(5)}")
-        val t = runCatching { ex.trending() }
-        println("trending: ${t.getOrNull()?.items?.size} ${t.exceptionOrNull()}")
         val v = s.items.first { it.kind == com.vidgrab.app.core.model.ItemKind.VIDEO }
         val d = ex.details(v.url)
         println("details: ${d.item.title} play=${d.playbackUrl != null} related=${d.related.size}")
         d.options.forEach { println("  ${it.kind} ${it.title} ${it.info} size=${it.totalSize} merge=${it.audioUrl != null}") }
         val c = runCatching { ex.comments(v.url) }
         println("comments: ${c.getOrNull()?.items?.size} ${c.exceptionOrNull()}")
-        val m = runCatching { ex.musicHome() }
-        println("music: ${m.getOrNull()?.map { it.title + ":" + it.items.size }} ${m.exceptionOrNull()}")
     }
 
     @Test

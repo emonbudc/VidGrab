@@ -11,8 +11,6 @@ import com.vidgrab.app.core.analytics.Analytics
 import com.vidgrab.app.core.analytics.analyticsModule
 import com.vidgrab.app.core.data.SettingsRepository
 import com.vidgrab.app.core.data.dataModule
-import com.vidgrab.app.core.extractor.NewPipeMediaExtractor
-import com.vidgrab.app.core.extractor.detectCountry
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import com.vidgrab.app.core.download.DownloadManager
@@ -62,12 +60,6 @@ class VidGrabApplication : Application(), SingletonImageLoader.Factory {
             // Daily check (cheap: a conditional request that returns 304 when nothing changed).
             if (System.currentTimeMillis() - prefs.getLong("updated", 0) > 24L * 60 * 60 * 1000) {
                 ytdlp.update()?.let { prefs.edit().putLong("updated", System.currentTimeMillis()).putString("version", it).apply() }
-            }
-        }
-        appScope.launch {
-            get<SettingsRepository>().settings.map { it.contentRegion }.distinctUntilChanged().collect { region ->
-                val country = region.ifBlank { detectCountry(this@VidGrabApplication) }
-                get<NewPipeMediaExtractor>().setRegion(java.util.Locale.getDefault().language.ifBlank { "en" }, country)
             }
         }
     }

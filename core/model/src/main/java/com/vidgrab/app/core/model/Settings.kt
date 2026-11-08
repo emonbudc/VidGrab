@@ -47,7 +47,6 @@ data class AppSettings(
     /** Salted PBKDF2 hash of the vault PIN, never the PIN itself. */
     val vaultPin: String? = null,
     val language: String = "en",
-    val contentRegion: String = "",
     /** Speed every video starts at (Settings → Player). */
     val playbackSpeed: Float = 1f,
     /** Remember where each video was left (capped list), for resuming and progress bars. */
@@ -71,7 +70,6 @@ data class AppSettings(
     val autoPip: Boolean = true,
     /** Online videos: play the next suggested video when one ends (the player's autoplay switch). */
     val autoplayNext: Boolean = true,
-    val onboarded: Boolean = false,
     /** Crash reports + anonymous usage stats (official builds only). */
     val analyticsEnabled: Boolean = true,
 )

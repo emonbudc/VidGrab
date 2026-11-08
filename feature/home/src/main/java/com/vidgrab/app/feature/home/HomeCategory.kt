@@ -30,13 +30,6 @@ enum class HomeCategory(
             "movie", "movies", "film", "films", "cinema", "trailer", "teaser", "bollywood", "tollywood",
             "hollywood", "ott", "web series", "picture", "সিনেমা", "চলচ্চিত্র", "মুভি", "ট্রেইলার",
         ),
-    ),
-    NATOK(
-        "Natok", "bangla natok", SearchFilter.VIDEOS,
-        listOf(
-            "natok", "drama", "telefilm", "serial", "episode", "bangla natok", "নাটক", "টেলিফিল্ম",
-            "ধারাবাহিক", "অভিনয়", "পর্ব",
-        ),
     );
 
     val topic: RecommendationTopic? get() = query?.let { RecommendationTopic(it, filter, keywords) }

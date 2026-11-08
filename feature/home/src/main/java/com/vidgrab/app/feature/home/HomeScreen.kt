@@ -35,14 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -69,7 +66,6 @@ import org.koin.compose.viewmodel.koinViewModel
 class HomeActions(
     val openSearch: (String) -> Unit,
     val openSearchResults: (String) -> Unit,
-    val openUrl: (String) -> Unit,
     /** A link the user pasted/copied: go straight to downloading it. */
     val downloadUrl: (String) -> Unit,
     val openItem: (MediaItem) -> Unit,
@@ -79,15 +75,6 @@ class HomeActions(
     val openSettings: () -> Unit = {},
     val openLibrary: () -> Unit = {},
     val openVault: () -> Unit = {},
-)
-
-private data class SocialSource(val name: String, val url: String)
-
-private val socialSources = listOf(
-    SocialSource("YouTube", "https://m.youtube.com/"),
-    SocialSource("TikTok", "https://www.tiktok.com/"),
-    SocialSource("Facebook", "https://m.facebook.com/"),
-    SocialSource("Instagram", "https://www.instagram.com/"),
 )
 
 @Composable
@@ -115,9 +102,9 @@ fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
     ) {
         HomeHeader(
             onLogoClick = { actions.openSearch("") },
-            onOpen = actions.openUrl,
-            onMusic = { vm.selectCategory(HomeCategory.MUSIC) },
+            onSearch = { actions.openSearch("") },
         )
+        HomeSearchBar(onClick = { actions.openSearch("") })
         CategoryRow(selected = category, onSelect = vm::selectCategory)
         if (clipboardOn && clip != null) ClipboardSuggestion(
             url = clip.orEmpty(),
@@ -139,11 +126,8 @@ fun HomeScreen(actions: HomeActions, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun HomeHeader(
-    onLogoClick: () -> Unit,
-    onOpen: (String) -> Unit,
-    onMusic: () -> Unit,
-) {
+private fun HomeHeader(onLogoClick: () -> Unit, onSearch: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
     Row(
         Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -154,33 +138,34 @@ private fun HomeHeader(
             contentScale = ContentScale.Fit,
             modifier = Modifier.height(30.dp).pressable(scaleDown = 0.96f, role = Role.Button, onClick = onLogoClick),
         )
-        LazyRow(
-            Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.End),
-            contentPadding = PaddingValues(start = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            items(socialSources, key = { it.name }) { source ->
-                SocialShortcut(name = source.name, onClick = { onOpen(source.url) })
-            }
-            item(key = "Music") { SocialShortcut(name = "Music", onClick = onMusic, music = true) }
-        }
+        Box(Modifier.weight(1f))
+        QtIconButton(
+            QtIcons.Search, "Search", onSearch,
+            tint = cs.onSurface, container = cs.surfaceContainerHigh, size = 40.dp, iconSize = 20.dp,
+        )
     }
 }
 
 @Composable
-private fun SocialShortcut(name: String, onClick: () -> Unit, music: Boolean = false) {
-    Box(
-        Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
-            .semantics { contentDescription = name }
-            .pressable(scaleDown = 0.9f, role = Role.Button, onClick = onClick),
+private fun HomeSearchBar(onClick: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp)
+            .height(48.dp).clip(RoundedCornerShape(16.dp))
+            .background(cs.surfaceContainerHigh)
+            .pressable(scaleDown = 0.98f, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 15.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (music) Box(
-            Modifier.fillMaxSize().background(Color(0xFFE2F8F0)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(QtIcons.MusicNote, null, tint = Color(0xFF12A987), modifier = Modifier.size(22.dp))
-        } else BrandTile(name, Modifier.fillMaxSize(), size = 40.dp)
+        Icon(QtIcons.Search, null, tint = cs.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Text(
+            "Search videos, music or paste a link",
+            style = MaterialTheme.typography.bodyMedium,
+            color = cs.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 10.dp),
+        )
     }
 }
 

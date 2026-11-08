@@ -8,7 +8,6 @@ import com.vidgrab.app.core.model.DownloadTask
 import com.vidgrab.app.core.model.GalleryLibrary
 import com.vidgrab.app.core.model.HistoryEntry
 import com.vidgrab.app.core.model.MediaItem
-import com.vidgrab.app.core.model.MediaSection
 import com.vidgrab.app.core.model.Page
 import com.vidgrab.app.core.model.PlaylistDetails
 import com.vidgrab.app.core.model.SearchFilter
@@ -20,9 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface MediaRepository {
     suspend fun suggestions(query: String): List<String>
     suspend fun search(query: String, filter: SearchFilter, page: Any? = null): Page<MediaItem>
-    suspend fun trending(page: Any? = null): Page<MediaItem>
     suspend fun discover(page: Any? = null): Page<MediaItem>
-    suspend fun musicHome(): List<MediaSection>
     suspend fun details(url: String, forceRefresh: Boolean = false): VideoDetails
     suspend fun comments(url: String, page: Any? = null): Page<Comment>
     suspend fun channel(url: String, page: Any? = null): ChannelDetails

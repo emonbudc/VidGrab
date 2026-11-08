@@ -24,10 +24,6 @@ data class MediaItem(
     val description: String? = null,
 )
 
-data class MediaSection(val title: String, val items: List<MediaItem>, val style: SectionStyle = SectionStyle.ROW)
-
-enum class SectionStyle { ROW, LIST }
-
 data class Page<T>(val items: List<T>, val nextPage: Any? = null) {
     val hasMore get() = nextPage != null
 }

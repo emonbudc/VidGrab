@@ -171,7 +171,6 @@ fun AppNavHost(nav: NavHostController) {
                     HomeActions(
                         openSearch = { nav.navigate(SearchRoute(it)) },
                         openSearchResults = { nav.navigate(SearchResultsRoute(it)) },
-                        openUrl = ::openUrl,
                         downloadUrl = ::downloadUrl,
                         openItem = ::openItem,
                         openChannel = { nav.navigate(ChannelRoute(it)) },

@@ -47,9 +47,9 @@ class SettingsDataSource(private val context: Context) {
         val toolbar = booleanPreferencesKey("toolbar")
         val pin = stringPreferencesKey("vault_pin")
         val language = stringPreferencesKey("language")
-        val region = stringPreferencesKey("region")
+        val legacyRegion = stringPreferencesKey("region")
         val playbackSpeed = floatPreferencesKey("playback_speed")
-        val onboarded = booleanPreferencesKey("onboarded")
+        val legacyOnboarded = booleanPreferencesKey("onboarded")
         val analytics = booleanPreferencesKey("analytics")
         val playHistory = booleanPreferencesKey("play_history")
         val resume = booleanPreferencesKey("resume_playback")
@@ -74,6 +74,8 @@ class SettingsDataSource(private val context: Context) {
     val settings: Flow<AppSettings> = context.dataStore.data
         .onStart {
             context.dataStore.edit { p ->
+                if (p.contains(K.legacyRegion)) p.remove(K.legacyRegion)
+                if (p.contains(K.legacyOnboarded)) p.remove(K.legacyOnboarded)
                 if (p[K.defaultToggles] != true) {
                     p[K.keepScreenOn] = true
                     p[K.autoPip] = true
@@ -109,9 +111,7 @@ class SettingsDataSource(private val context: Context) {
             p[K.toolbar] = s.toolbarNotification
             if (s.vaultPin == null) p.remove(K.pin) else p[K.pin] = s.vaultPin!!
             p[K.language] = s.language
-            p[K.region] = s.contentRegion
             p[K.playbackSpeed] = s.playbackSpeed
-            p[K.onboarded] = s.onboarded
             p[K.analytics] = s.analyticsEnabled
             p[K.playHistory] = s.playHistory
             p[K.resume] = s.resumePlayback
@@ -150,9 +150,7 @@ class SettingsDataSource(private val context: Context) {
         toolbarNotification = p[K.toolbar] ?: false,
         vaultPin = p[K.pin],
         language = p[K.language] ?: "en",
-        contentRegion = p[K.region] ?: "",
         playbackSpeed = p[K.playbackSpeed] ?: 1f,
-        onboarded = p[K.onboarded] ?: false,
         analyticsEnabled = p[K.analytics] ?: true,
         playHistory = p[K.playHistory] ?: true,
         resumePlayback = p[K.resume] ?: true,
