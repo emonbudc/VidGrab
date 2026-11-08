@@ -2,9 +2,10 @@ package com.vidgrab.app
 
 import android.Manifest
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.graphics.Color
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -49,7 +50,9 @@ class MainActivity : ComponentActivity() {
     private val updates: UpdateManager by inject()
     private var pendingIntent by mutableStateOf<Intent?>(null)
 
-    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
+    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        requestAllFilesAccess()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,9 +140,23 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestStartupPermissions() {
-        // Only what this Android version needs: notifications (13+) and storage (10 and older).
-        val perms = (Permissions.notifications + Permissions.storageWrite).filterNot { Permissions.granted(this, arrayOf(it)) }
-        if (perms.isNotEmpty()) permissionLauncher.launch(perms.toTypedArray())
+        // Notifications (13+) and full storage access (10 and older) are requested together.
+        val perms = (Permissions.notifications + Permissions.storageWrite + Permissions.legacyRead)
+            .distinct()
+            .filterNot { Permissions.granted(this, arrayOf(it)) }
+        if (perms.isNotEmpty()) permissionLauncher.launch(perms.toTypedArray()) else requestAllFilesAccess()
+    }
+
+    /** Android 11+ keeps all-files access on a system page; ask once, right after the first-launch dialogs. */
+    private fun requestAllFilesAccess() {
+        if (Build.VERSION.SDK_INT < 30 || Permissions.allFilesAccess()) return
+        val asked = getSharedPreferences("startup", MODE_PRIVATE)
+        if (asked.getBoolean("all_files_asked", false)) return
+        asked.edit().putBoolean("all_files_asked", true).apply()
+        val appPage = Permissions.allFilesAccessIntent(this)
+        runCatching { startActivity(appPage) }.onFailure {
+            runCatching { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
+        }
     }
 
     companion object {

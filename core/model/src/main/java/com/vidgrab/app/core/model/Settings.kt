@@ -66,7 +66,7 @@ data class AppSettings(
     val videoEndMode: VideoEndMode = VideoEndMode.REPEAT_ONE,
     val keepScreenOn: Boolean = true,
     /** A video's sound keeps playing after leaving the app when it doesn't go to picture-in-picture. */
-    val backgroundPlay: Boolean = false,
+    val backgroundPlay: Boolean = true,
     /** Leaving a playing video (back or home) keeps it going in a picture-in-picture window. */
     val autoPip: Boolean = true,
     /** Online videos: play the next suggested video when one ends (the player's autoplay switch). */

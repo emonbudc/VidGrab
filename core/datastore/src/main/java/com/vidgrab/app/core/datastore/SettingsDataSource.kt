@@ -19,6 +19,7 @@ import com.vidgrab.app.core.model.VideoEndMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import java.io.File
@@ -64,12 +65,24 @@ class SettingsDataSource(private val context: Context) {
         val backgroundPlay = booleanPreferencesKey("background_play")
         val autoPip = booleanPreferencesKey("auto_pip")
         val autoplayNext = booleanPreferencesKey("autoplay_next")
+        val defaultToggles = booleanPreferencesKey("default_toggles_enabled")
     }
 
     val defaultDownloadDir: String
         get() = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "VidGrab").absolutePath
 
-    val settings: Flow<AppSettings> = context.dataStore.data.map(::settingsFrom)
+    val settings: Flow<AppSettings> = context.dataStore.data
+        .onStart {
+            context.dataStore.edit { p ->
+                if (p[K.defaultToggles] != true) {
+                    p[K.keepScreenOn] = true
+                    p[K.autoPip] = true
+                    p[K.backgroundPlay] = true
+                    p[K.defaultToggles] = true
+                }
+            }
+        }
+        .map(::settingsFrom)
 
     suspend fun current(): AppSettings = settings.first()
 
@@ -152,7 +165,7 @@ class SettingsDataSource(private val context: Context) {
         gestureDoubleTap = p[K.gDoubleTap] ?: true,
         videoEndMode = p[K.endMode]?.let { runCatching { VideoEndMode.valueOf(it) }.getOrNull() } ?: VideoEndMode.REPEAT_ONE,
         keepScreenOn = p[K.keepScreenOn] ?: true,
-        backgroundPlay = p[K.backgroundPlay] ?: false,
+        backgroundPlay = p[K.backgroundPlay] ?: true,
         autoPip = p[K.autoPip] ?: true,
         autoplayNext = p[K.autoplayNext] ?: true,
     )
