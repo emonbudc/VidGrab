@@ -15,7 +15,7 @@ import com.vidgrab.app.core.download.MediaMerger
 import com.vidgrab.app.core.media.PlayItem
 import com.vidgrab.app.core.media.PlayerController
 import com.vidgrab.app.core.media.RepeatMode
-import com.vidgrab.app.core.media.VlcEqualizer
+import com.vidgrab.app.core.media.MediaEqualizer
 import com.vidgrab.app.core.model.GalleryMedia
 import com.vidgrab.app.feature.gallery.GallerySections
 import com.vidgrab.app.feature.gallery.uri
@@ -77,7 +77,7 @@ class GalleryPlayerViewModel(
     )
     val ui: StateFlow<GalleryPlayerUi> = _ui.asStateFlow()
     private var timerJob: Job? = null
-    private var equalizer: VlcEqualizer? = null
+    private var equalizer: MediaEqualizer? = null
 
     init {
         repo.load()
@@ -214,8 +214,8 @@ class GalleryPlayerViewModel(
         }.getOrNull()
     }
 
-    /** The player's libVLC equalizer, created on first use and kept while the player is open. */
-    fun equalizer(): VlcEqualizer = equalizer ?: controller.equalizer().also { equalizer = it }
+    /** The player's equalizer, created on first use and kept while the player is open. */
+    fun equalizer(): MediaEqualizer = equalizer ?: controller.equalizer().also { equalizer = it }
 
     override fun onCleared() {
         equalizer?.release()

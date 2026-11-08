@@ -260,7 +260,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             )
             Text(
-                "NewPipe Extractor (GPLv3) · libVLC (LGPL 2.1) · AndroidX Room, Navigation, DataStore (Apache 2.0) · Koin (Apache 2.0) · " +
+                "NewPipe Extractor (GPLv3) · AndroidX Media3 (Apache 2.0) · AndroidX Room, Navigation, DataStore (Apache 2.0) · Koin (Apache 2.0) · " +
                     "Coil (Apache 2.0) · OkHttp (Apache 2.0) · Kotlin Coroutines & Serialization (Apache 2.0)",
                 textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),

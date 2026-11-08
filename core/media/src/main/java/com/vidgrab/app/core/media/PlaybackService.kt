@@ -41,7 +41,7 @@ data class NowPlaying(
     val hasPrevious: Boolean = false,
 )
 
-/** The foreground service that keeps libVLC playback alive in the background and on the lock screen. */
+/** The foreground service that keeps playback alive in the background and on the lock screen. */
 class PlaybackService : Service() {
     /** Set by [PlayerController] so notification and lock-screen buttons can drive the queue. */
     interface Commands {
@@ -53,7 +53,7 @@ class PlaybackService : Service() {
         fun seekTo(ms: Long)
     }
 
-    private val engine by lazy { VlcEngine.get(this) }
+    private val engine by lazy { MediaEngine.get(this) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var session: MediaSessionCompat? = null
     private var contentIntent: PendingIntent? = null
@@ -149,7 +149,7 @@ class PlaybackService : Service() {
         super.onDestroy()
     }
 
-    private fun updateSession(state: VlcSnapshot, info: NowPlaying) {
+    private fun updateSession(state: MediaSnapshot, info: NowPlaying) {
         val s = session ?: return
         val metadata = MediaMetadataCompat.Builder()
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, info.title)
@@ -182,7 +182,7 @@ class PlaybackService : Service() {
         s.setPlaybackState(builder.build())
     }
 
-    private fun render(state: VlcSnapshot, info: NowPlaying) {
+    private fun render(state: MediaSnapshot, info: NowPlaying) {
         val key = listOf(
             info.title, info.artist, info.artwork, info.hasNext, info.hasPrevious, state.isPlaying, state.isBuffering,
             state.ended, state.error, state.timeMs / 5_000,
@@ -193,7 +193,7 @@ class PlaybackService : Service() {
         manager.notify(NOTIFICATION_ID, buildNotification(state, info))
     }
 
-    private fun buildNotification(state: VlcSnapshot, info: NowPlaying): Notification {
+    private fun buildNotification(state: MediaSnapshot, info: NowPlaying): Notification {
         val s = session
         val playing = state.isPlaying
         val playPause = if (playing) {

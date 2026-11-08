@@ -11,7 +11,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
 import com.vidgrab.app.core.media.PlayerController
-import com.vidgrab.app.core.playerui.VlcVideoSurface
+import com.vidgrab.app.core.playerui.MediaVideoSurface
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -61,7 +61,7 @@ class VideoZoom {
  */
 @Composable
 fun VideoLayer(controller: PlayerController, aspect: AspectMode, ratio: Float, zoom: VideoZoom, modifier: Modifier = Modifier) {
-    Layout({ VlcVideoSurface(controller) }, modifier) { measurables, c ->
+    Layout({ MediaVideoSurface(controller) }, modifier) { measurables, c ->
         val w = c.maxWidth.toFloat()
         val h = c.maxHeight.toFloat()
         val r = if (ratio > 0f) ratio else 16f / 9f

@@ -112,7 +112,7 @@ Issues and pull requests are welcome. Keep changes focused, follow the existing 
 - [QuickTube](https://github.com/devgalib/QuickTube) by devgalib (GPL-3.0): the app this is based on.
 - [NewPipe Extractor](https://github.com/TeamNewPipe/NewPipeExtractor) (GPL-3.0): YouTube, SoundCloud, Bandcamp and media.ccc.de support.
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Unlicense) via [youtubedl-android](https://github.com/yausername/youtubedl-android) (GPL-3.0): additional site support.
-- AndroidX (Compose, Room, Navigation, DataStore), libVLC (LGPL-2.1), Koin, Coil and OkHttp (Apache-2.0).
+- AndroidX (Compose, Room, Navigation, DataStore), AndroidX Media3 (Apache-2.0), Koin, Coil and OkHttp (Apache-2.0).
 - Material Symbols (Apache-2.0), Simple Icons (CC0), Plus Jakarta Sans (OFL-1.1).
 
 ## License

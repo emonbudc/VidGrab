@@ -22,7 +22,6 @@ serialization = "1.12.0"
 coroutines = "1.10.2"
 media3 = "1.11.1"
 androidxMedia = "1.7.0"
-libvlc = "3.7.7"
 documentfile = "1.1.0"
 webkit = "1.18.0"
 ytdlp = "0.18.1"
@@ -67,11 +66,15 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-exoplayer-dash = { group = "androidx.media3", name = "media3-exoplayer-dash", version.ref = "media3" }
+androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3" }
+androidx-media3-exoplayer-rtsp = { group = "androidx.media3", name = "media3-exoplayer-rtsp", version.ref = "media3" }
 androidx-media3-extractor = { group = "androidx.media3", name = "media3-extractor", version.ref = "media3" }
 androidx-media3-muxer = { group = "androidx.media3", name = "media3-muxer", version.ref = "media3" }
 androidx-media3-inspector = { group = "androidx.media3", name = "media3-inspector", version.ref = "media3" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 androidx-media = { group = "androidx.media", name = "media", version.ref = "androidxMedia" }
-libvlc-all = { group = "org.videolan.android", name = "libvlc-all", version.ref = "libvlc" }
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
 koin-android = { group = "io.insert-koin", name = "koin-android" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose" }

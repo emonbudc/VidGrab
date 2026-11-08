@@ -165,10 +165,10 @@ fun VideoPlayerBox(
         return
     }
     BoxWithConstraints(modifier.background(Color.Black), contentAlignment = Alignment.Center) {
-        // The surface stays attached in audio-only too: detaching it would make the video track's return unreliable.
-        // A black sheet covers it instead (alpha wouldn't hide a SurfaceView).
+        // The surface stays attached in audio-only too: a black sheet covers it instead.
+        // Alpha wouldn't hide a SurfaceView.
         val fitWide = maxWidth / maxHeight < ratio
-        VlcVideoSurface(
+        MediaVideoSurface(
             controller = controller,
             modifier = Modifier.then(if (fitWide) Modifier.fillMaxWidth() else Modifier.fillMaxSize().padding(0.dp))
                 .aspectRatio(ratio, matchHeightConstraintsFirst = !fitWide),

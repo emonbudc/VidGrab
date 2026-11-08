@@ -764,7 +764,7 @@ private class TouchClock {
 }
 
 /**
- * Shown when a file can't play: libVLC reports the file's format is broken or unsupported. The actions let the
+ * Shown when a file can't play: the player reports the file's format is broken or unsupported. The actions let the
  * viewer try again, open the file in another app, or move on.
  */
 @Composable

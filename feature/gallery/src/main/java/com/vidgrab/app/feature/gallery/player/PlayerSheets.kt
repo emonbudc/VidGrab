@@ -61,7 +61,7 @@ import com.vidgrab.app.core.designsystem.LocalQtExtras
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.media.PlayerController
-import com.vidgrab.app.core.media.VlcEqualizer
+import com.vidgrab.app.core.media.MediaEqualizer
 import com.vidgrab.app.core.model.GalleryMedia
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -337,9 +337,9 @@ fun AudioTrackSheet(controller: PlayerController, onDismiss: () -> Unit, onBack:
     }
 }
 
-/** libVLC's equalizer: on/off, presets and per-band levels. */
+/** The player's equalizer: on/off, presets and per-band levels. */
 @Composable
-fun EqualizerSheet(eq: VlcEqualizer?, onDismiss: () -> Unit, onBack: (() -> Unit)? = null) {
+fun EqualizerSheet(eq: MediaEqualizer?, onDismiss: () -> Unit, onBack: (() -> Unit)? = null) {
     PlayerSheet(onDismiss) {
         if (eq == null) {
             SheetHeader("Equalizer", onBack)

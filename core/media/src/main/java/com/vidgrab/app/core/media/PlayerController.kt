@@ -5,7 +5,7 @@ import android.net.Uri
 import com.vidgrab.app.core.data.PlaybackHistoryRepository
 import com.vidgrab.app.core.data.SettingsRepository
 import com.vidgrab.app.core.model.AppSettings
-import org.videolan.libvlc.util.VLCVideoLayout
+import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
-/** Same values as the old Media3 constants, kept so Settings and the player screens don't need their own enum. */
+/** Repeat modes, kept here so Settings and the player screens don't need their own enum. */
 object RepeatMode {
     const val OFF = 0
     const val ALL = 1
@@ -63,14 +63,14 @@ data class PlaybackState(
     val videoHeight: Int = 0,
 )
 
-/** The app-wide playback queue and history around the single [VlcEngine]. */
+/** The app-wide playback queue and history around the single [MediaEngine]. */
 class PlayerController(
     private val context: Context,
     private val history: PlaybackHistoryRepository? = null,
     settingsRepo: SettingsRepository? = null,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val engine = VlcEngine.get(context.applicationContext)
+    private val engine = MediaEngine.get(context.applicationContext)
 
     /** Settings → Player, kept current for synchronous reads. */
     @Volatile var prefs = AppSettings()
@@ -134,12 +134,12 @@ class PlayerController(
         }
     }
 
-    /** Kept for the app's startup call; libVLC needs no connection step. */
+    /** Kept for the app's startup call; the player needs no connection step. */
     fun connect() = Unit
 
     /** Attaches/detaches the video surface while playback itself continues. */
-    fun attachVideo(layout: VLCVideoLayout) = engine.attachVideo(layout)
-    fun detachVideo(layout: VLCVideoLayout) = engine.detachVideo(layout)
+    fun attachVideo(view: PlayerView) = engine.attachVideo(view)
+    fun detachVideo(view: PlayerView) = engine.detachVideo(view)
 
     fun play(items: List<PlayItem>, startIndex: Int = 0, audioOnly: Boolean = false) {
         if (items.isEmpty()) return
@@ -272,8 +272,8 @@ class PlayerController(
         engine.selectAudioTrack(track.id)
     }
 
-    /** The player's libVLC equalizer, created on first use; owned and released by the screen that asked for it. */
-    fun equalizer(): VlcEqualizer = VlcEqualizer(engine)
+    /** The player's equalizer, created on first use; owned and released by the screen that asked for it. */
+    fun equalizer(): MediaEqualizer = MediaEqualizer(engine)
 
     fun stop() {
         saveCurrentPosition()
@@ -334,10 +334,10 @@ class PlayerController(
         markOpened(next)
     }
 
-    private fun VlcSnapshot.atEnd(): Boolean =
+    private fun MediaSnapshot.atEnd(): Boolean =
         ended && !isPlaying && (lengthMs <= 0 || timeMs >= lengthMs - 1_500)
 
-    private fun sync(snapshot: VlcSnapshot) {
+    private fun sync(snapshot: MediaSnapshot) {
         if (queue.isEmpty()) return
         val buffered = when {
             snapshot.lengthMs > 0 -> (snapshot.lengthMs * snapshot.bufferingPercent / 100).coerceAtLeast(snapshot.timeMs)

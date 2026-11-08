@@ -17,8 +17,8 @@ core/
   extractor              MediaExtractor interface + NewPipe implementation, WebMediaFinder (FB/TikTok/X/OG tags)
   data                   Repository interfaces + implementations (the only thing features talk to)
   download               DownloadManager: queue, parallel ranged HTTP, Media3 merge/remux, foreground service
-  media                  PlaybackService (MediaSessionCompat), PlayerController, libVLC engine
-  playerui               VideoPlayerBox, VLC surface, seek bar, speed menu, fullscreen helper
+  media                  PlaybackService (MediaSessionCompat), PlayerController, Media3 engine
+  playerui               VideoPlayerBox, video surface, seek bar, speed menu, fullscreen helper
   downloadsheet          App-wide "Download video as" sheet (used by every screen + the share popup)
 feature/
   home                   Download tab (Search / YouTube / Music / More) + How-to screens
@@ -65,11 +65,11 @@ feature/
 - **Gallery**: `GalleryRepository` (`core:data`) pages the MediaStore Files table newest first (120 rows, then 600 per page)
   and reloads on a content observer → `GalleryViewModel` builds month sections / albums off the main thread → grids draw
   MediaStore's cached thumbnails from a small LRU. Videos open in the app's player; deleting goes through the system trash dialog.
-- **Playback**: `PlayerController.play(items)` → `VlcEngine` (libVLC) → `PlaybackService` (MediaSessionCompat + media notification).
-  Separate video+audio URLs are merged with libVLC's `:input-slave`. The video surface is a `VLCVideoLayout` attached by
-  `VlcVideoSurface` while a screen is started. `PlayerController` also keeps the playback history (`PlaybackHistoryRepository`,
+- **Playback**: `PlayerController.play(items)` → `MediaEngine` (AndroidX Media3) → `PlaybackService` (MediaSessionCompat + media notification).
+  Separate video+audio URLs are merged with `MergingMediaSource`. The video surface is a `PlayerView` attached by
+  `MediaVideoSurface` while a screen is started. `PlayerController` also keeps the playback history (`PlaybackHistoryRepository`,
   Room, capped at 300, least recently opened evicted) and resumes from it, keyed by file path or page URL, following
-  Settings → Player (`AppSettings`). Media3 remains only as the download muxer/extractor and gallery thumbnail inspector.
+  Settings → Player (`AppSettings`). Media3 also powers the download muxer/extractor and gallery thumbnail inspector.
 - **Picture-in-picture**: the floating window is always an activity in its own task, so the app stays usable (and can be
   reopened) behind it: the gallery player's, or `FloatingPlayerActivity` for the video page and the library player (started
   by the PiP button, or when going home from a playing video). While it floats, the page's player shows a "Show here"
@@ -81,4 +81,4 @@ feature/
 The domain is already isolated: `core:model`, `core:common`, `core:data` interfaces, `core:database` (Room KMP) and
 `core:datastore` (DataStore KMP) can move to `commonMain` with mostly mechanical changes, and the Compose UI can move to Compose
 Multiplatform. Platform-specific pieces would need iOS counterparts: NewPipe Extractor (JVM-only), the download service, MediaMuxer,
-the libVLC player and the WebView. Note that Apple doesn't allow YouTube downloading on the App Store.
+the media player and the WebView. Note that Apple doesn't allow YouTube downloading on the App Store.
