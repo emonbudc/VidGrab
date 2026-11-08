@@ -8,9 +8,11 @@ import com.vidgrab.app.core.model.DownloadStatus
 import com.vidgrab.app.core.model.DownloadTask
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.model.MediaSection
+import com.vidgrab.app.core.model.Page
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
@@ -41,10 +43,14 @@ class HomeViewModel(
     private val downloads: com.vidgrab.app.core.download.DownloadManager,
 ) : ViewModel() {
     private var feedLoadedAt = 0L
+    private var feedRequest = 0
 
     /** Settings → Trending on home (off by default). */
     val showTrending = settings.settings.map { it.showTrending }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
+
+    private val _category = MutableStateFlow(HomeCategory.ALL)
+    val category: StateFlow<HomeCategory> = _category.asStateFlow()
 
     val clipboardDetection = settings.settings.map { it.clipboardDetection }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, true)
@@ -103,6 +109,19 @@ class HomeViewModel(
                 if (_music.value.sections.isNotEmpty()) loadMusic()
             }
         }
+        viewModelScope.launch {
+            settings.settings.map { it.showTrending }.distinctUntilChanged().drop(1).collect {
+                if (_category.value == HomeCategory.ALL) loadFeed(refresh = _feed.value.items.isNotEmpty())
+            }
+        }
+    }
+
+    fun selectCategory(category: HomeCategory) {
+        if (_category.value == category) return
+        _category.value = category
+        feedLoadedAt = 0L
+        _feed.value = FeedUi(loading = true)
+        loadFeed(refresh = false)
     }
 
     fun ensureFeed(force: Boolean = false) {
@@ -113,26 +132,49 @@ class HomeViewModel(
     }
 
     fun loadFeed(refresh: Boolean) {
-        _feed.update { it.copy(loading = !refresh, refreshing = refresh, error = null) }
+        val requested = _category.value
+        val request = ++feedRequest
+        _feed.update { it.copy(loading = !refresh, refreshing = refresh, error = null, loadingMore = false) }
         viewModelScope.launch {
-            runCatching { media.discover() }
+            runCatching { pageFor(requested, null) }
                 .onSuccess { p ->
+                    if (request != feedRequest || requested != _category.value) return@onSuccess
                     feedLoadedAt = android.os.SystemClock.elapsedRealtime()
                     _feed.value = FeedUi(items = p.items.distinctBy { it.url }, nextPage = p.nextPage)
                 }
-                .onFailure { e -> _feed.update { it.copy(loading = false, refreshing = false, error = e.message ?: "Error") } }
+                .onFailure { e ->
+                    if (request != feedRequest || requested != _category.value) return@onFailure
+                    _feed.update { it.copy(loading = false, refreshing = false, error = e.message ?: "Error") }
+                }
         }
     }
 
     fun loadMoreFeed() {
         val s = _feed.value
+        val requested = _category.value
         if (s.loadingMore || s.nextPage == null) return
+        val request = feedRequest
         _feed.update { it.copy(loadingMore = true) }
         viewModelScope.launch {
-            runCatching { media.discover(s.nextPage) }
-                .onSuccess { p -> _feed.update { it.copy(items = (it.items + p.items).distinctBy { i -> i.url }, nextPage = p.nextPage, loadingMore = false) } }
-                .onFailure { _feed.update { it.copy(loadingMore = false, nextPage = null) } }
+            runCatching { pageFor(requested, s.nextPage) }
+                .onSuccess { p ->
+                    if (request != feedRequest || requested != _category.value) return@onSuccess
+                    _feed.update { it.copy(items = (it.items + p.items).distinctBy { i -> i.url }, nextPage = p.nextPage, loadingMore = false) }
+                }
+                .onFailure {
+                    if (request != feedRequest || requested != _category.value) return@onFailure
+                    _feed.update { it.copy(loadingMore = false, nextPage = null) }
+                }
         }
+    }
+
+    private suspend fun pageFor(category: HomeCategory, page: Any?): Page<MediaItem> {
+        val result = if (category == HomeCategory.ALL) {
+            if (showTrending.value) media.trending(page) else media.discover(page)
+        } else {
+            media.search(category.query.orEmpty(), category.filter, page)
+        }
+        return result.copy(items = result.items.filter { it.kind == com.vidgrab.app.core.model.ItemKind.VIDEO && !it.isShort })
     }
 
     fun ensureMusic() {

@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +37,7 @@ import com.vidgrab.app.core.common.Platform
 import com.vidgrab.app.core.common.Urls
 import com.vidgrab.app.core.designsystem.QtColors
 import com.vidgrab.app.core.designsystem.QtIconButton
+import com.vidgrab.app.core.designsystem.icon.BrandIcons
 import com.vidgrab.app.core.designsystem.icon.QtIcons
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.model.ItemKind
@@ -132,31 +134,144 @@ fun DownloadIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 /** Full-width feed card: large thumbnail, avatar, title and a quick download button. */
 @Composable
 fun VideoFeedCard(item: MediaItem, onClick: () -> Unit, onDownload: () -> Unit, onChannel: (() -> Unit)? = null) {
-    Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.99f, role = null, onClick = onClick).padding(bottom = 14.dp)) {
-        Thumbnail(item.thumbnail, Modifier.padding(horizontal = 16.dp).fillMaxWidth().aspectRatio(16f / 9f), corner = 14) {
-            SourceChip(platformTag(item.url))
-            CornerLabel(if (item.isLive) "LIVE" else Format.duration(item.durationSec), live = item.isLive)
+    val cs = MaterialTheme.colorScheme
+    Column(Modifier.fillMaxWidth().pressable(scaleDown = 0.995f, role = null, onClick = onClick)) {
+        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(16f / 9f), corner = 20) {
+            FeedSourceBadge(item.url)
+            FeedDurationBadge(
+                text = when {
+                    item.isLive -> "LIVE"
+                    item.durationSec > 0 -> Format.duration(item.durationSec)
+                    else -> ""
+                },
+                live = item.isLive,
+            )
         }
-        Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
-            Avatar(item.uploaderAvatar, 30, Modifier.then(if (onChannel != null) Modifier.pressable(scaleDown = 0.9f, onClick = onChannel) else Modifier))
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-                Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Row(
+            Modifier.fillMaxWidth().padding(top = 11.dp, bottom = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Avatar(
+                item.uploaderAvatar,
+                38,
+                Modifier.then(if (onChannel != null) Modifier.pressable(scaleDown = 0.9f, onClick = onChannel) else Modifier),
+            )
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(
-                    item.subtitle(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    item.title,
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = cs.onSurface,
+                )
+                if (item.uploader.isNotBlank()) Text(
+                    item.uploader,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = cs.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp),
+                    modifier = Modifier.padding(top = 3.dp),
+                )
+                val meta = listOf(Format.views(item.viewCount), item.uploadDate.orEmpty())
+                    .filter { it.isNotBlank() }.joinToString(" · ")
+                if (meta.isNotBlank()) Text(
+                    meta,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    color = cs.onSurfaceVariant.copy(alpha = 0.82f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 1.dp),
                 )
             }
-            DownloadIconButton(onDownload)
+            FeedDownloadButton(onDownload)
         }
-        HorizontalDivider(
-            Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp),
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
+        HorizontalDivider(color = cs.outlineVariant.copy(alpha = 0.7f))
     }
+}
+
+@Composable
+private fun FeedSourceBadge(url: String) {
+    val source = feedSource(url)
+    Box(
+        Modifier.padding(10.dp).height(24.dp).clip(RoundedCornerShape(8.dp))
+            .background(Color(0xB312141A)).padding(horizontal = 7.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (source.icon != null) {
+                Icon(source.icon, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                source.label,
+                color = Color.White,
+                fontSize = 9.sp,
+                lineHeight = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.FeedDurationBadge(text: String, live: Boolean) {
+    if (text.isBlank()) return
+    Box(
+        Modifier.align(Alignment.BottomEnd).padding(10.dp).height(24.dp).clip(RoundedCornerShape(8.dp))
+            .background(if (live) Color(0xF2E5243B) else Color(0xB30A0C10)).padding(horizontal = 7.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (live) {
+                Box(Modifier.size(5.dp).clip(CircleShape).background(Color.White))
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                text,
+                color = Color.White,
+                fontSize = 11.sp,
+                lineHeight = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = FontFamily.Monospace,
+                letterSpacing = 0.2.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeedDownloadButton(onClick: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    Box(
+        Modifier.size(48.dp).pressable(scaleDown = 0.88f, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(38.dp).clip(RoundedCornerShape(13.dp)).background(cs.primaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(QtIcons.Download, "Download", tint = cs.primary, modifier = Modifier.size(20.dp))
+        }
+    }
+}
+
+private data class FeedSource(val label: String, val icon: ImageVector?)
+
+private fun feedSource(url: String): FeedSource = when (Urls.platformOf(url)) {
+    Platform.YOUTUBE -> FeedSource("YT", BrandIcons.YouTube)
+    Platform.INSTAGRAM -> FeedSource("IG", BrandIcons.Instagram)
+    Platform.FACEBOOK -> FeedSource("FB", BrandIcons.Facebook)
+    Platform.TIKTOK -> FeedSource("TT", BrandIcons.TikTok)
+    Platform.TWITTER -> FeedSource("X", BrandIcons.X)
+    Platform.WHATSAPP -> FeedSource("WA", BrandIcons.WhatsApp)
+    Platform.SOUNDCLOUD -> FeedSource("SC", BrandIcons.SoundCloud)
+    Platform.OTHER -> FeedSource("WEB", null)
 }
 
 /** Compact list row: thumbnail on the left. Used for search results and related videos. */

@@ -44,7 +44,7 @@ fun FloatingNavBar(
     val scheme = MaterialTheme.colorScheme
     val haptic = LocalHapticFeedback.current
     Column(
-        Modifier.fillMaxWidth().background(scheme.surfaceContainer)
+        Modifier.fillMaxWidth().background(scheme.surface)
             .navigationBarsPadding(),
     ) {
         HorizontalDivider(color = scheme.outlineVariant)
