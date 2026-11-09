@@ -4,7 +4,7 @@
 #
 # Usage:  scripts/setup-release-secrets.sh
 # Needs:  gh (https://cli.github.com) logged in, local.properties with RELEASE_* keys,
-#         optionally app/google-services.json (Firebase).
+#         app/google-services.json (Firebase).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -24,13 +24,13 @@ done
 set_secret() { gh secret set "$1" --repo "$REPO" >/dev/null && echo "  ✓ $1"; }
 
 echo "Setting secrets on $REPO:"
-base64 -w0 "$KEYSTORE_PATH"                      | set_secret RELEASE_KEYSTORE_BASE64
+base64 -w0 "$KEYSTORE_PATH"                      | set_secret KEYSTORE_BASE64
 printf '%s' "$(prop RELEASE_KEYSTORE_PASSWORD)" | set_secret RELEASE_KEYSTORE_PASSWORD
 printf '%s' "$(prop RELEASE_KEY_ALIAS)"         | set_secret RELEASE_KEY_ALIAS
 printf '%s' "$(prop RELEASE_KEY_PASSWORD)"      | set_secret RELEASE_KEY_PASSWORD
 if [ -f app/google-services.json ]; then
   set_secret GOOGLE_SERVICES_JSON < app/google-services.json
 else
-  echo "  - app/google-services.json not found: releases will be built without Firebase"
+  echo "  - app/google-services.json not found: the release workflow will fail until GOOGLE_SERVICES_JSON is set"
 fi
-echo "Done. Publish a release with: git push origin main:production"
+echo "Done. Publish a release with: git push origin main"

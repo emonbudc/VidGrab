@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-11-09T00:11:54.309Z",
+  "propertyId": null,
+  "firebase": {
+    "pending": true,
+    "reason": "No GA4 property is linked to vidgrab-app-prod yet."
+  },
+  "traffic": {
+    "views14d": 58,
+    "uniques14d": 5,
+    "clones14d": 465,
+    "uniqueCloners14d": 137
+  },
+  "github": {
+    "releaseCount": 35,
+    "apkDownloads": 159,
+    "assetDownloads": 280,
+    "latestTag": "v1.0.50",
+    "latestDownloads": 4
+  }
+}

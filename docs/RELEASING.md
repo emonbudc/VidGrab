@@ -48,22 +48,36 @@ and checksum from that folder with `python3 -m http.server 8765`, and run `adb r
 
 ## Firebase
 
-Project **`vidgrab-app`** (Crashlytics + Analytics), Android apps `com.vidgrab.app` and `com.vidgrab.app.qa`.
-Maintainers get the config with the Firebase CLI:
+Project **`vidgrab-app-prod`** (Crashlytics + Analytics), Android apps `com.vidgrab.app` and `com.vidgrab.app.qa`.
+Download the combined config from **Project settings → Your apps**, or fetch both apps with the Firebase CLI and merge their `client` entries:
 
 ```bash
-firebase apps:sdkconfig ANDROID --project vidgrab-app -o app/google-services.json
+firebase apps:list --project vidgrab-app-prod
+firebase apps:sdkconfig ANDROID <app-id> --project vidgrab-app-prod -o app/google-services.json
 ```
 
-`app/google-services.json` is git-ignored. Collection is off in debug builds and when users opt out (Settings → Privacy).
+`app/google-services.json` is git-ignored. CI restores it from the `GOOGLE_SERVICES_JSON` secret before Gradle starts and fails the build if the secret is missing. Collection is off in debug builds and when users opt out (Settings → Privacy).
+
+Enable **Crashlytics** and link a **Google Analytics** property in the Firebase console. The dashboard snapshots GA4 through the `vidgrab-dashboard@vidgrab-app-prod.iam.gserviceaccount.com` service account; add it as a **Viewer** on the GA4 property under **Admin → Property access management**.
+
+## Dashboard
+
+The admin dashboard lives at `https://udcemon.me/VidGrab/analysis/`. It reads GitHub release statistics live and product totals from `docs/analysis/data.json`, refreshed nightly by **Analytics snapshot**. The page is encrypted with StatiCrypt; rebuild it with:
+
+```bash
+STATICRYPT_PASSWORD='…' scripts/build-analysis.sh
+```
+
+The GitHub Pages deployment is static, so the password gate is client-side. Do not put secrets in the page or `data.json`.
 
 ## Secrets
 
 | Secret | Purpose |
 |---|---|
-| `RELEASE_KEYSTORE_BASE64` | The release keystore (JKS), base64-encoded |
+| `KEYSTORE_BASE64` | The release keystore (JKS), base64-encoded |
 | `RELEASE_KEYSTORE_PASSWORD` / `RELEASE_KEY_ALIAS` / `RELEASE_KEY_PASSWORD` | Keystore credentials |
-| `GOOGLE_SERVICES_JSON` | Firebase config (Crashlytics + Analytics). Optional: without it the release has no analytics |
+| `GOOGLE_SERVICES_JSON` | Firebase config (Crashlytics + Analytics). Required by the release workflow |
+| `FIREBASE_SERVICE_ACCOUNT` | Read-only service-account JSON for the nightly GA4 snapshot |
 
 Set or rotate them with:
 

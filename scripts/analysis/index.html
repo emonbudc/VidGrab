@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>VidGrab Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#05070c;
+  --panel:#0b1019;
+  --panel-2:#0e1521;
+  --line:#1b2637;
+  --line-soft:#131c2a;
+  --text:#edf3ff;
+  --muted:#8b9ab1;
+  --dim:#61708a;
+  --accent:#4f8cff;
+  --mint:#37d6a8;
+  --amber:#f5b759;
+  --rose:#ff6b8a;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  --display:"Sora","Inter",sans-serif;
+  --body:"Inter",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:
+    radial-gradient(900px 500px at 12% -10%,rgba(79,140,255,.18),transparent 62%),
+    radial-gradient(700px 420px at 92% 4%,rgba(55,214,168,.10),transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:linear-gradient(to bottom,black,transparent 78%);
+}
+a{color:inherit}
+.shell{position:relative;width:min(1240px,calc(100% - 44px));margin:0 auto;padding:26px 0 70px}
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 0 30px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none}
+.mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(145deg,#5b97ff,#2f66e0);box-shadow:0 8px 26px rgba(79,140,255,.28)}
+.mark svg{width:17px;height:17px;color:white}
+.brand b{font-family:var(--display);font-size:16px;letter-spacing:-.02em}
+.brand span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:5px 8px;border:1px solid var(--line);border-radius:999px}
+.grow{flex:1}
+.live{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 4px rgba(55,214,168,.12)}
+.button{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);font-family:var(--body);font-size:12px;font-weight:600;border-radius:9px;padding:9px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:border-color .18s,background .18s}
+.button:hover{border-color:#2b3c57;background:rgba(255,255,255,.055)}
+.button:active{transform:translateY(1px)}
+.button svg{width:14px;height:14px;color:var(--muted)}
+.hero{padding:20px 0 30px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font-family:var(--display);font-size:clamp(31px,5.2vw,58px);line-height:1.02;letter-spacing:-.045em;margin:0;max-width:820px;font-weight:600}
+.hero p{max-width:620px;color:var(--muted);font-size:15px;line-height:1.7;margin:18px 0 0}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:22px;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--dim)}
+.hero-meta b{color:var(--muted);font-weight:500}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:38px 0 14px}
+.section-head h2{font-family:var(--display);font-size:16px;letter-spacing:-.02em;margin:0}
+.section-head p{margin:4px 0 0;color:var(--dim);font-size:12px}
+.grid-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.card{position:relative;border:1px solid var(--line-soft);border-radius:15px;background:linear-gradient(180deg,rgba(15,22,34,.92),rgba(10,15,24,.92));overflow:hidden}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.kpi{padding:19px 19px 17px;min-height:136px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi-label{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.kpi-label svg{width:13px;height:13px;color:var(--dim)}
+.kpi-value{font-family:var(--display);font-size:36px;line-height:1;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.kpi-value small{font-family:var(--body);font-size:13px;color:var(--muted);letter-spacing:0}
+.kpi-foot{display:flex;align-items:center;gap:7px;color:var(--dim);font-size:10.5px}
+.pill{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 7px;font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.pill.live{color:var(--mint);border-color:rgba(55,214,168,.24)}
+.pill.wait{color:var(--amber);border-color:rgba(245,183,89,.22)}
+.split{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.85fr);gap:12px;margin-top:12px}
+.panel{padding:20px}
+.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+.panel-head h3{margin:0;font-family:var(--display);font-size:13.5px;letter-spacing:-.01em}
+.panel-head p{margin:5px 0 0;color:var(--dim);font-size:11px}
+.bars{display:flex;flex-direction:column;gap:11px;min-height:280px;justify-content:center}
+.bar-row{display:grid;grid-template-columns:74px minmax(0,1fr) 48px;align-items:center;gap:12px}
+.bar-tag{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+.bar-track{height:8px;border-radius:999px;background:#121b29;overflow:hidden}
+.bar-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#3c74e6,#63a1ff);min-width:2px;transform-origin:left;animation:grow .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes grow{from{transform:scaleX(.05);opacity:.3}to{transform:scaleX(1);opacity:1}}
+.bar-val{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.arch{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:8px}
+.donut{width:164px;height:164px;border-radius:50%;position:relative;display:grid;place-items:center;background:conic-gradient(var(--accent) 0 60%,var(--mint) 60% 88%,#2a3850 88% 100%)}
+.donut::before{content:"";position:absolute;inset:17px;border-radius:50%;background:#0a101a;border:1px solid #172232}
+.donut-center{position:relative;text-align:center}
+.donut-center b{display:block;font-family:var(--display);font-size:24px;letter-spacing:-.04em}
+.donut-center span{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.legend{width:100%;display:flex;flex-direction:column;gap:9px}
+.legend-row{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--muted)}
+.swatch{width:8px;height:8px;border-radius:2px}
+.legend-row b{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text);font-variant-numeric:tabular-nums}
+.table-wrap{overflow:auto;margin:0 -20px -20px;padding:0 20px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:500;padding:0 10px 10px 0;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+td{padding:11px 10px 11px 0;border-bottom:1px solid #101825;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{color:var(--text);font-family:var(--mono);font-size:10.5px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0}
+.tag{display:inline-flex;align-items:center;gap:6px}
+.tag i{width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block}
+.product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.mini{padding:16px;min-height:108px}
+.mini .kpi-value{font-size:29px}
+.spark-card{padding:20px;margin-top:12px}
+.spark-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.spark-head h3{margin:0;font-family:var(--display);font-size:13.5px}
+.spark-head p{margin:4px 0 0;color:var(--dim);font-size:11px}
+.spark{width:100%;height:148px;display:block}
+.spark .grid{stroke:#172130;stroke-width:1}
+.spark .area{fill:url(#sparkFill)}
+.spark .line{fill:none;stroke:var(--mint);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.notice{display:flex;align-items:flex-start;gap:12px;border:1px solid rgba(245,183,89,.2);background:rgba(245,183,89,.055);border-radius:11px;padding:13px 14px;margin-top:12px;color:#d8c49e;font-size:11.5px;line-height:1.55}
+.notice svg{width:15px;height:15px;flex:none;margin-top:1px;color:var(--amber)}
+.footer{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:46px;padding-top:18px;border-top:1px solid var(--line-soft);color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.05em}
+.footer a{color:var(--muted);text-decoration:none}
+.footer a:hover{color:var(--text)}
+.error{border-color:rgba(255,107,138,.25);background:rgba(255,107,138,.06);color:#ffc4d0}
+.empty{color:var(--dim);font-size:11.5px;text-align:center;padding:30px 0}
+.skeleton{position:relative;overflow:hidden;background:#111a27;border-radius:5px;color:transparent}
+.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:shimmer 1.2s infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media(max-width:980px){.grid-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.shell{width:calc(100% - 28px);padding-top:18px}.grid-kpi,.product-grid{grid-template-columns:1fr 1fr;gap:9px}.kpi{padding:15px;min-height:124px}.kpi-value{font-size:29px}.brand span{display:none}.live{display:none}.panel{padding:16px}.table-wrap{margin:0 -16px -16px;padding:0 16px}.bar-row{grid-template-columns:62px minmax(0,1fr) 42px;gap:8px}.hero{padding-top:8px}.button{padding:8px 10px}}
+@media(max-width:420px){.grid-kpi,.product-grid{grid-template-columns:1fr}.kpi{min-height:112px}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="https://udcemon.me/VidGrab/" aria-label="VidGrab">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
+      </span>
+      <b>VidGrab</b><span>Analytics</span>
+    </a>
+    <span class="grow"></span>
+    <span class="live"><i class="dot"></i><span id="liveLabel">Live</span></span>
+    <button class="button" id="refresh" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      Refresh
+    </button>
+    <button class="button" id="logout" type="button" title="Lock dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      Lock
+    </button>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Private admin view</p>
+    <h1>Every download,<br>in one quiet place.</h1>
+    <p>Release installs, product usage and the download library in one dashboard. GitHub numbers update live; Firebase product totals follow the nightly snapshot.</p>
+    <div class="hero-meta">
+      <span>Source <b>emonbudc/VidGrab</b></span>
+      <span>Snapshot <b id="snapshotTime">loading…</b></span>
+      <span>Generated <b id="generatedTime">—</b></span>
+    </div>
+  </section>
+
+  <div class="grid-kpi">
+    <article class="card kpi">
+      <div class="kpi-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>APK downloads</div>
+      <div class="kpi-value" id="kpiApk">—</div>
+      <div class="kpi-foot"><span class="pill live">GitHub</span><span id="kpiApkFoot">all releases</span></div>
+    </article>
+    <article class="card kpi">
+      <div class="kpi-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>App installs</div>
+      <div class="kpi-value" id="kpiInstalls">—</div>
+      <div class="kpi-foot"><span class="pill" id="pillInstalls">Firebase</span><span>first opens</span></div>
+    </article>
+    <article class="card kpi">
+      <div class="kpi-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3Z"/></svg>Videos downloaded</div>
+      <div class="kpi-value" id="kpiVideos">—</div>
+      <div class="kpi-foot"><span class="pill" id="pillVideos">Firebase</span><span>completed downloads</span></div>
+    </article>
+    <article class="card kpi">
+      <div class="kpi-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg>Active users</div>
+      <div class="kpi-value" id="kpiActive">—</div>
+      <div class="kpi-foot"><span class="pill" id="pillActive">Firebase</span><span>last 28 days</span></div>
+    </article>
+  </div>
+
+  <div class="split">
+    <section class="card panel">
+      <div class="panel-head">
+        <div><h3>Downloads by release</h3><p>APK assets only, checksum files excluded.</p></div>
+        <span class="pill live" id="releaseCount">—</span>
+      </div>
+      <div class="bars" id="releaseBars"><div class="empty">Loading releases…</div></div>
+    </section>
+    <section class="card panel">
+      <div class="panel-head"><div><h3>Architecture split</h3><p>Which APK people take.</p></div></div>
+      <div class="arch">
+        <div class="donut" id="donut"><div class="donut-center"><b id="donutTotal">—</b><span>APK files</span></div></div>
+        <div class="legend" id="archLegend"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card panel" style="margin-top:12px">
+    <div class="panel-head">
+      <div><h3>Latest releases</h3><p>The newest builds and how each asset is moving.</p></div>
+      <a class="button" href="https://github.com/emonbudc/VidGrab/releases" target="_blank" rel="noopener">Open releases</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Release</th><th>Published</th><th class="num">Universal</th><th class="num">arm64</th><th class="num">armv7</th><th class="num">Total</th></tr></thead>
+        <tbody id="releaseTable"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div><h2>Product analytics</h2><p>From the app's anonymous usage events. Nightly snapshot.</p></div>
+    <span class="pill" id="analyticsPill">waiting</span>
+  </div>
+  <div class="product-grid">
+    <article class="card mini">
+      <div class="kpi-label">Data downloaded</div>
+      <div class="kpi-value" id="kpiBytes">—</div>
+      <div class="kpi-foot">across completed downloads</div>
+    </article>
+    <article class="card mini">
+      <div class="kpi-label">Sessions · 28d</div>
+      <div class="kpi-value" id="kpiSessions">—</div>
+      <div class="kpi-foot">foreground sessions</div>
+    </article>
+    <article class="card mini">
+      <div class="kpi-label">Repo views · 14d</div>
+      <div class="kpi-value" id="kpiViews">—</div>
+      <div class="kpi-foot" id="viewFoot">unique visitors</div>
+    </article>
+    <article class="card mini">
+      <div class="kpi-label">Latest release</div>
+      <div class="kpi-value" id="kpiLatest">—</div>
+      <div class="kpi-foot"><span class="pill live" id="pillLatest">GitHub</span><span id="latestTag">downloads</span></div>
+    </article>
+  </div>
+
+  <section class="card spark-card">
+    <div class="spark-head">
+      <div><h3>Daily video downloads</h3><p>Last 14 days of <span style="font-family:var(--mono);color:var(--muted)">download_completed</span>.</p></div>
+      <span class="pill" id="sparkPill">waiting</span>
+    </div>
+    <div id="sparkWrap"><div class="empty">No analytics snapshot yet.</div></div>
+  </section>
+
+  <div class="notice" id="notice">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg>
+    <span>Firebase product analytics connects after the first nightly snapshot. GitHub release downloads are live already.</span>
+  </div>
+
+  <footer class="footer">
+    <span>VIDGRAB ADMIN</span>
+    <span>·</span>
+    <a href="https://udcemon.me/VidGrab/">Public site</a>
+    <span>·</span>
+    <a href="https://github.com/emonbudc/VidGrab" target="_blank" rel="noopener">Repository</a>
+    <span class="grow"></span>
+    <span id="footTime">—</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const REPO="emonbudc/VidGrab";
+  const API="https://api.github.com/repos/"+REPO;
+  const CACHE_KEY="vidgrab.dashboard.releases.v1";
+  const CACHE_MS=10*60*1000;
+  const nf=new Intl.NumberFormat("en-US");
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function n(v){return Number.isFinite(Number(v))?nf.format(Number(v)):"—"}
+  function bytes(v){
+    if(!Number.isFinite(Number(v))||Number(v)<=0)return "—";
+    const u=["B","KB","MB","GB","TB"];let x=Number(v),i=0;
+    while(x>=1024&&i<u.length-1){x/=1024;i++}
+    return x.toFixed(x>=100||i===0?0:1)+" "+u[i];
+  }
+  function ago(iso){
+    if(!iso)return "—";
+    const d=(Date.now()-new Date(iso).getTime())/1000;
+    if(!Number.isFinite(d))return "—";
+    if(d<60)return "just now";
+    if(d<3600)return Math.floor(d/60)+"m ago";
+    if(d<86400)return Math.floor(d/3600)+"h ago";
+    return Math.floor(d/86400)+"d ago";
+  }
+  function pill(el,text,state){
+    if(!el)return;
+    el.textContent=text;
+    el.className="pill "+(state||"");
+  }
+  function classify(name){
+    if(/arm64-v8a/i.test(name))return "arm64";
+    if(/armeabi-v7a/i.test(name))return "armv7";
+    return "universal";
+  }
+  function isApk(a){return /\.apk$/i.test(a.name||"")}
+  function summarize(rel){
+    const out={universal:0,arm64:0,armv7:0,total:0};
+    (rel.assets||[]).filter(isApk).forEach(a=>{
+      const k=classify(a.name),v=Number(a.download_count||0);
+      out[k]+=v;out.total+=v;
+    });
+    return out;
+  }
+  function renderReleases(rels){
+    const apk=rels.reduce((s,r)=>s+summarize(r).total,0);
+    $("kpiApk").textContent=n(apk);
+    $("kpiApkFoot").textContent=rels.length+" releases tracked";
+    pill($("releaseCount"),rels.length+" releases","live");
+    $("snapshotTime").textContent=ago(new Date().toISOString());
+    $("footTime").textContent="Fetched "+new Date().toLocaleString();
+
+    const sorted=[...rels].sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
+    const recent=sorted.slice(0,12).reverse();
+    const max=Math.max(...recent.map(r=>summarize(r).total),1);
+    $("releaseBars").innerHTML=recent.length?recent.map(r=>{
+      const s=summarize(r),w=Math.max(2,Math.round(s.total/max*100));
+      return '<div class="bar-row"><span class="bar-tag">'+esc(r.tag_name)+'</span><span class="bar-track"><span class="bar-fill" style="width:'+w+'%"></span></span><span class="bar-val">'+n(s.total)+'</span></div>';
+    }).join(""):'<div class="empty">No releases yet.</div>';
+
+    const arch={universal:0,arm64:0,armv7:0};
+    rels.forEach(r=>{const s=summarize(r);arch.universal+=s.universal;arch.arm64+=s.arm64;arch.armv7+=s.armv7});
+    const total=arch.universal+arch.arm64+arch.armv7;
+    $("donutTotal").textContent=n(total);
+    const pct=v=>total?Math.round(v/total*100):0;
+    $("donut").style.background="conic-gradient(#4f8cff 0 "+pct(arch.universal)+"%, #37d6a8 "+pct(arch.universal)+"% "+(pct(arch.universal)+pct(arch.arm64))+"%, #2a3850 "+(pct(arch.universal)+pct(arch.arm64))+"% 100%)";
+    $("archLegend").innerHTML=[["Universal","var(--accent)",arch.universal],["arm64-v8a","var(--mint)",arch.arm64],["armeabi-v7a","#2a3850",arch.armv7]].map(([k,c,v])=>
+      '<div class="legend-row"><span class="swatch" style="background:'+c+'"></span>'+k+'<b>'+n(v)+' · '+pct(v)+'%</b></div>').join("");
+
+    if(sorted[0]){
+      const latest=summarize(sorted[0]);
+      $("kpiLatest").textContent=n(latest.total);
+      $("latestTag").textContent=sorted[0].tag_name;
+    }
+    $("releaseTable").innerHTML=sorted.slice(0,8).map(r=>{
+      const s=summarize(r);
+      return '<tr><td><span class="tag"><i></i>'+esc(r.tag_name)+'</span></td><td>'+new Date(r.published_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})+'</td><td class="num">'+n(s.universal)+'</td><td class="num">'+n(s.arm64)+'</td><td class="num">'+n(s.armv7)+'</td><td class="num" style="color:var(--text)">'+n(s.total)+'</td></tr>';
+    }).join("");
+  }
+  async function fetchJson(url,opts){
+    const r=await fetch(url,opts);
+    if(!r.ok)throw new Error(url+" → "+r.status);
+    return r.json();
+  }
+  async function loadReleases(){
+    try{
+      const cached=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+      if(cached&&Date.now()-cached.at<CACHE_MS&&Array.isArray(cached.rels)&&cached.rels.length){renderReleases(cached.rels);return}
+    }catch(e){}
+    try{
+      const rels=await fetchJson(API+"/releases?per_page=100",{headers:{Accept:"application/vnd.github+json"}});
+      if(!Array.isArray(rels))throw new Error("Unexpected GitHub response");
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),rels}))}catch(_){}
+      renderReleases(rels);
+    }catch(e){
+      try{
+        const cached=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+        if(cached&&cached.rels){renderReleases(cached.rels);$("liveLabel").textContent="Cached";return}
+      }catch(_){}
+      $("kpiApk").textContent="—";
+      $("releaseBars").innerHTML='<div class="empty error">GitHub API unavailable. '+esc(e.message)+'</div>';
+      $("liveLabel").textContent="Offline";
+    }
+  }
+  function renderAnalytics(d){
+    if(!d){return}
+    const fb=d.firebase||{};
+    $("generatedTime").textContent=d.generatedAt?new Date(d.generatedAt).toLocaleString():"—";
+    if(Number.isFinite(Number(fb.installs))){$("kpiInstalls").textContent=n(fb.installs);pill($("pillInstalls"),"Firebase","live")}
+    if(Number.isFinite(Number(fb.videoDownloads))){$("kpiVideos").textContent=n(fb.videoDownloads);pill($("pillVideos"),"Firebase","live")}
+    if(Number.isFinite(Number(fb.activeUsers28d))){$("kpiActive").textContent=n(fb.activeUsers28d);pill($("pillActive"),"Firebase","live")}
+    if(Number.isFinite(Number(fb.bytes))){$("kpiBytes").textContent=bytes(fb.bytes)}
+    if(Number.isFinite(Number(fb.sessions28d))){$("kpiSessions").textContent=n(fb.sessions28d)}
+    if(d.traffic){
+      if(Number.isFinite(Number(d.traffic.views14d))){$("kpiViews").textContent=n(d.traffic.views14d);$("viewFoot").textContent=n(d.traffic.uniques14d)+" unique visitors"}
+    }
+    const series=Array.isArray(fb.videosByDay)?fb.videosByDay:[];
+    if(series.length){
+      pill($("sparkPill"),"Firebase","live");
+      $("sparkWrap").innerHTML=spark(series);
+    }else{
+      pill($("sparkPill"),"waiting","wait");
+    }
+    const connected=[fb.installs,fb.videoDownloads,fb.activeUsers28d].some(v=>Number.isFinite(Number(v)));
+    pill($("analyticsPill"),connected?"connected":"waiting",connected?"live":"wait");
+    if(connected){
+      $("notice").style.display="none";
+      $("liveLabel").textContent="Live";
+    }
+  }
+  function spark(data){
+    const w=900,h=148,pad=8;
+    const vals=data.map(x=>Number(x.count)||0);
+    const max=Math.max(...vals,1);
+    const pts=vals.map((v,i)=>{
+      const x=pad+(data.length===1?w/2:i*(w-pad*2)/(data.length-1));
+      const y=h-pad-(v/max)*(h-pad*2);
+      return [x,y];
+    });
+    const line=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+    const area=line+" L "+pts[pts.length-1][0].toFixed(1)+" "+(h-pad)+" L "+pts[0][0].toFixed(1)+" "+(h-pad)+" Z";
+    const grid=[0,.33,.66,1].map(f=>'<line class="grid" x1="0" x2="'+w+'" y1="'+(pad+f*(h-pad*2)).toFixed(1)+'" y2="'+(pad+f*(h-pad*2)).toFixed(1)+'"/>').join("");
+    return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" role="img" aria-label="Daily video downloads">'
+      +'<defs><linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#37d6a8" stop-opacity=".28"/><stop offset="1" stop-color="#37d6a8" stop-opacity="0"/></linearGradient></defs>'
+      +grid+'<path class="area" d="'+area+'"/><path class="line" d="'+line+'"/>'
+      +pts.map((p,i)=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.4" fill="#37d6a8"><title>'+esc(data[i].date)+': '+n(vals[i])+'</title></circle>').join("")
+      +'</svg>';
+  }
+  async function loadAnalytics(){
+    try{
+      const d=await fetchJson("data.json?ts="+Date.now(),{cache:"no-store"});
+      renderAnalytics(d);
+    }catch(e){
+      pill($("analyticsPill"),"waiting","wait");
+      pill($("sparkPill"),"waiting","wait");
+    }
+  }
+  function loadAll(){
+    $("liveLabel").textContent="Live";
+    loadReleases();
+    loadAnalytics();
+  }
+  $("refresh").addEventListener("click",loadAll);
+  $("logout").addEventListener("click",()=>{try{localStorage.clear()}catch(e){}location.reload()});
+  loadAll();
+})();
+</script>
+</body>
+</html>

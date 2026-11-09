@@ -129,7 +129,7 @@ docs/                GitHub Pages site
 
 ## <img src="https://api.iconify.design/material-symbols:shield.svg?color=4f46e5" width="28" height="28" align="center" /> Privacy
 
-VidGrab has no accounts and no servers of its own. Downloads, history, vault contents and settings stay on the device. Official release builds may include Firebase Crashlytics and anonymous analytics when a Firebase configuration is supplied at build time; both can be disabled in **Settings → Privacy**. URLs, titles, search terms and file names are never sent. See [PRIVACY.md](PRIVACY.md) for details.
+VidGrab has no accounts and no servers of its own. Downloads, history, vault contents and settings stay on the device. Official release builds include Firebase Crashlytics and anonymous analytics; both can be disabled in **Settings → Privacy**. URLs, titles, search terms and file names are never sent. See [PRIVACY.md](PRIVACY.md) for details.
 
 ---
 

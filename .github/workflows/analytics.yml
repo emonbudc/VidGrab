@@ -1,0 +1,57 @@
+name: Analytics snapshot
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: analytics-snapshot
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Google auth
+        run: npm install --no-save --prefix "$RUNNER_TEMP/analytics" google-auth-library@9
+
+      - name: Write Firebase credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "FIREBASE_SERVICE_ACCOUNT secret is missing" >&2
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+
+      - name: Build snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_PATH: ${{ runner.temp }}/analytics/node_modules
+        run: node scripts/analytics/snapshot.cjs --service-account "$RUNNER_TEMP/firebase-service-account.json" --output docs/analysis/data.json
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/analysis/data.json
+          if git diff --cached --quiet; then
+            echo "No analytics changes"
+            exit 0
+          fi
+          git commit -m "Update analytics snapshot"
+          git push
