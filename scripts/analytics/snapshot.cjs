@@ -45,14 +45,35 @@ async function gh(pathname) {
 
 async function findProperty(token) {
   try {
-    const r = await fetch(
-      "https://firebase.googleapis.com/v1beta1/projects/" + encodeURIComponent(PROJECT) + ":getAnalyticsDetails",
-      { headers: { Authorization: "Bearer " + token, Accept: "application/json" } }
-    );
-    if (r.ok) {
-      const data = await r.json();
+    const headers = { Authorization: "Bearer " + token, Accept: "application/json" };
+    const [detailsResponse, appsResponse] = await Promise.all([
+      fetch(
+        "https://firebase.googleapis.com/v1beta1/projects/" + encodeURIComponent(PROJECT) + "/analyticsDetails",
+        { headers }
+      ),
+      fetch(
+        "https://firebase.googleapis.com/v1beta1/projects/" + encodeURIComponent(PROJECT) + "/androidApps",
+        { headers }
+      ),
+    ]);
+    if (detailsResponse.ok) {
+      const data = await detailsResponse.json();
       const id = data.analyticsProperty && data.analyticsProperty.id;
-      if (id) return String(id).startsWith("properties/") ? String(id) : "properties/" + id;
+      if (id) {
+        const property = String(id).startsWith("properties/") ? String(id) : "properties/" + id;
+        let streamId = null;
+        if (appsResponse.ok) {
+          const apps = await appsResponse.json();
+          const app = (apps.apps || []).find((item) => item.packageName === PACKAGE_NAME);
+          if (app && app.appId) {
+            const mapping = (data.streamMappings || []).find(
+              (item) => String(item.app || "").endsWith("/" + app.appId)
+            );
+            if (mapping && mapping.streamId) streamId = String(mapping.streamId);
+          }
+        }
+        return { property, streamId };
+      }
     }
   } catch (error) {
     console.warn("Firebase analytics lookup failed:", error.message);
@@ -71,12 +92,12 @@ async function findProperty(token) {
   }
   if (!properties.length) return null;
   const preferred = properties.find((p) => /vidgrab/i.test(p.displayName || "")) || properties[0];
-  return preferred.property;
+  return { property: preferred.property, streamId: null };
 }
 
 async function runReport(token, property, body) {
   const r = await fetch(
-    "https://analyticsdata.googleapis.com/v1beta/" + encodeURIComponent(property) + ":runReport",
+    "https://analyticsdata.googleapis.com/v1beta/" + property + ":runReport",
     {
       method: "POST",
       headers: {
@@ -87,7 +108,17 @@ async function runReport(token, property, body) {
       body: JSON.stringify(body),
     }
   );
-  if (!r.ok) throw new Error("GA4 " + r.status + ": " + (await r.text()).slice(0, 500));
+  if (!r.ok) {
+    const text = await r.text();
+    let message = text;
+    try {
+      const parsed = JSON.parse(text);
+      message = (parsed.error && parsed.error.message) || text;
+    } catch (_) {
+      message = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    }
+    throw new Error("GA4 " + r.status + ": " + String(message).slice(0, 240));
+  }
   return r.json();
 }
 
@@ -98,15 +129,18 @@ function metric(data, index = 0) {
   return Number.isFinite(num) ? num : null;
 }
 
-function eventFilter(eventName) {
-  return {
-    andGroup: {
-      expressions: [
-        { filter: { fieldName: "eventName", stringFilter: { value: eventName } } },
-        { filter: { fieldName: "appInfo.id", stringFilter: { value: PACKAGE_NAME } } },
-      ],
-    },
-  };
+function eventFilter(eventName, streamId) {
+  const expressions = [{ filter: { fieldName: "eventName", stringFilter: { value: eventName } } }];
+  if (streamId) {
+    expressions.push({ filter: { fieldName: "streamId", stringFilter: { value: streamId } } });
+  }
+  return { andGroup: { expressions } };
+}
+
+function streamFilter(streamId) {
+  return streamId
+    ? { filter: { fieldName: "streamId", stringFilter: { value: streamId } } }
+    : undefined;
 }
 
 function dateKey(value) {
@@ -124,27 +158,29 @@ function last14Days() {
   return days;
 }
 
-async function firebaseSnapshot(token, property) {
+async function firebaseSnapshot(token, property, streamId) {
   const base = { dateRanges: [{ startDate: "2020-01-01", endDate: "today" }] };
   const installsReport = await runReport(token, property, {
     ...base,
     metrics: [{ name: "eventCount" }, { name: "totalUsers" }],
-    dimensionFilter: eventFilter("first_open"),
+    dimensionFilter: eventFilter("first_open", streamId),
   });
   const videosReport = await runReport(token, property, {
     ...base,
     metrics: [{ name: "eventCount" }, { name: "totalUsers" }],
-    dimensionFilter: eventFilter("download_completed"),
+    dimensionFilter: eventFilter("download_completed", streamId),
   });
   const activeReport = await runReport(token, property, {
     dateRanges: [{ startDate: "28daysAgo", endDate: "today" }],
-    metrics: [{ name: "activeUsers" }, { name: "sessions" }],
+    dimensions: [],
+    metrics: [{ name: "activeUsers" }, { name: "sessions" }, { name: "crashFreeUsersRate" }],
+    dimensionFilter: streamFilter(streamId),
   });
   const dailyReport = await runReport(token, property, {
     dateRanges: [{ startDate: "13daysAgo", endDate: "today" }],
     dimensions: [{ name: "date" }],
     metrics: [{ name: "eventCount" }],
-    dimensionFilter: eventFilter("download_completed"),
+    dimensionFilter: eventFilter("download_completed", streamId),
   });
   const byDay = new Map();
   for (const row of dailyReport.rows || []) {
@@ -152,14 +188,16 @@ async function firebaseSnapshot(token, property) {
     const value = Number(row.metricValues && row.metricValues[0] && row.metricValues[0].value) || 0;
     if (day) byDay.set(day, value);
   }
+  const activeUsers = metric(activeReport, 0);
   return {
     pending: false,
     installs: metric(installsReport, 0),
     installUsers: metric(installsReport, 1),
     videoDownloads: metric(videosReport, 0),
     videoDownloadUsers: metric(videosReport, 1),
-    activeUsers28d: metric(activeReport, 0),
+    activeUsers28d: activeUsers,
     sessions28d: metric(activeReport, 1),
+    crashFreeUsersRate: activeUsers && activeUsers > 0 ? metric(activeReport, 2) : null,
     bytes: null,
     videosByDay: last14Days().map((date) => ({ date, count: byDay.get(date) || 0 })),
   };
@@ -227,11 +265,11 @@ async function trafficSnapshot() {
   result.traffic = await trafficSnapshot();
   try {
     const token = await accessToken();
-    const property = await findProperty(token);
-    if (property) {
-      result.propertyId = property;
-      result.firebase = await firebaseSnapshot(token, property);
-      console.log("Firebase snapshot from " + property);
+    const found = await findProperty(token);
+    if (found) {
+      result.propertyId = found.property;
+      result.firebase = await firebaseSnapshot(token, found.property, found.streamId);
+      console.log("Firebase snapshot from " + found.property + (found.streamId ? " / stream " + found.streamId : ""));
     } else {
       result.firebase.reason = "No GA4 property is linked to " + PROJECT + " yet.";
       console.warn(result.firebase.reason);

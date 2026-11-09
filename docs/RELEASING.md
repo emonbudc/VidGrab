@@ -62,13 +62,13 @@ Enable **Crashlytics** and link a **Google Analytics** property in the Firebase 
 
 ## Dashboard
 
-The admin dashboard lives at `https://udcemon.me/VidGrab/analysis/`. It reads GitHub release statistics live and product totals from `docs/analysis/data.json`, refreshed nightly by **Analytics snapshot**. The page is encrypted with StatiCrypt; rebuild it with:
+The admin dashboard lives at `https://udcemon.me/VidGrab/analysis/`. It reads GitHub release statistics live and product totals from `docs/analysis/data.json`, refreshed nightly by **Analytics snapshot**. The page is public on GitHub Pages; rebuild it with:
 
 ```bash
-STATICRYPT_PASSWORD='…' scripts/build-analysis.sh
+scripts/build-analysis.sh
 ```
 
-The GitHub Pages deployment is static, so the password gate is client-side. Do not put secrets in the page or `data.json`.
+Do not put secrets in the page or `data.json`.
 
 ## Secrets
 

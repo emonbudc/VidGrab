@@ -1,9 +1,74 @@
 {
-  "generatedAt": "2026-11-09T00:11:54.309Z",
-  "propertyId": null,
+  "generatedAt": "2026-11-09T00:39:31.067Z",
+  "propertyId": "properties/563305504",
   "firebase": {
-    "pending": true,
-    "reason": "No GA4 property is linked to vidgrab-app-prod yet."
+    "pending": false,
+    "installs": null,
+    "installUsers": null,
+    "videoDownloads": null,
+    "videoDownloadUsers": null,
+    "activeUsers28d": 0,
+    "sessions28d": 0,
+    "crashFreeUsersRate": null,
+    "bytes": null,
+    "videosByDay": [
+      {
+        "date": "2026-10-27",
+        "count": 0
+      },
+      {
+        "date": "2026-10-28",
+        "count": 0
+      },
+      {
+        "date": "2026-10-29",
+        "count": 0
+      },
+      {
+        "date": "2026-10-30",
+        "count": 0
+      },
+      {
+        "date": "2026-10-31",
+        "count": 0
+      },
+      {
+        "date": "2026-11-01",
+        "count": 0
+      },
+      {
+        "date": "2026-11-02",
+        "count": 0
+      },
+      {
+        "date": "2026-11-03",
+        "count": 0
+      },
+      {
+        "date": "2026-11-04",
+        "count": 0
+      },
+      {
+        "date": "2026-11-05",
+        "count": 0
+      },
+      {
+        "date": "2026-11-06",
+        "count": 0
+      },
+      {
+        "date": "2026-11-07",
+        "count": 0
+      },
+      {
+        "date": "2026-11-08",
+        "count": 0
+      },
+      {
+        "date": "2026-11-09",
+        "count": 0
+      }
+    ]
   },
   "traffic": {
     "views14d": 58,
@@ -12,9 +77,9 @@
     "uniqueCloners14d": 137
   },
   "github": {
-    "releaseCount": 35,
-    "apkDownloads": 159,
-    "assetDownloads": 280,
+    "releaseCount": 34,
+    "apkDownloads": 155,
+    "assetDownloads": 275,
     "latestTag": "v1.0.50",
     "latestDownloads": 4
   }
