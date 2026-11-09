@@ -115,6 +115,18 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
 .mini{padding:16px;min-height:108px}
 .mini .kpi-value{font-size:29px}
 .spark-card{padding:20px;margin-top:12px}
+.crash-summary{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 15px}
+.crash-chip{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line-soft);background:#0e1622;border-radius:999px;padding:5px 10px;font-family:var(--mono);font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.crash-chip b{color:var(--text);font-size:11px;font-weight:600}
+.crash-issue{white-space:normal;min-width:220px;max-width:420px}
+.crash-issue b{display:block;font-family:var(--mono);font-size:10.5px;font-weight:500;color:var(--text);line-height:1.35}
+.crash-issue span{display:block;margin-top:2px;color:var(--dim);font-size:10px;line-height:1.4;overflow:hidden;text-overflow:ellipsis}
+.issue-link{color:inherit;text-decoration:none}
+.issue-link:hover b{color:var(--mint)}
+.crash-type{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.crash-type.fatal{color:#ff6b8a}
+.crash-type.nonfatal{color:var(--amber)}
+.crash-type.anr{color:var(--accent)}
 .spark-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .spark-head h3{margin:0;font-family:var(--display);font-size:13.5px}
 .spark-head p{margin:4px 0 0;color:var(--dim);font-size:11px}
@@ -162,16 +174,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
       Refresh
     </button>
-    <button class="button" id="logout" type="button" title="Lock dashboard">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      Lock
-    </button>
   </header>
 
   <section class="hero">
-    <p class="eyebrow">Private admin view</p>
+    <p class="eyebrow">Public analytics</p>
     <h1>Every download,<br>in one quiet place.</h1>
-    <p>Release installs, product usage and the download library in one dashboard. GitHub numbers update live; Firebase product totals follow the nightly snapshot.</p>
+    <p>Release installs, product usage and crash reports in one dashboard. GitHub numbers update live; app activity follows the five-minute feed.</p>
     <div class="hero-meta">
       <span>Source <b>emonbudc/VidGrab</b></span>
       <span>Snapshot <b id="snapshotTime">loading…</b></span>
@@ -267,6 +275,23 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     </article>
   </div>
 
+  <section class="card panel" style="margin-top:12px">
+    <div class="panel-head">
+      <div><h3>Crash reports</h3><p>Fatal crashes, non-fatals and ANRs from Crashlytics · last 7 days.</p></div>
+      <div style="display:flex;align-items:center;gap:8px;flex:none">
+        <span class="pill wait" id="crashPill">Crashlytics</span>
+        <a class="button" href="https://console.firebase.google.com/project/vidgrab-app-prod/crashlytics/app/android:com.vidgrab.app" target="_blank" rel="noopener">Console</a>
+      </div>
+    </div>
+    <div class="crash-summary" id="crashSummary"><span class="crash-chip">loading</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Issue</th><th>Type</th><th class="num">Events</th><th class="num">Users</th><th>Last seen</th></tr></thead>
+        <tbody id="crashRows"><tr><td colspan="5" class="empty">Loading crash reports…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
   <section class="card spark-card">
     <div class="spark-head">
       <div><h3>Daily video downloads</h3><p>Last 14 days of <span style="font-family:var(--mono);color:var(--muted)">download_completed</span>.</p></div>
@@ -297,6 +322,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
   const API="https://api.github.com/repos/"+REPO;
   const CACHE_KEY="vidgrab.dashboard.releases.v1";
   const CACHE_MS=10*60*1000;
+  const LIVE_FEED="https://raw.githubusercontent.com/emonbudc/VidGrab/analytics-live/realtime.json";
+  const CRASH_CONSOLE="https://console.firebase.google.com/project/vidgrab-app-prod/crashlytics/app/android:com.vidgrab.app";
+  let crashFromLive=false;
   const nf=new Intl.NumberFormat("en-US");
   const $=id=>document.getElementById(id);
   const has=v=>v!==null&&v!==undefined&&Number.isFinite(Number(v));
@@ -321,6 +349,48 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     if(!el)return;
     el.textContent=text;
     el.className="pill "+(state||"");
+  }
+  function crashType(type){
+    if(type==="FATAL")return ["fatal","Fatal"];
+    if(type==="ANR")return ["anr","ANR"];
+    if(type==="NON_FATAL")return ["nonfatal","Non-fatal"];
+    return ["","Error"];
+  }
+  function renderCrashes(c,fromLive){
+    if(!c)return;
+    if(fromLive){
+      if(c.pending)return;
+      crashFromLive=true;
+    }else if(crashFromLive){
+      return;
+    }
+    if(c.pending){
+      $("crashSummary").innerHTML='<span class="crash-chip">syncing</span>';
+      $("crashRows").innerHTML='<tr><td colspan="5" class="empty">Crashlytics is not reporting yet.</td></tr>';
+      pill($("crashPill"),"syncing","wait");
+      return;
+    }
+    const issues=Array.isArray(c.issues)?c.issues:[];
+    const days=Number(c.intervalDays)||7;
+    const open=has(c.openIssues)?Number(c.openIssues):issues.filter(i=>i.state==="OPEN").length;
+    const chips=[
+      [open,"open"],
+      [has(c.fatalIssues)?c.fatalIssues:0,"fatal"],
+      [has(c.nonFatalIssues)?c.nonFatalIssues:0,"non-fatal"],
+      [has(c.anrIssues)?c.anrIssues:0,"anr"],
+      [has(c.affectedUsers)?c.affectedUsers:0,"user impacts"]
+    ];
+    $("crashSummary").innerHTML=chips.map(([v,k])=>'<span class="crash-chip"><b>'+n(v)+'</b>'+k+'</span>').join("");
+    $("crashRows").innerHTML=issues.length?issues.map(issue=>{
+      const [cls,label]=crashType(issue.errorType);
+      const title=esc(issue.title||"Unknown issue");
+      const subtitle=issue.subtitle?esc(issue.subtitle):"";
+      const link=issue.uri?esc(issue.uri):CRASH_CONSOLE;
+      const when=issue.lastSeen?ago(issue.lastSeen):"—";
+      const version=issue.version&&when!=="—"?' · v'+esc(issue.version):"";
+      return '<tr><td class="crash-issue"><a class="issue-link" href="'+link+'" target="_blank" rel="noopener"><b>'+title+'</b>'+(subtitle?'<span>'+subtitle+'</span>':'')+'</a></td><td><span class="crash-type '+cls+'">'+label+'</span></td><td class="num">'+n(issue.events)+'</td><td class="num">'+n(issue.users)+'</td><td>'+when+version+'</td></tr>';
+    }).join(""):'<tr><td colspan="5" class="empty">No crashes in the last '+days+' days. Nothing to fix.</td></tr>';
+    pill($("crashPill"),issues.length?"live":"clean","live");
   }
   function classify(name){
     if(/arm64-v8a/i.test(name))return "arm64";
@@ -397,6 +467,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     if(!d){return}
     const fb=d.firebase||{};
     $("generatedTime").textContent=d.generatedAt?new Date(d.generatedAt).toLocaleString():"—";
+    renderCrashes(d.crashlytics,false);
     if(has(fb.installs)){$("kpiInstalls").textContent=n(fb.installs);pill($("pillInstalls"),"Firebase","live")}
     if(has(fb.videoDownloads)){$("kpiVideos").textContent=n(fb.videoDownloads);pill($("pillVideos"),"Firebase","live")}
     if(has(fb.activeUsers28d)){$("kpiActive").textContent=n(fb.activeUsers28d);pill($("pillActive"),"Firebase","live")}
@@ -455,6 +526,19 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
       pill($("sparkPill"),"waiting","wait");
     }
   }
+  async function loadLive(){
+    try{
+      const d=await fetchJson(LIVE_FEED+"?ts="+Date.now(),{cache:"no-store"});
+      if(has(d.activeUsers30m))$("liveActive").textContent=n(d.activeUsers30m);
+      if(has(d.downloads30m))$("liveDownloads").textContent=n(d.downloads30m);
+      if(has(d.installs30m))$("liveInstalls").textContent=n(d.installs30m);
+      $("liveUpdated").textContent=d.generatedAt?"feed "+ago(d.generatedAt):"waiting for feed";
+      renderCrashes(d.crashlytics,true);
+      $("liveLabel").textContent="Live";
+    }catch(e){
+      $("liveUpdated").textContent="feed unavailable";
+    }
+  }
   function loadAll(){
     $("liveLabel").textContent="Live";
     loadReleases();
@@ -462,7 +546,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     loadLive();
   }
   $("refresh").addEventListener("click",loadAll);
-  $("logout").addEventListener("click",()=>{try{localStorage.clear()}catch(e){}location.reload()});
   loadAll();
   setInterval(loadLive,60000);
   setInterval(loadAnalytics,300000);

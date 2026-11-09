@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T00:56:12.441Z",
+  "generatedAt": "2026-11-09T01:16:50.195Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
@@ -70,12 +70,24 @@
       }
     ]
   },
+  "crashlytics": {
+    "pending": false,
+    "intervalDays": 7,
+    "issueCount": 0,
+    "openIssues": 0,
+    "fatalIssues": 0,
+    "nonFatalIssues": 0,
+    "anrIssues": 0,
+    "eventCount": 0,
+    "affectedUsers": 0,
+    "issues": []
+  },
   "traffic": null,
   "github": {
     "releaseCount": 1,
-    "apkDownloads": 0,
-    "assetDownloads": 0,
+    "apkDownloads": 5,
+    "assetDownloads": 9,
     "latestTag": "v1.0.51",
-    "latestDownloads": 0
+    "latestDownloads": 5
   }
 }

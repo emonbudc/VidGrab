@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { JWT } = require("google-auth-library");
+const { crashlyticsSnapshot } = require("./crashlytics.cjs");
 
 function arg(name, fallback) {
   const i = process.argv.indexOf("--" + name);
@@ -24,7 +25,7 @@ const auth = new JWT({
   email: key.client_email,
   key: key.private_key,
   scopes: [
-    "https://www.googleapis.com/auth/firebase.readonly",
+    "https://www.googleapis.com/auth/firebase",
     "https://www.googleapis.com/auth/analytics.readonly",
   ],
 });
@@ -62,17 +63,19 @@ async function findProperty(token) {
       if (id) {
         const property = String(id).startsWith("properties/") ? String(id) : "properties/" + id;
         let streamId = null;
+        let appId = null;
         if (appsResponse.ok) {
           const apps = await appsResponse.json();
           const app = (apps.apps || []).find((item) => item.packageName === PACKAGE_NAME);
           if (app && app.appId) {
+            appId = app.appId;
             const mapping = (data.streamMappings || []).find(
               (item) => String(item.app || "").endsWith("/" + app.appId)
             );
             if (mapping && mapping.streamId) streamId = String(mapping.streamId);
           }
         }
-        return { property, streamId };
+        return { property, streamId, appId };
       }
     }
   } catch (error) {
@@ -92,7 +95,7 @@ async function findProperty(token) {
   }
   if (!properties.length) return null;
   const preferred = properties.find((p) => /vidgrab/i.test(p.displayName || "")) || properties[0];
-  return { property: preferred.property, streamId: null };
+  return { property: preferred.property, streamId: null, appId: null };
 }
 
 async function runReport(token, property, body) {
@@ -254,6 +257,7 @@ async function trafficSnapshot() {
     generatedAt: new Date().toISOString(),
     propertyId: null,
     firebase: { pending: true, reason: "Analytics property not available yet." },
+    crashlytics: { pending: true, reason: "Crashlytics data not available yet." },
     traffic: null,
     github: null,
   };
@@ -270,8 +274,20 @@ async function trafficSnapshot() {
       result.propertyId = found.property;
       result.firebase = await firebaseSnapshot(token, found.property, found.streamId);
       console.log("Firebase snapshot from " + found.property + (found.streamId ? " / stream " + found.streamId : ""));
+      if (found.appId) {
+        try {
+          result.crashlytics = await crashlyticsSnapshot(token, PROJECT, found.appId, 7);
+          console.log("Crashlytics: " + result.crashlytics.issueCount + " issues");
+        } catch (error) {
+          result.crashlytics = { pending: true, reason: error.message.slice(0, 240) };
+          console.warn("Crashlytics snapshot skipped:", error.message);
+        }
+      } else {
+        result.crashlytics.reason = "No Android app id found for " + PACKAGE_NAME + ".";
+      }
     } else {
       result.firebase.reason = "No GA4 property is linked to " + PROJECT + " yet.";
+      result.crashlytics.reason = "No GA4 property is linked to " + PROJECT + " yet.";
       console.warn(result.firebase.reason);
     }
   } catch (error) {

@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { JWT } = require("google-auth-library");
+const { crashlyticsSnapshot } = require("./crashlytics.cjs");
 
 function arg(name, fallback) {
   const i = process.argv.indexOf("--" + name);
@@ -21,7 +22,7 @@ const auth = new JWT({
   email: key.client_email,
   key: key.private_key,
   scopes: [
-    "https://www.googleapis.com/auth/firebase.readonly",
+    "https://www.googleapis.com/auth/firebase",
     "https://www.googleapis.com/auth/analytics.readonly",
   ],
 });
@@ -51,17 +52,19 @@ async function findProperty(token) {
       if (id) {
         const property = String(id).startsWith("properties/") ? String(id) : "properties/" + id;
         let streamId = null;
+        let appId = null;
         if (appsResponse.ok) {
           const apps = await appsResponse.json();
           const app = (apps.apps || []).find((item) => item.packageName === "com.vidgrab.app");
           if (app && app.appId) {
+            appId = app.appId;
             const mapping = (data.streamMappings || []).find(
               (item) => String(item.app || "").endsWith("/" + app.appId)
             );
             if (mapping && mapping.streamId) streamId = String(mapping.streamId);
           }
         }
-        return { property, streamId };
+        return { property, streamId, appId };
       }
     }
   } catch (error) {
@@ -125,6 +128,7 @@ function metric(data) {
     activeUsers30m: null,
     downloads30m: null,
     installs30m: null,
+    crashlytics: { pending: true, reason: "Crashlytics data not loaded yet." },
     pending: true,
   };
   try {
@@ -150,6 +154,16 @@ function metric(data) {
       result.downloads30m = metric(downloads);
       result.installs30m = metric(installs);
       result.pending = false;
+      if (found.appId) {
+        try {
+          result.crashlytics = await crashlyticsSnapshot(token, PROJECT, found.appId, 7);
+        } catch (error) {
+          result.crashlytics = { pending: true, reason: error.message.slice(0, 240) };
+          console.warn("Crashlytics snapshot skipped:", error.message);
+        }
+      } else {
+        result.crashlytics.reason = "No Android app id found for com.vidgrab.app.";
+      }
       console.log(
         "Realtime " +
           found.property +
@@ -159,7 +173,9 @@ function metric(data) {
           result.downloads30m +
           " downloads, " +
           result.installs30m +
-          " installs"
+          " installs, " +
+          (result.crashlytics.issueCount || 0) +
+          " crash issues"
       );
     }
   } catch (error) {
