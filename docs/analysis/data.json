@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T00:41:13.018Z",
+  "generatedAt": "2026-11-09T00:56:12.441Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
@@ -72,10 +72,10 @@
   },
   "traffic": null,
   "github": {
-    "releaseCount": 34,
-    "apkDownloads": 155,
-    "assetDownloads": 275,
-    "latestTag": "v1.0.50",
-    "latestDownloads": 4
+    "releaseCount": 1,
+    "apkDownloads": 0,
+    "assetDownloads": 0,
+    "latestTag": "v1.0.51",
+    "latestDownloads": 0
   }
 }
