@@ -62,7 +62,7 @@ Enable **Crashlytics** and link a **Google Analytics** property in the Firebase 
 
 ## Dashboard
 
-The admin dashboard lives at `https://udcemon.me/VidGrab/analysis/`. It reads GitHub release statistics live and product totals from `docs/analysis/data.json`, refreshed nightly by **Analytics snapshot**. The page is public on GitHub Pages; rebuild it with:
+The admin dashboard lives at `https://udcemon.me/VidGrab/analysis/`. It reads GitHub release statistics live, product totals from `docs/analysis/data.json` (nightly **Analytics snapshot**), and 30-minute live totals from the `analytics-live` branch, refreshed every five minutes by **Live analytics**. The page is public on GitHub Pages; rebuild it with:
 
 ```bash
 scripts/build-analysis.sh
