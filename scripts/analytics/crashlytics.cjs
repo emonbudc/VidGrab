@@ -30,19 +30,23 @@ function normalizeIssue(group) {
   };
 }
 
-async function crashlyticsSnapshot(token, project, appId, days) {
-  const intervalDays = days || 7;
+function reportUrl(project, appId, report, days) {
   const params = new URLSearchParams();
-  params.set("filter.interval.startTime", isoAgo(intervalDays));
+  params.set("filter.interval.startTime", isoAgo(days));
   params.set("filter.interval.endTime", new Date().toISOString());
-  params.set("pageSize", "25");
-  const url =
+  return (
     "https://firebasecrashlytics.googleapis.com/v1alpha/projects/" +
     encodeURIComponent(project) +
     "/apps/" +
     appId +
-    "/reports/topIssues?" +
-    params.toString();
+    "/reports/" +
+    report +
+    "?" +
+    params.toString()
+  );
+}
+
+async function readReport(token, url) {
   const r = await fetch(url, {
     headers: {
       Authorization: "Bearer " + token,
@@ -58,15 +62,49 @@ async function crashlyticsSnapshot(token, project, appId, days) {
     } catch (_) {}
     throw new Error("Crashlytics " + r.status + ": " + String(message).slice(0, 200));
   }
-  const data = await r.json();
+  return r.json();
+}
+
+function parseSummary(data) {
+  const metrics = data.groups && data.groups[0] && data.groups[0].metrics && data.groups[0].metrics[0];
+  if (!metrics) return null;
+  return {
+    totalUsers: toNumber(metrics.totalUsersCount),
+    totalSessions: toNumber(metrics.totalSessionsCount),
+    events: toNumber(metrics.eventsCount),
+    impactedUsers: toNumber(metrics.impactedUsersCount),
+    impactedSessions: toNumber(metrics.impactedSessionsCount),
+    crashFreeUsersPercent:
+      typeof metrics.crashFreeUsersPercentage === "number" ? metrics.crashFreeUsersPercentage : null,
+    crashFreeSessionsPercent:
+      typeof metrics.crashFreeSessionsPercentage === "number" ? metrics.crashFreeSessionsPercentage : null,
+  };
+}
+
+async function crashlyticsSnapshot(token, project, appId, days) {
+  const intervalDays = days || 7;
+  const summaryDays = 90;
+  const issuesUrl = reportUrl(project, appId, "topIssues", intervalDays);
+  const issuesUrlWithPage = issuesUrl + "&pageSize=25";
+  const summaryUrl = reportUrl(project, appId, "appSummary", summaryDays);
+  const [issuesResult, summaryResult] = await Promise.all([
+    readReport(token, issuesUrlWithPage).catch((error) => ({ error })),
+    readReport(token, summaryUrl).catch((error) => ({ error })),
+  ]);
+  if (issuesResult.error) throw issuesResult.error;
+  const data = issuesResult;
   const issues = (Array.isArray(data.groups) ? data.groups : [])
     .map(normalizeIssue)
     .filter((issue) => issue.events > 0 || issue.users > 0)
     .sort((a, b) => b.events - a.events);
   const count = (type) => issues.filter((issue) => issue.errorType === type).length;
+  let summary = null;
+  if (!summaryResult.error) summary = parseSummary(summaryResult);
   return {
     pending: false,
     intervalDays,
+    summaryDays,
+    summary,
     issueCount: issues.length,
     openIssues: issues.filter((issue) => issue.state === "OPEN").length,
     fatalIssues: count("FATAL"),

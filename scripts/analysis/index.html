@@ -48,9 +48,8 @@ a{color:inherit}
 .shell{position:relative;width:min(1240px,calc(100% - 44px));margin:0 auto;padding:26px 0 70px}
 .topbar{display:flex;align-items:center;gap:16px;padding:10px 0 30px}
 .brand{display:flex;align-items:center;gap:11px;text-decoration:none}
-.mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(145deg,#5b97ff,#2f66e0);box-shadow:0 8px 26px rgba(79,140,255,.28)}
-.mark svg{width:17px;height:17px;color:white}
-.brand b{font-family:var(--display);font-size:16px;letter-spacing:-.02em}
+.logo-plate{display:inline-flex;align-items:center;background:#f7fbff;border-radius:9px;padding:5px 8px;box-shadow:0 8px 24px rgba(0,0,0,.24)}
+.logo-plate img{display:block;width:auto;height:22px}
 .brand span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:5px 8px;border:1px solid var(--line);border-radius:999px}
 .grow{flex:1}
 .live{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -115,6 +114,16 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
 .mini{padding:16px;min-height:108px}
 .mini .kpi-value{font-size:29px}
 .spark-card{padding:20px;margin-top:12px}
+.life-wrap{display:flex;align-items:center;gap:30px;padding:6px 0 2px}
+.life-ring{width:154px;height:154px;flex:none}
+.life-ring::before{inset:15px}
+.life-ring .donut-center b{font-size:34px}
+.life-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex:1}
+.life-fact{padding:12px 14px;border:1px solid var(--line-soft);border-radius:11px;background:#0e1622}
+.life-fact b{display:block;font-family:var(--display);font-size:22px;letter-spacing:-.03em}
+.life-fact span{display:block;margin-top:3px;font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+@media(max-width:720px){.life-wrap{flex-direction:column;align-items:flex-start;gap:18px}.life-facts{width:100%}}
+@media(max-width:420px){.life-facts{grid-template-columns:1fr 1fr}}
 .crash-summary{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 15px}
 .crash-chip{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line-soft);background:#0e1622;border-radius:999px;padding:5px 10px;font-family:var(--mono);font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
 .crash-chip b{color:var(--text);font-size:11px;font-weight:600}
@@ -163,10 +172,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
 <div class="shell">
   <header class="topbar">
     <a class="brand" href="https://udcemon.me/VidGrab/" aria-label="VidGrab">
-      <span class="mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
-      </span>
-      <b>VidGrab</b><span>Analytics</span>
+      <div class="logo-plate"><img src="https://udcemon.me/VidGrab/assets/vidgrab-logo.png" alt="VidGrab" width="1200" height="287" decoding="async"></div>
+      <span>Analytics</span>
     </a>
     <span class="grow"></span>
     <span class="live"><i class="dot"></i><span id="liveLabel">Live</span></span>
@@ -191,7 +198,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     <span class="live-badge"><i class="dot"></i>Live now</span>
     <div class="live-stat"><b id="liveActive">—</b><span>active · 30m</span></div>
     <div class="live-stat"><b id="liveDownloads">—</b><span>downloads · 30m</span></div>
-    <div class="live-stat"><b id="liveInstalls">—</b><span>installs · 30m</span></div>
+    <div class="live-stat"><b id="liveInstalls">—</b><span>installers · lifetime</span></div>
     <span class="live-refresh" id="liveUpdated">waiting for feed</span>
   </div>
 
@@ -202,9 +209,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
       <div class="kpi-foot"><span class="pill live">GitHub</span><span id="kpiApkFoot">all releases</span></div>
     </article>
     <article class="card kpi">
-      <div class="kpi-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>App installs</div>
+      <div class="kpi-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>App installers</div>
       <div class="kpi-value" id="kpiInstalls">—</div>
-      <div class="kpi-foot"><span class="pill" id="pillInstalls">Firebase</span><span>first opens</span></div>
+      <div class="kpi-foot"><span class="pill" id="pillInstalls">Crashlytics</span><span>lifetime</span></div>
     </article>
     <article class="card kpi">
       <div class="kpi-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3Z"/></svg>Videos downloaded</div>
@@ -249,7 +256,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
   </section>
 
   <div class="section-head">
-    <div><h2>Product analytics</h2><p>From the app's anonymous usage events. Nightly snapshot.</p></div>
+    <div><h2>Product analytics</h2><p>From the app's anonymous usage events and Crashlytics.</p></div>
     <span class="pill" id="analyticsPill">waiting</span>
   </div>
   <div class="product-grid">
@@ -259,9 +266,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
       <div class="kpi-foot">unique downloaders</div>
     </article>
     <article class="card mini">
-      <div class="kpi-label">Sessions · 28d</div>
+      <div class="kpi-label">Sessions · lifetime</div>
       <div class="kpi-value" id="kpiSessions">—</div>
-      <div class="kpi-foot">foreground sessions</div>
+      <div class="kpi-foot">app sessions</div>
     </article>
     <article class="card mini">
       <div class="kpi-label">Release assets</div>
@@ -271,9 +278,24 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     <article class="card mini">
       <div class="kpi-label">Crash-free users</div>
       <div class="kpi-value" id="kpiCrashFree">—</div>
-      <div class="kpi-foot"><span class="pill" id="pillCrash">Crashlytics</span><span>last 28 days</span></div>
+      <div class="kpi-foot"><span class="pill" id="pillCrash">Crashlytics</span><span>lifetime</span></div>
     </article>
   </div>
+
+  <section class="card panel" style="margin-top:12px">
+    <div class="panel-head">
+      <div><h3>Lifetime installers</h3><p>Distinct installers from Crashlytics, measured against lifetime APK downloads.</p></div>
+      <span class="pill" id="lifePill">Crashlytics</span>
+    </div>
+    <div class="life-wrap">
+      <div class="donut life-ring" id="lifeRing"><div class="donut-center"><b id="lifeInstalls">—</b><span>installers</span></div></div>
+      <div class="life-facts">
+        <div class="life-fact"><b id="lifeApk">—</b><span>APK downloads</span></div>
+        <div class="life-fact"><b id="lifeSessions">—</b><span>app sessions</span></div>
+        <div class="life-fact"><b id="lifeRate">—</b><span>download-to-install</span></div>
+      </div>
+    </div>
+  </section>
 
   <section class="card panel" style="margin-top:12px">
     <div class="panel-head">
@@ -325,6 +347,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
   const LIVE_FEED="https://raw.githubusercontent.com/emonbudc/VidGrab/analytics-live/realtime.json";
   const CRASH_CONSOLE="https://console.firebase.google.com/project/vidgrab-app-prod/crashlytics/app/android:com.vidgrab.app";
   let crashFromLive=false;
+  let apkTotal=0;
+  let lifeInstallers=null;
+  let lifeSessions=null;
   const nf=new Intl.NumberFormat("en-US");
   const $=id=>document.getElementById(id);
   const has=v=>v!==null&&v!==undefined&&Number.isFinite(Number(v));
@@ -392,6 +417,39 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     }).join(""):'<tr><td colspan="5" class="empty">No crashes in the last '+days+' days. Nothing to fix.</td></tr>';
     pill($("crashPill"),issues.length?"live":"clean","live");
   }
+  function renderLifetime(c){
+    const s=c&&c.summary;
+    if(s&&has(s.totalUsers))lifeInstallers=Number(s.totalUsers);
+    if(s&&has(s.totalSessions))lifeSessions=Number(s.totalSessions);
+    if(s&&has(s.crashFreeUsersPercent)&&Number(s.totalUsers)>0){
+      $("kpiCrashFree").textContent=Number(s.crashFreeUsersPercent).toFixed(1)+"%";
+      pill($("pillCrash"),"Crashlytics","live");
+    }
+    updateLifetime();
+  }
+  function updateLifetime(){
+    if(has(lifeInstallers)){
+      $("lifeInstalls").textContent=n(lifeInstallers);
+      $("kpiInstalls").textContent=n(lifeInstallers);
+      $("liveInstalls").textContent=n(lifeInstallers);
+      pill($("pillInstalls"),"Crashlytics","live");
+      pill($("lifePill"),"Crashlytics","live");
+    }
+    if(has(lifeSessions)){
+      $("lifeSessions").textContent=n(lifeSessions);
+      $("kpiSessions").textContent=n(lifeSessions);
+    }
+    if(has(apkTotal))$("lifeApk").textContent=n(apkTotal);
+    if(has(lifeInstallers)&&has(apkTotal)&&Number(apkTotal)>0){
+      const pct=lifeInstallers/apkTotal*100;
+      const fill=Math.min(100,Math.max(0,pct));
+      $("lifeRate").textContent=Math.round(pct)+"%";
+      $("lifeRing").style.background="conic-gradient(#37d6a8 0 "+fill+"%, #2a3850 "+fill+"% 100%)";
+    }else{
+      $("lifeRate").textContent="—";
+      $("lifeRing").style.background="conic-gradient(#2a3850 0 100%)";
+    }
+  }
   function classify(name){
     if(/arm64-v8a/i.test(name))return "arm64";
     if(/armeabi-v7a/i.test(name))return "armv7";
@@ -411,6 +469,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     const assets=rels.reduce((s,r)=>s+(r.assets||[]).reduce((a,x)=>a+(Number(x.download_count)||0),0),0);
     $("kpiApk").textContent=n(apk);
     $("kpiAssets").textContent=n(assets);
+    apkTotal=apk;
+    updateLifetime();
     $("kpiApkFoot").textContent=rels.length+" releases tracked";
     pill($("releaseCount"),rels.length+" releases","live");
     $("snapshotTime").textContent=ago(new Date().toISOString());
@@ -468,13 +528,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     const fb=d.firebase||{};
     $("generatedTime").textContent=d.generatedAt?new Date(d.generatedAt).toLocaleString():"—";
     renderCrashes(d.crashlytics,false);
-    if(has(fb.installs)){$("kpiInstalls").textContent=n(fb.installs);pill($("pillInstalls"),"Firebase","live")}
     if(has(fb.videoDownloads)){$("kpiVideos").textContent=n(fb.videoDownloads);pill($("pillVideos"),"Firebase","live")}
     if(has(fb.activeUsers28d)){$("kpiActive").textContent=n(fb.activeUsers28d);pill($("pillActive"),"Firebase","live")}
     if(has(fb.videoDownloadUsers)){$("kpiDownloadUsers").textContent=n(fb.videoDownloadUsers)}
-    if(has(fb.sessions28d)){$("kpiSessions").textContent=n(fb.sessions28d)}
     if(has(fb.crashFreeUsersRate)){$("kpiCrashFree").textContent=(Number(fb.crashFreeUsersRate)*100).toFixed(1)+"%";pill($("pillCrash"),"Crashlytics","live")}
     else{$("kpiCrashFree").textContent="—";pill($("pillCrash"),"awaiting","wait")}
+    renderLifetime(d.crashlytics);
     const series=Array.isArray(fb.videosByDay)?fb.videosByDay:[];
     if(series.length){
       $("sparkWrap").innerHTML=spark(series);
@@ -485,7 +544,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     }
     const pending=fb.pending===true;
     const connected=!pending;
-    const populated=has(fb.installs)||has(fb.videoDownloads)||(has(fb.activeUsers28d)&&Number(fb.activeUsers28d)>0);
+    const crashUsers=d.crashlytics&&d.crashlytics.summary&&d.crashlytics.summary.totalUsers;
+    const populated=has(fb.videoDownloads)||(has(fb.activeUsers28d)&&Number(fb.activeUsers28d)>0)||(has(crashUsers)&&Number(crashUsers)>0);
     pill($("analyticsPill"),connected?"connected":"waiting",connected?"live":"wait");
     const notice=$("notice");
     if(populated){
@@ -531,9 +591,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
       const d=await fetchJson(LIVE_FEED+"?ts="+Date.now(),{cache:"no-store"});
       if(has(d.activeUsers30m))$("liveActive").textContent=n(d.activeUsers30m);
       if(has(d.downloads30m))$("liveDownloads").textContent=n(d.downloads30m);
-      if(has(d.installs30m))$("liveInstalls").textContent=n(d.installs30m);
       $("liveUpdated").textContent=d.generatedAt?"feed "+ago(d.generatedAt):"waiting for feed";
       renderCrashes(d.crashlytics,true);
+      renderLifetime(d.crashlytics);
       $("liveLabel").textContent="Live";
     }catch(e){
       $("liveUpdated").textContent="feed unavailable";

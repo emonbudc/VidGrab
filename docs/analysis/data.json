@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T01:16:50.195Z",
+  "generatedAt": "2026-11-09T01:36:42.851Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
@@ -73,6 +73,16 @@
   "crashlytics": {
     "pending": false,
     "intervalDays": 7,
+    "summaryDays": 90,
+    "summary": {
+      "totalUsers": 2,
+      "totalSessions": 2,
+      "events": 0,
+      "impactedUsers": 0,
+      "impactedSessions": 0,
+      "crashFreeUsersPercent": 100,
+      "crashFreeSessionsPercent": 100
+    },
     "issueCount": 0,
     "openIssues": 0,
     "fatalIssues": 0,

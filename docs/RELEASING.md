@@ -62,7 +62,7 @@ Enable **Crashlytics** and link a **Google Analytics** property in the Firebase 
 
 ## Dashboard
 
-The public dashboard lives at `https://udcemon.me/VidGrab/analysis/`. It reads GitHub release statistics live, product totals from `docs/analysis/data.json` (nightly **Analytics snapshot**), and 30-minute live totals plus Crashlytics top issues from the `analytics-live` branch, refreshed every five minutes by **Live analytics**. The crash table links each issue to the Firebase console for full stack traces and logs. Rebuild the page with:
+The public dashboard lives at `https://udcemon.me/VidGrab/analysis/`. It reads GitHub release statistics live, product totals from `docs/analysis/data.json` (nightly **Analytics snapshot**), and 30-minute live totals plus Crashlytics lifetime installers and top issues from the `analytics-live` branch, refreshed every five minutes by **Live analytics**. The crash table links each issue to the Firebase console for full stack traces and logs. Rebuild the page with:
 
 ```bash
 scripts/build-analysis.sh
