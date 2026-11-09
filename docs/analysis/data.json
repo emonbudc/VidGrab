@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T00:39:31.067Z",
+  "generatedAt": "2026-11-09T00:41:13.018Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
@@ -70,12 +70,7 @@
       }
     ]
   },
-  "traffic": {
-    "views14d": 58,
-    "uniques14d": 5,
-    "clones14d": 465,
-    "uniqueCloners14d": 137
-  },
+  "traffic": null,
   "github": {
     "releaseCount": 34,
     "apkDownloads": 155,
