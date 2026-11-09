@@ -228,9 +228,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
   </div>
   <div class="product-grid">
     <article class="card mini">
-      <div class="kpi-label">Data downloaded</div>
-      <div class="kpi-value" id="kpiBytes">—</div>
-      <div class="kpi-foot">across completed downloads</div>
+      <div class="kpi-label">Download users</div>
+      <div class="kpi-value" id="kpiDownloadUsers">—</div>
+      <div class="kpi-foot">unique downloaders</div>
     </article>
     <article class="card mini">
       <div class="kpi-label">Sessions · 28d</div>
@@ -238,9 +238,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
       <div class="kpi-foot">foreground sessions</div>
     </article>
     <article class="card mini">
-      <div class="kpi-label">Repo views · 14d</div>
-      <div class="kpi-value" id="kpiViews">—</div>
-      <div class="kpi-foot" id="viewFoot">unique visitors</div>
+      <div class="kpi-label">Release assets</div>
+      <div class="kpi-value" id="kpiAssets">—</div>
+      <div class="kpi-foot">all asset downloads</div>
     </article>
     <article class="card mini">
       <div class="kpi-label">Crash-free users</div>
@@ -320,7 +320,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
   }
   function renderReleases(rels){
     const apk=rels.reduce((s,r)=>s+summarize(r).total,0);
+    const assets=rels.reduce((s,r)=>s+(r.assets||[]).reduce((a,x)=>a+(Number(x.download_count)||0),0),0);
     $("kpiApk").textContent=n(apk);
+    $("kpiAssets").textContent=n(assets);
     $("kpiApkFoot").textContent=rels.length+" releases tracked";
     pill($("releaseCount"),rels.length+" releases","live");
     $("snapshotTime").textContent=ago(new Date().toISOString());
@@ -377,26 +379,35 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0
     if(!d){return}
     const fb=d.firebase||{};
     $("generatedTime").textContent=d.generatedAt?new Date(d.generatedAt).toLocaleString():"—";
-    if(Number.isFinite(Number(fb.installs))){$("kpiInstalls").textContent=n(fb.installs);pill($("pillInstalls"),"Firebase","live")}
-    if(Number.isFinite(Number(fb.videoDownloads))){$("kpiVideos").textContent=n(fb.videoDownloads);pill($("pillVideos"),"Firebase","live")}
-    if(Number.isFinite(Number(fb.activeUsers28d))){$("kpiActive").textContent=n(fb.activeUsers28d);pill($("pillActive"),"Firebase","live")}
-    if(Number.isFinite(Number(fb.bytes))){$("kpiBytes").textContent=bytes(fb.bytes)}
-    if(Number.isFinite(Number(fb.sessions28d))){$("kpiSessions").textContent=n(fb.sessions28d)}
-    if(d.traffic){
-      if(Number.isFinite(Number(d.traffic.views14d))){$("kpiViews").textContent=n(d.traffic.views14d);$("viewFoot").textContent=n(d.traffic.uniques14d)+" unique visitors"}
-    }
+    if(has(fb.installs)){$("kpiInstalls").textContent=n(fb.installs);pill($("pillInstalls"),"Firebase","live")}
+    if(has(fb.videoDownloads)){$("kpiVideos").textContent=n(fb.videoDownloads);pill($("pillVideos"),"Firebase","live")}
+    if(has(fb.activeUsers28d)){$("kpiActive").textContent=n(fb.activeUsers28d);pill($("pillActive"),"Firebase","live")}
+    if(has(fb.videoDownloadUsers)){$("kpiDownloadUsers").textContent=n(fb.videoDownloadUsers)}
+    if(has(fb.sessions28d)){$("kpiSessions").textContent=n(fb.sessions28d)}
+    if(has(fb.crashFreeUsersRate)){$("kpiCrashFree").textContent=(Number(fb.crashFreeUsersRate)*100).toFixed(1)+"%";pill($("pillCrash"),"Crashlytics","live")}
+    else{$("kpiCrashFree").textContent="—";pill($("pillCrash"),"awaiting","wait")}
     const series=Array.isArray(fb.videosByDay)?fb.videosByDay:[];
     if(series.length){
-      pill($("sparkPill"),"Firebase","live");
       $("sparkWrap").innerHTML=spark(series);
+      const active=series.some(x=>Number(x.count)>0);
+      pill($("sparkPill"),active?"Firebase":"no data",active?"live":"wait");
     }else{
       pill($("sparkPill"),"waiting","wait");
     }
-    const connected=[fb.installs,fb.videoDownloads,fb.activeUsers28d].some(v=>Number.isFinite(Number(v)));
+    const pending=fb.pending===true;
+    const connected=!pending;
+    const populated=has(fb.installs)||has(fb.videoDownloads)||(has(fb.activeUsers28d)&&Number(fb.activeUsers28d)>0);
     pill($("analyticsPill"),connected?"connected":"waiting",connected?"live":"wait");
-    if(connected){
-      $("notice").style.display="none";
+    const notice=$("notice");
+    if(populated){
+      notice.style.display="none";
       $("liveLabel").textContent="Live";
+    }else if(connected){
+      notice.style.display="";
+      notice.querySelector("span").textContent="Firebase is connected. Product numbers will appear after the first release built with analytics enabled starts reporting.";
+    }else{
+      notice.style.display="";
+      notice.querySelector("span").textContent="Firebase product analytics connects after the first nightly snapshot. GitHub release downloads are live already.";
     }
   }
   function spark(data){
