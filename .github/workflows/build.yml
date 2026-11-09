@@ -104,7 +104,7 @@ jobs:
       - name: Compose release notes
         run: |
           prev=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          if [ -n "$prev" ]; then range="$prev..HEAD"; else range="HEAD"; fi
+          if [ -n "$prev" ]; then range="$prev..HEAD"; else range="HEAD~1..HEAD"; fi
           {
             echo "## What's improved"
             echo

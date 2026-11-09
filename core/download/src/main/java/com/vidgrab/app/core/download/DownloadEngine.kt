@@ -298,7 +298,12 @@ internal class DownloadEngine(
             MediaScannerConnection.scanFile(context, arrayOf(saved.absolutePath), arrayOf(done.mimeType), null)
             notifier.completed(done.asModel())
             analytics.event(com.vidgrab.app.core.analytics.Events.DOWNLOAD_COMPLETED,
-                mapOf("kind" to done.type.name.lowercase(), "protocol" to done.protocol.name.lowercase()))
+                mapOf(
+                    "kind" to done.type.name.lowercase(),
+                    "protocol" to done.protocol.name.lowercase(),
+                    "bytes" to saved.length(),
+                    "duration_sec" to probedDuration,
+                ))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
