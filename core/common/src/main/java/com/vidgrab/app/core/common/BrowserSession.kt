@@ -66,20 +66,14 @@ object BrowserSession {
             host == "youtu.be" || host.endsWith(".youtu.be")
     }
 
-    fun isYouTubeApiHost(url: String): Boolean {
-        val host = Urls.host(url)?.lowercase() ?: return false
-        // The hash is bound to one origin, so only send it to the origin it was built for.
-        return host == "youtube.com" || host == "www.youtube.com" ||
-            host == "youtubei.googleapis.com"
-    }
-
     /**
      * YouTube's account authorization header. NewPipe already sends the session cookies, but YouTube only
      * treats restricted videos and the account home feed as signed in when the request also carries a
-     * SAPISIDHASH for the session's SAPISID cookie.
+     * SAPISIDHASH for the session's SAPISID cookie. The hash is bound to one origin, so use the origin of
+     * the actual host rather than www for every YouTube URL.
      */
     fun authHeaders(url: String): Map<String, String> {
-        if (!isYouTubeApiHost(url)) return emptyMap()
+        val origin = youtubeApiOrigin(url) ?: return emptyMap()
         val cookie = headers(url).entries.firstOrNull { it.key.equals("Cookie", true) }?.value ?: return emptyMap()
         val cookies = parseCookieHeader(cookie)
         if ((cookies["LOGIN_INFO"]?.length ?: 0) <= 10) return emptyMap()
@@ -87,9 +81,23 @@ object BrowserSession {
         if (sapisid.isBlank()) return emptyMap()
         val timestamp = System.currentTimeMillis() / 1000
         return linkedMapOf(
-            "Origin" to YOUTUBE_ORIGIN,
-            "Authorization" to "SAPISIDHASH ${sapisidHash(timestamp, sapisid, YOUTUBE_ORIGIN)}",
+            "Origin" to origin,
+            "Authorization" to "SAPISIDHASH ${sapisidHash(timestamp, sapisid, origin)}",
         )
+    }
+
+    private fun youtubeApiOrigin(url: String): String? {
+        val host = try {
+            java.net.URI(url).host?.lowercase()
+        } catch (_: Exception) {
+            null
+        }
+        return when (host) {
+            "youtube.com", "www.youtube.com" -> YOUTUBE_ORIGIN
+            "m.youtube.com" -> "https://m.youtube.com"
+            "youtubei.googleapis.com" -> YOUTUBE_ORIGIN
+            else -> null
+        }
     }
 
     internal fun sapisidHash(timestamp: Long, sapisid: String, origin: String): String =

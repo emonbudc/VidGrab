@@ -123,6 +123,23 @@ class BrowserSessionTest {
     }
 
     @Test
+    fun authHeadersMatchTheOriginOfTheYouTubeHost() {
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=abc") }
+        try {
+            val headers = BrowserSession.authHeaders("https://m.youtube.com/youtubei/v1/browse")
+            assertEquals("https://m.youtube.com", headers["Origin"])
+            val authorization = headers["Authorization"] ?: error("missing Authorization")
+            val match = Regex("""SAPISIDHASH (\d+)_([0-9a-f]{40})""").matchEntire(authorization)!!
+            assertEquals(
+                BrowserSession.sapisidHash(match.groupValues[1].toLong(), "abc", "https://m.youtube.com"),
+                authorization.removePrefix("SAPISIDHASH "),
+            )
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
     fun authHeadersNeedARealAccountAndOnlyGoToYouTubeApis() {
         BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=short; SAPISID=abc") }
         try {
@@ -133,7 +150,6 @@ class BrowserSessionTest {
         BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=abc") }
         try {
             assertEquals(emptyMap<String, String>(), BrowserSession.authHeaders("https://www.instagram.com/"))
-            assertEquals(emptyMap<String, String>(), BrowserSession.authHeaders("https://m.youtube.com/"))
             assertEquals(emptyMap<String, String>(), BrowserSession.authHeaders("https://rr1.googlevideo.com/videoplayback"))
         } finally {
             BrowserSession.install(null)
