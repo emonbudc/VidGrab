@@ -86,17 +86,17 @@ class YouTubeAccountFeedTest {
 
     @Test
     fun parsesRelatedItemsAndDropsTheCurrentVideo() {
-        val related = parseYouTubeRelated(NEXT, "current1")
+        val related = parseYouTubeRelated(NEXT, "currentvid1")
 
         assertEquals(2, related.size)
-        assertEquals("https://www.youtube.com/watch?v=rel1", related[0].url)
+        assertEquals("https://www.youtube.com/watch?v=relvideo001", related[0].url)
         assertEquals("Related one", related[0].title)
         assertEquals("Related Channel", related[0].uploader)
         assertEquals(245L, related[0].durationSec)
         assertEquals(2000L, related[0].viewCount)
-        assertEquals("https://www.youtube.com/watch?v=rel2", related[1].url)
+        assertEquals("https://www.youtube.com/watch?v=relvideo002", related[1].url)
         assertEquals("Related two", related[1].title)
-        assertTrue(related.none { it.url.endsWith("current1") })
+        assertTrue(related.none { it.url.endsWith("currentvid1") })
     }
 
     @Test
@@ -204,9 +204,9 @@ class YouTubeAccountFeedTest {
                       "results": [
                         {
                           "compactVideoRenderer": {
-                            "videoId": "rel1",
+                            "videoId": "relvideo001",
                             "title": {"runs": [{"text": "Related one"}]},
-                            "thumbnail": {"thumbnails": [{"url": "https://i.ytimg.com/vi/rel1/hqdefault.jpg", "width": 480, "height": 360}]},
+                            "thumbnail": {"thumbnails": [{"url": "https://i.ytimg.com/vi/relvideo001/hqdefault.jpg", "width": 480, "height": 360}]},
                             "shortBylineText": {
                               "runs": [{
                                 "text": "Related Channel",
@@ -216,16 +216,16 @@ class YouTubeAccountFeedTest {
                             "lengthText": {"simpleText": "4:05"},
                             "viewCountText": {"simpleText": "2K views"},
                             "publishedTimeText": {"simpleText": "3 days ago"},
-                            "navigationEndpoint": {"commandMetadata": {"webCommandMetadata": {"url": "/watch?v=rel1"}}}
+                            "navigationEndpoint": {"commandMetadata": {"webCommandMetadata": {"url": "/watch?v=relvideo001"}}}
                           }
                         },
                         {
                           "lockupViewModel": {
-                            "contentId": "rel2",
+                            "contentId": "relvideo002",
                             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
                             "contentImage": {
                               "thumbnailViewModel": {
-                                "image": {"sources": [{"url": "https://i.ytimg.com/vi/rel2/hqdefault.jpg", "width": 480, "height": 270}]},
+                                "image": {"sources": [{"url": "https://i.ytimg.com/vi/relvideo002/hqdefault.jpg", "width": 480, "height": 270}]},
                                 "overlays": [{
                                   "thumbnailBottomOverlayViewModel": {
                                     "badges": [{"thumbnailBadgeViewModel": {"text": "4:33"}}]
@@ -250,9 +250,9 @@ class YouTubeAccountFeedTest {
                         },
                         {
                           "compactVideoRenderer": {
-                            "videoId": "current1",
+                            "videoId": "currentvid1",
                             "title": {"runs": [{"text": "Current video"}]},
-                            "navigationEndpoint": {"commandMetadata": {"webCommandMetadata": {"url": "/watch?v=current1"}}}
+                            "navigationEndpoint": {"commandMetadata": {"webCommandMetadata": {"url": "/watch?v=currentvid1"}}}
                           }
                         }
                       ]

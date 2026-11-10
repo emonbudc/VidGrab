@@ -222,7 +222,7 @@ internal fun parseYouTubeConfig(html: String, defaults: YouTubeFeedConfig): YouT
         .find(html)?.groupValues?.get(1)
     val identity = Regex(""""ID_TOKEN"\s*:\s*"([^"]+)"""")
         .find(html)?.groupValues?.get(1)
-    val sessionIndex = Regex(""""SESSION_INDEX"\s*:\s*"?(\d+)"""")
+    val sessionIndex = Regex(""""SESSION_INDEX"\s*:\s*"?(\d+)""")
         .find(html)?.groupValues?.get(1)?.toIntOrNull()
     return defaults.copy(
         apiKey = apiKey,
