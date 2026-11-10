@@ -74,9 +74,10 @@ internal class RecommendationRepositoryImpl(
     )
 
     override suspend fun feed(page: Any?, topic: RecommendationTopic?, exclude: Set<String>): Page<MediaItem> {
-        if (topic == null && accountFeed != null && (page == null || accountFeed.owns(page))) {
-            if (accountFeed.isAvailable) {
-                val accountPage = runCatching { accountFeed.home(page) }.getOrNull()
+        val feed = accountFeed
+        if (topic == null && feed != null && (page == null || feed.owns(page))) {
+            if (feed.isAvailable) {
+                val accountPage = runCatching { feed.home(page) }.getOrNull()
                 if (accountPage != null &&
                     (accountPage.items.isNotEmpty() || page != null || accountPage.nextPage != null)
                 ) {
