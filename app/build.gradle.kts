@@ -41,9 +41,9 @@ android {
 
     defaultConfig {
         applicationId = "com.vidgrab.app"
-        // CI sets these from the release run (see .github/workflows/release.yml); local builds are "dev".
+        // The version comes from gradle.properties; CI can override it for a one-off build.
         versionCode = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 1
-        versionName = (project.findProperty("appVersionName") as String?) ?: "${project.property("appVersionBase")}.0-dev"
+        versionName = (project.findProperty("appVersionName") as String?) ?: "0.0.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Where the app looks for new versions. Override with -PupdateApiUrl=… to test against a local fake release.
         val updateUrl = (project.findProperty("updateApiUrl") as String?)

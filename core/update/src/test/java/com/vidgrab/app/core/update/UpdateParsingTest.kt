@@ -13,8 +13,9 @@ class UpdateParsingTest {
 
     @Test
     fun versionCodes() {
-        assertEquals(12L, UpdateParsing.versionCodeOf("v1.0.12"))
-        assertEquals(40L, UpdateParsing.versionCodeOf("1.1.40"))
+        assertEquals(1_000_012L, UpdateParsing.versionCodeOf("v1.0.12"))
+        assertEquals(1_001_040L, UpdateParsing.versionCodeOf("1.1.40"))
+        assertEquals(1_001_000L, UpdateParsing.versionCodeOf("v1.1.0"))
         assertNull(UpdateParsing.versionCodeOf("nightly"))
         assertNull(UpdateParsing.versionCodeOf("v1.0.12-beta"))
     }
@@ -26,7 +27,7 @@ class UpdateParsingTest {
             "assets":[{"name":"VidGrab-v1.0.7.apk","size":123,"browser_download_url":"https://g/a.apk"},
                       {"name":"VidGrab-v1.0.7.apk.sha256","size":90,"browser_download_url":"https://g/a.apk.sha256"}]}"""
         val u = UpdateParsing.parseRelease(json)!!
-        assertEquals(7L, u.versionCode)
+        assertEquals(1_000_007L, u.versionCode)
         assertEquals("1.0.7", u.versionName)
         assertEquals("https://g/a.apk", u.apkUrl)
         assertEquals("https://g/a.apk.sha256", u.sha256Url)

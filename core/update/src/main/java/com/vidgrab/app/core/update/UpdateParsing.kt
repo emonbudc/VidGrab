@@ -16,15 +16,18 @@ data class UpdateInfo(
 /** Pure parsing helpers (unit-tested): GitHub release JSON → [UpdateInfo]. */
 object UpdateParsing {
     /**
-     * Releases are tagged `v<major>.<minor>.<versionCode>` by the release workflow (versionCode = CI run number),
-     * so the last number of the tag is the versionCode.
+     * Releases are tagged `v<major>.<minor>.<patch>`. The release workflow sets Android's versionCode to
+     * `major * 1_000_000 + minor * 1_000 + patch`, so a newer tag always has a higher code.
      */
-    fun versionCodeOf(tag: String): Long? =
-        Regex("""^v?\d+(?:\.\d+)*\.(\d+)$""").matchEntire(tag.trim())?.groupValues?.get(1)?.toLongOrNull()
+    fun versionCodeOf(tag: String): Long? {
+        val parts = Regex("""^v?(\d+)\.(\d+)\.(\d+)$""").matchEntire(tag.trim()) ?: return null
+        val (major, minor, patch) = parts.destructured
+        return major.toLong() * 1_000_000 + minor.toLong() * 1_000 + patch.toLong()
+    }
 
     /**
      * Picks the APK built for this phone's CPU ([abis], most preferred first, e.g. `Build.SUPPORTED_ABIS`):
-     * `VidGrab-v1.0.9-arm64-v8a.apk`, falling back to the universal `VidGrab-v1.0.9.apk`. Each APK's
+     * `VidGrab-v1.1.0-arm64-v8a.apk`, falling back to the universal `VidGrab-v1.1.0.apk`. Each APK's
      * checksum is the asset named `<apk>.sha256`.
      */
     fun parseRelease(json: String, abis: List<String> = emptyList()): UpdateInfo? {

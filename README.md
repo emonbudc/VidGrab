@@ -8,7 +8,7 @@
 <img src="https://img.shields.io/badge/Android-7.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android" />
 
 **Search, watch and download videos and music from YouTube and 1,800+ sites.**
-**Open source. No ads. No account.**
+**Open source. No ads. No account needed.**
 
 <a href="https://github.com/emonbudc/VidGrab/releases/latest"><img src="https://img.shields.io/badge/Download-APK-4f46e5?style=for-the-badge&logo=android&logoColor=white" alt="Download" /></a>
 <a href="https://udcemon.me/VidGrab/"><img src="https://img.shields.io/badge/Website-1f2937?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Website" /></a>
@@ -21,7 +21,7 @@
 
 | <img src="https://api.iconify.design/material-symbols:language.svg?color=4f46e5" width="32" height="32" /> | <img src="https://api.iconify.design/material-symbols:download.svg?color=4f46e5" width="32" height="32" /> | <img src="https://api.iconify.design/material-symbols:block.svg?color=4f46e5" width="32" height="32" /> | <img src="https://api.iconify.design/material-symbols:person-off.svg?color=4f46e5" width="32" height="32" /> |
 |:---:|:---:|:---:|:---:|
-| **1,800+ sites** | **Up to 4K** | **No ads** | **No account** |
+| **1,800+ sites** | **Up to 4K** | **No ads** | **No account needed** |
 
 ---
 
@@ -73,6 +73,13 @@ The feeds are paged, deduplicated and capped per channel so one creator cannot t
 - Filters for videos, playlists, channels and music.
 - Built-in browser with site list, history, bookmarks and player detection for MP4, HLS (including AES-128), iframes and shadow-DOM videos.
 - Native pages for YouTube, SoundCloud, Bandcamp and media.ccc.de; the rest go through the page reader or bundled yt-dlp.
+
+### <img src="https://api.iconify.design/material-symbols:account-circle.svg?color=4f46e5" width="22" height="22" align="center" /> Optional account sign-ins
+
+- Sign in to YouTube, Instagram, Facebook and TikTok on the site's own page; passwords never pass through VidGrab and only session cookies stay on the device.
+- Signed-in YouTube sessions power the home feed, search, related videos, playback and downloads, including account-only videos.
+- Switch accounts or sign out from **Settings → Accounts**; downloads from other signed-in sites use the same session automatically.
+- Every other site can be signed in from the built-in browser and is remembered the same way.
 
 ### <img src="https://api.iconify.design/material-symbols:video-library.svg?color=4f46e5" width="22" height="22" align="center" /> Library, gallery and tools
 
@@ -129,7 +136,7 @@ docs/                GitHub Pages site
 
 ## <img src="https://api.iconify.design/material-symbols:shield.svg?color=4f46e5" width="28" height="28" align="center" /> Privacy
 
-VidGrab has no accounts and no servers of its own. Downloads, history, vault contents and settings stay on the device. Official release builds include Firebase Crashlytics and anonymous analytics; both can be disabled in **Settings → Privacy**. URLs, titles, search terms and file names are never sent. See [PRIVACY.md](PRIVACY.md) for details.
+VidGrab doesn't require an account and has no servers of its own. Optional site sign-ins run on the site's own page; only the resulting session cookies stay on the device. Downloads, history, vault contents and settings stay on the device. Official release builds include Firebase Crashlytics and anonymous analytics; both can be disabled in **Settings → Privacy**. URLs, titles, search terms and file names are never sent. See [PRIVACY.md](PRIVACY.md) for details.
 
 ---
 
