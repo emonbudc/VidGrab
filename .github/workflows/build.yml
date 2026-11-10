@@ -10,6 +10,11 @@ on:
       - "scripts/**"
       - ".github/workflows/**"
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish a GitHub release for this build
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -72,7 +77,6 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           ./gradlew :app:assembleRelease --stacktrace \
-            -Pabis=arm64-v8a \
             -PappVersionCode=${{ github.run_number }} \
             -PappVersionName=1.0.${{ github.run_number }}
 
@@ -84,13 +88,19 @@ jobs:
           [ -n "$apksigner" ] || { echo "::error::apksigner not found in $ANDROID_HOME/build-tools"; exit 1; }
           mkdir -p dist
           version=${{ github.run_number }}
-          abi=arm64-v8a
-          src="$dir/app-$abi-release.apk"
-          [ -f "$src" ] || { echo "::error::$src not found"; exit 1; }
-          "$apksigner" verify --verbose "$src" >/dev/null || { echo "::error::$src signature verification failed"; exit 1; }
-          out="VidGrab-v1.0.$version-$abi.apk"
-          cp "$src" "dist/$out"
-          (cd dist && sha256sum "$out" > "$out.sha256")
+          collect() {
+            abi="$1"
+            suffix="$2"
+            src="$dir/app-$abi-release.apk"
+            [ -f "$src" ] || { echo "::error::$src not found"; exit 1; }
+            "$apksigner" verify --verbose "$src" >/dev/null || { echo "::error::$src signature verification failed"; exit 1; }
+            out="VidGrab-v1.0.$version${suffix:+-$suffix}.apk"
+            cp "$src" "dist/$out"
+            (cd dist && sha256sum "$out" > "$out.sha256")
+          }
+          collect arm64-v8a arm64-v8a
+          collect armeabi-v7a armeabi-v7a
+          collect universal ""
           ls -la dist
 
       - name: Upload APK artifacts
@@ -105,7 +115,7 @@ jobs:
           prev=$(git describe --tags --abbrev=0 2>/dev/null || true)
           if [ -n "$prev" ]; then range="$prev..HEAD"; else range="HEAD~1..HEAD"; fi
           {
-            echo "This release contains the **arm64-v8a** APK only."
+            echo "This release contains the **arm64-v8a**, **armeabi-v7a**, and **universal** APKs."
             echo
             echo "## What's improved"
             echo
@@ -114,7 +124,7 @@ jobs:
           cat "$RUNNER_TEMP/notes.md"
 
       - name: Publish GitHub release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || inputs.publish_release == true
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
