@@ -51,7 +51,7 @@ android {
         buildConfigField("String", "UPDATE_API_URL", "\"$updateUrl\"")
         buildConfigField("boolean", "UPDATE_URL_OVERRIDDEN", "${project.hasProperty("updateApiUrl")}")
         // Phones only (the bundled Python is per-ABI); keeps the APK small.
-        ndk { abiFilters += phoneAbis }
+        // The ABI splits below do the filtering; ndk.abiFilters would conflict with them.
     }
 
     buildTypes {
