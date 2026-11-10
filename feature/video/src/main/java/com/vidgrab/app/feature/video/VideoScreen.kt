@@ -53,11 +53,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vidgrab.app.core.common.Format
 import com.vidgrab.app.core.common.LoadState
-import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.designsystem.SectionHeader
 import com.vidgrab.app.core.downloadsheet.DownloadSheetController
 import com.vidgrab.app.core.model.MediaItem
@@ -205,7 +203,7 @@ fun VideoScreen(
                                     vm.player.setAudioOnly(false)
                                     leave(toPip = true)
                                 },
-                                onMore = { showAbout = true },
+                                onAbout = { showAbout = true },
                             )
                         }
                         item {
@@ -267,10 +265,11 @@ private fun VideoActions(
     onListen: () -> Unit,
     onShare: () -> Unit,
     onPip: () -> Unit,
-    onMore: () -> Unit,
+    onAbout: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var menuOpen by remember { mutableStateOf(false) }
     val plainDescription = remember(v.description) {
         v.description.replace(Regex("<br\\s*/?>"), "\n").replace(Regex("<[^>]+>"), "")
     }
@@ -282,85 +281,76 @@ private fun VideoActions(
             Toast.LENGTH_SHORT,
         ).show()
     }
-    Column(
+    fun choose(action: () -> Unit) {
+        menuOpen = false
+        action()
+    }
+    Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            com.vidgrab.app.core.designsystem.PillButton(
-                "Download", onDownload, Modifier.weight(1f), icon = QtIcons.Download, enabled = !v.item.isLive,
-            )
+        com.vidgrab.app.core.designsystem.PillButton(
+            "Download", onDownload, Modifier.weight(1f), icon = QtIcons.Download, enabled = !v.item.isLive,
+        )
+        Box {
             QtIconButton(
-                QtIcons.MoreHoriz, "More actions", onMore, size = 48.dp,
+                QtIcons.MoreHoriz, "More actions", { menuOpen = true }, size = 48.dp,
                 container = MaterialTheme.colorScheme.surfaceContainerHigh,
             )
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text("Save thumbnail") },
+                    onClick = { choose { saveThumb() } },
+                    leadingIcon = { Icon(QtIcons.Image, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text("Copy title") },
+                    onClick = { choose { copyText(context, "Title", v.item.title) } },
+                    leadingIcon = { Icon(QtIcons.ContentCopy, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text("Copy description") },
+                    onClick = { choose { copyText(context, "Description", plainDescription) } },
+                    leadingIcon = { Icon(QtIcons.ContentCopy, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text(if (v.tags.isEmpty()) "No tags" else "Copy tags") },
+                    enabled = v.tags.isNotEmpty(),
+                    onClick = { choose { copyText(context, "Tags", v.tags.joinToString("\n") { "#$it" }) } },
+                    leadingIcon = { Icon(QtIcons.Link, null) },
+                )
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = { Text(if (saved) "Saved to Watch later" else "Watch later") },
+                    onClick = { choose(onSave) },
+                    leadingIcon = { Icon(if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder, null) },
+                    trailingIcon = if (saved) { { Icon(QtIcons.Check, null) } } else null,
+                )
+                DropdownMenuItem(
+                    text = { Text(if (audioOnly) "Watch video" else "Listen in background") },
+                    onClick = { choose(onListen) },
+                    leadingIcon = { Icon(if (audioOnly) QtIcons.Videocam else QtIcons.Headphones, null) },
+                    trailingIcon = if (audioOnly) { { Icon(QtIcons.Check, null) } } else null,
+                )
+                DropdownMenuItem(
+                    text = { Text("Share") },
+                    onClick = { choose(onShare) },
+                    leadingIcon = { Icon(QtIcons.Share, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text("Picture in picture") },
+                    onClick = { choose(onPip) },
+                    leadingIcon = { Icon(QtIcons.PictureInPicture, null) },
+                )
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = { Text("About") },
+                    onClick = { choose(onAbout) },
+                    leadingIcon = { Icon(QtIcons.Info, null) },
+                )
+            }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ActionTile(QtIcons.Image, "Thumbnail", onClick = { saveThumb() }, modifier = Modifier.weight(1f))
-            ActionTile(QtIcons.ContentCopy, "Copy title", onClick = { copyText(context, "Title", v.item.title) }, modifier = Modifier.weight(1f))
-            ActionTile(QtIcons.ContentCopy, "Description", onClick = { copyText(context, "Description", plainDescription) }, modifier = Modifier.weight(1f))
-            ActionTile(
-                QtIcons.Link, "Tags", enabled = v.tags.isNotEmpty(),
-                onClick = { copyText(context, "Tags", v.tags.joinToString("\n") { "#$it" }) },
-                modifier = Modifier.weight(1f),
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ActionTile(
-                if (saved) QtIcons.Bookmark else QtIcons.BookmarkBorder,
-                if (saved) "Saved" else "Watch later",
-                selected = saved, onClick = onSave, modifier = Modifier.weight(1f),
-            )
-            ActionTile(
-                if (audioOnly) QtIcons.Videocam else QtIcons.Headphones,
-                if (audioOnly) "Watch" else "Listen",
-                selected = audioOnly, onClick = onListen, modifier = Modifier.weight(1f),
-            )
-            ActionTile(QtIcons.Share, "Share", onClick = onShare, modifier = Modifier.weight(1f))
-            ActionTile(QtIcons.PictureInPicture, "PiP", onClick = onPip, modifier = Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun ActionTile(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    modifier: Modifier = Modifier,
-    selected: Boolean = false,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    val cs = MaterialTheme.colorScheme
-    Column(
-        modifier.height(56.dp).clip(RoundedCornerShape(14.dp))
-            .background(if (selected) cs.primary.copy(alpha = 0.12f) else cs.surfaceContainerHigh)
-            .pressable(enabled = enabled, scaleDown = 0.95f, onClick = onClick).padding(horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            icon, null,
-            tint = when {
-                !enabled -> cs.onSurfaceVariant.copy(alpha = 0.38f)
-                selected -> cs.primary
-                else -> cs.onSurface
-            },
-            modifier = Modifier.size(17.dp),
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            fontSize = 10.sp,
-            color = when {
-                !enabled -> cs.onSurfaceVariant.copy(alpha = 0.38f)
-                selected -> cs.primary
-                else -> cs.onSurfaceVariant
-            },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 3.dp),
-        )
     }
 }
 
