@@ -2,6 +2,7 @@ package com.vidgrab.app.core.downloadsheet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vidgrab.app.core.common.BrowserSession
 import com.vidgrab.app.core.data.MediaRepository
 import com.vidgrab.app.core.download.DownloadManager
 import com.vidgrab.app.core.extractor.StreamCandidate
@@ -79,7 +80,7 @@ class DownloadSheetViewModel(
 
     private fun remoteSize(url: String, headers: Map<String, String>): Long = runCatching {
         val req = okhttp3.Request.Builder().url(url).header("Range", "bytes=0-0")
-            .apply { headers.forEach { (k, v) -> header(k, v) } }.build()
+            .apply { BrowserSession.withSession(url, headers).forEach { (k, v) -> header(k, v) } }.build()
         http.newBuilder().callTimeout(6, java.util.concurrent.TimeUnit.SECONDS).build().newCall(req).execute().use { r ->
             r.header("Content-Range")?.substringAfter('/')?.toLongOrNull() ?: r.body.contentLength().takeIf { r.code == 200 }
         } ?: -1L
@@ -111,7 +112,7 @@ class DownloadSheetViewModel(
                     var subtitles: List<SubtitleTrack> = emptyList()
                     if (options.isEmpty()) {
                         // Site-specific engine (1800+ sites) with the page's session.
-                        val page = universal.extract(target.pageUrl, target.headers)
+                        val page = universal.extract(target.pageUrl, BrowserSession.withSession(target.pageUrl, target.headers))
                         report = report + "yt-dlp → " + (page?.let { "${it.options.size} formats" } ?: "no result")
                         if (page != null && page.options.isNotEmpty()) {
                             options = page.options
@@ -161,7 +162,7 @@ class DownloadSheetViewModel(
         fun timing(stage: String) = android.util.Log.i("SheetTiming", "$stage at ${System.currentTimeMillis() - started} ms")
         // Facebook: its own reader gives every resolution; the generic page reader would only find SD/HD.
         if (com.vidgrab.app.core.extractor.FacebookReader.isFacebook(url)) {
-            val fb = universal.extract(url)
+            val fb = universal.extract(url, BrowserSession.headers(url))
             timing("facebook (${fb?.options?.size ?: -1} options)")
             if (fb != null && fb.options.isNotEmpty()) return SheetUi(
                 loading = false, title = fb.title, thumbnail = fb.thumbnail, pageUrl = url, options = fb.options, headers = fb.headers,
@@ -178,7 +179,7 @@ class DownloadSheetViewModel(
             durationSec = page.durationSec?.toLong() ?: -1, report = r.report,
         )
         // Fall back to the site-specific engine (1800+ sites).
-        val x = universal.extract(url)
+        val x = universal.extract(url, BrowserSession.headers(url))
         timing("yt-dlp (${x?.options?.size ?: -1} options)")
         val report = r.report + "yt-dlp → " + (x?.let { "${it.options.size} formats" } ?: "no result")
         if (x != null && x.options.isNotEmpty()) return SheetUi(

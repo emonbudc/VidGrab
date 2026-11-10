@@ -39,6 +39,33 @@ object BrowserSession {
             host == "googleapis.com" || host.endsWith(".googleapis.com")
     }
 
+    fun isYouTubeHost(url: String): Boolean {
+        val host = Urls.host(url)?.lowercase() ?: return false
+        return host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtu.be" || host.endsWith(".youtu.be")
+    }
+
+    /**
+     * [headers] with the browser session merged in. An explicit Cookie header is kept and the sign-in
+     * cookies are appended, so the extractor's consent cookie and the account session both reach YouTube.
+     */
+    fun withSession(url: String, headers: Map<String, String>): Map<String, String> {
+        val session = this.headers(url)
+        if (session.isEmpty()) return headers
+        val out = LinkedHashMap(session)
+        for ((name, value) in headers) {
+            if (!name.equals("Cookie", true)) out[name] = value
+        }
+        val sessionCookie = session.entries.firstOrNull { it.key.equals("Cookie", true) }?.value
+        val explicitCookie = headers.entries.firstOrNull { it.key.equals("Cookie", true) }?.value
+        when {
+            sessionCookie == null -> explicitCookie?.let { out["Cookie"] = it }
+            explicitCookie == null -> out["Cookie"] = sessionCookie
+            else -> out["Cookie"] = cookieHeader(explicitCookie, sessionCookie) ?: "$explicitCookie; $sessionCookie"
+        }
+        return out
+    }
+
     /**
      * Combines cookie strings into one Cookie header, keeping the first value of each name (YouTube's own
      * copy before Google's). Returns null unless a sign-in cookie is present.

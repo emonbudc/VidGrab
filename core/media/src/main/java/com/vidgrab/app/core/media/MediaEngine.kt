@@ -15,6 +15,7 @@ import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -22,6 +23,7 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
+import com.vidgrab.app.core.common.BrowserSession
 import com.vidgrab.app.core.model.SubtitleTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +67,11 @@ class MediaEngine private constructor(private val context: Context) {
         .setAllowCrossProtocolRedirects(true)
         .setConnectTimeoutMs(15_000)
         .setReadTimeoutMs(15_000)
-    private val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
+    // The signed-in browser session only applies to Google/YouTube URLs; every other source stays anonymous.
+    private val dataSourceFactory = ResolvingDataSource.Factory(DefaultDataSource.Factory(context, httpDataSourceFactory)) { spec ->
+        val session = BrowserSession.headers(spec.uri.toString())
+        if (session.isEmpty()) spec else spec.withRequestHeaders(session)
+    }
     private val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
 
     private var player: ExoPlayer? = null

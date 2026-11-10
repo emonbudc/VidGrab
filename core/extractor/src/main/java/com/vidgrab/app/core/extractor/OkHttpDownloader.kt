@@ -21,11 +21,26 @@ class OkHttpDownloader(private val client: OkHttpClient) : Downloader() {
             builder.removeHeader(name)
             values.forEach { builder.addHeader(name, it) }
         }
-        // A signed-in in-app browser makes YouTube treat extraction as that account. Never override an
-        // explicit header from the extractor, and BrowserSession only answers for Google/YouTube hosts.
+        // A signed-in in-app browser makes YouTube treat extraction as that account. BrowserSession only
+        // answers for Google/YouTube hosts. NewPipe sends its own consent Cookie on every YouTube request,
+        // so merge instead of replacing it or the sign-in cookies would be dropped.
+        val session = BrowserSession.headers(request.url())
+        val sessionCookie = session.entries.firstOrNull { it.key.equals("Cookie", true) }?.value
+        if (sessionCookie != null) {
+            val extractorCookie = request.headers().entries
+                .filter { it.key.equals("Cookie", true) }
+                .flatMap { it.value }
+                .joinToString("; ")
+                .takeIf { it.isNotBlank() }
+            builder.header(
+                "Cookie",
+                if (extractorCookie == null) sessionCookie
+                else BrowserSession.cookieHeader(extractorCookie, sessionCookie) ?: "$extractorCookie; $sessionCookie",
+            )
+        }
         val present = request.headers().keys.map { it.lowercase() }.toSet()
-        BrowserSession.headers(request.url()).forEach { (name, value) ->
-            if (name.lowercase() !in present) builder.header(name, value)
+        session.forEach { (name, value) ->
+            if (!name.equals("Cookie", true) && name.lowercase() !in present) builder.header(name, value)
         }
         client.newCall(builder.build()).execute().use { response ->
             if (response.code == 429) throw ReCaptchaException("reCaptcha Challenge requested", request.url())

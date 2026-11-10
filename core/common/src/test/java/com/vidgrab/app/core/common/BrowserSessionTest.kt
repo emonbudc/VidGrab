@@ -37,6 +37,30 @@ class BrowserSessionTest {
     }
 
     @Test
+    fun youtubeHostsAreNarrowerThanGoogleHosts() {
+        assertTrue(BrowserSession.isYouTubeHost("https://youtu.be/x"))
+        assertTrue(BrowserSession.isYouTubeHost("https://m.youtube.com/watch?v=x"))
+        assertFalse(BrowserSession.isYouTubeHost("https://accounts.google.com/signin"))
+        assertFalse(BrowserSession.isYouTubeHost("https://notyoutube.com/watch?v=x"))
+    }
+
+    @Test
+    fun withSessionMergesCookiesAndKeepsExplicitHeaders() {
+        BrowserSession.install { mapOf("Cookie" to "SID=session") }
+        try {
+            val headers = BrowserSession.withSession(
+                "https://www.youtube.com/watch?v=x",
+                mapOf("Cookie" to "SOCS=CAI", "Referer" to "https://example.com"),
+            )
+            assertEquals("SOCS=CAI; SID=session", headers["Cookie"])
+            assertEquals("https://example.com", headers["Referer"])
+            assertEquals(mapOf("A" to "B"), BrowserSession.withSession("https://example.com", mapOf("A" to "B")))
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
     fun youtubeCookiesWinAndSignInCookieIsRequired() {
         val header = BrowserSession.cookieHeader(
             "PREF=a; SID=youtube; SAPISID=yt-sapisid",

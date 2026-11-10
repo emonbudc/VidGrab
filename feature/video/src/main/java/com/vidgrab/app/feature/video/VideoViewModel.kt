@@ -85,7 +85,9 @@ class VideoViewModel(
                 .maxByOrNull { if (it.audioUrl == null) 1 else 0 }
         }
         // Auto: 720p (video-only + separate audio) for a sharper picture; fall back to the muxed stream.
-        val hd = chosen ?: d.options.filter { it.kind == FormatKind.VIDEO && it.audioUrl != null && it.height in 361..720 }.maxByOrNull { it.height }
+        val hd = chosen
+            ?: d.options.filter { it.kind == FormatKind.VIDEO && it.audioUrl != null && it.height in 361..720 }.maxByOrNull { it.height }
+            ?: d.options.filter { it.kind == FormatKind.VIDEO && it.audioUrl != null }.maxByOrNull { it.height }
         val (uri, audio) = when {
             audioOnly && d.audioPlaybackUrl != null -> d.audioPlaybackUrl to null
             item.isLive && d.hlsUrl != null -> d.hlsUrl to null

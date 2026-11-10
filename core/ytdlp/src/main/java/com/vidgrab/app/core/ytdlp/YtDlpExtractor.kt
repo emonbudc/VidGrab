@@ -123,6 +123,9 @@ class YtDlpExtractor(private val context: Context) : UniversalExtractor {
     }
 
     private fun extractOnce(url: String, headers: Map<String, String>): ExtractedPage? {
+        // A cookie file (not --add-header) is what lets yt-dlp's YouTube extractor treat the request as a
+        // signed-in account and generate its own auth headers. It lives only for this extraction.
+        val cookieFile = headers["Cookie"]?.let { writeCookieFile(url, it) }
         val req = YoutubeDLRequest(url).apply {
             addOption("--dump-single-json")
             addOption("--no-playlist")
@@ -131,15 +134,49 @@ class YtDlpExtractor(private val context: Context) : UniversalExtractor {
             addOption("--socket-timeout", "20")
             headers["User-Agent"]?.let { addOption("--user-agent", it) }
             headers["Referer"]?.let { addOption("--referer", it) }
-            headers["Cookie"]?.let { addOption("--add-header", "Cookie:$it") }
+            cookieFile?.let { addOption("--cookies", it.absolutePath) }
         }
-        val out = runCatching { YoutubeDL.getInstance().execute(req).out }
-            .onFailure { Log.w(TAG, "yt-dlp failed for $url: ${it.message?.takeLast(600)}") }
-            .getOrNull() ?: return null
+        val out = try {
+            runCatching { YoutubeDL.getInstance().execute(req).out }
+                .onFailure { Log.w(TAG, "yt-dlp failed for $url: ${it.message?.takeLast(600)}") }
+                .getOrNull()
+        } finally {
+            cookieFile?.delete()
+        } ?: return null
         val root = runCatching { json.parseToJsonElement(out).jsonObject }.getOrNull() ?: return null
         // A playlist/multi-video page: take its first real entry.
         val info = (root["entries"] as? JsonArray)?.firstOrNull { it is JsonObject }?.jsonObject ?: root
         return YtDlpFormats.toPage(info)
+    }
+
+    /** WebView cookies (name=value;…) as a Netscape cookie file yt-dlp can read. */
+    private fun writeCookieFile(url: String, cookie: String): java.io.File? {
+        val host = runCatching { java.net.URI(url).host }.getOrNull()?.lowercase() ?: return null
+        val domains = if (host == "youtube.com" || host.endsWith(".youtube.com") || host == "youtu.be") {
+            listOf(".youtube.com", ".google.com")
+        } else {
+            listOf(host.removePrefix("www."))
+        }
+        val rows = cookie.split(';').mapNotNull { part ->
+            val name = part.substringBefore('=', "").trim()
+            if (name.isEmpty()) return@mapNotNull null
+            val value = part.substringAfter('=', "").trim()
+                .replace("\n", "").replace("\r", "").replace("\t", "")
+            name to value
+        }
+        if (rows.isEmpty()) return null
+        val file = java.io.File(context.cacheDir, "yt-cookies-${System.nanoTime()}.txt")
+        return runCatching {
+            file.writeText(buildString {
+                appendLine("# Netscape HTTP Cookie File")
+                for (domain in domains) {
+                    for ((name, value) in rows) {
+                        appendLine(listOf(domain, "TRUE", "/", "TRUE", "0", name, value).joinToString("\t"))
+                    }
+                }
+            })
+            file
+        }.onFailure { file.delete() }.getOrNull()
     }
 
     companion object {

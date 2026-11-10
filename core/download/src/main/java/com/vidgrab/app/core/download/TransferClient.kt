@@ -1,5 +1,6 @@
 package com.vidgrab.app.core.download
 
+import com.vidgrab.app.core.common.BrowserSession
 import com.vidgrab.app.core.extractor.HlsClient
 import com.vidgrab.app.core.extractor.HlsPlaylist
 import kotlinx.coroutines.Dispatchers
@@ -73,13 +74,16 @@ internal class TransferClient(
         Probe(-1, false)
     }
 
-    fun request(url: String, headers: Map<String, String>, range: String?): Request = Request.Builder().url(url)
-        .header("User-Agent", headers["User-Agent"] ?: UA)
-        .apply {
-            range?.let { header("Range", it) }
-            headers.forEach { (k, v) -> if (!k.equals("User-Agent", true) && !k.equals("Range", true)) header(k, v) }
-        }
-        .build()
+    fun request(url: String, headers: Map<String, String>, range: String?): Request {
+        val all = BrowserSession.withSession(url, headers)
+        return Request.Builder().url(url)
+            .header("User-Agent", all["User-Agent"] ?: UA)
+            .apply {
+                range?.let { header("Range", it) }
+                all.forEach { (k, v) -> if (!k.equals("User-Agent", true) && !k.equals("Range", true)) header(k, v) }
+            }
+            .build()
+    }
 
     /**
      * Downloads a plain HTTP stream into [part]. With a known size and range support it is split into

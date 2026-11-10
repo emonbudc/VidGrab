@@ -50,9 +50,18 @@ class OkHttpDownloaderSessionTest {
     }
 
     @Test
-    fun keepsAnExplicitCookieFromTheExtractor() {
+    fun mergesTheSessionWithNewPipesConsentCookie() {
         BrowserSession.install { mapOf("Cookie" to "SID=session") }
 
+        OkHttpDownloader(client).execute(
+            Request.newBuilder().get("https://www.youtube.com/watch?v=x").setHeader("Cookie", "SOCS=CAI").build(),
+        )
+
+        assertEquals("SOCS=CAI; SID=session", lastRequest.get().header("Cookie"))
+    }
+
+    @Test
+    fun keepsAnExplicitCookieWhenThereIsNoSession() {
         OkHttpDownloader(client).execute(
             Request.newBuilder().get("https://www.youtube.com/watch?v=x").setHeader("Cookie", "explicit=1").build(),
         )
