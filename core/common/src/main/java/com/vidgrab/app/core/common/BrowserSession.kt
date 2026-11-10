@@ -36,7 +36,8 @@ object BrowserSession {
         return host == "youtube.com" || host.endsWith(".youtube.com") ||
             host == "youtu.be" || host.endsWith(".youtu.be") ||
             host == "google.com" || host.endsWith(".google.com") ||
-            host == "googleapis.com" || host.endsWith(".googleapis.com")
+            host == "googleapis.com" || host.endsWith(".googleapis.com") ||
+            host == "googlevideo.com" || host.endsWith(".googlevideo.com")
     }
 
     fun isYouTubeHost(url: String): Boolean {

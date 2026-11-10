@@ -96,6 +96,8 @@ data class VideoDetails(
     val related: List<MediaItem>,
     val commentsUrl: String?,
     val subtitles: List<SubtitleTrack> = emptyList(),
+    /** Site-specific headers needed by the media URLs (yt-dlp's http_headers/cookies). */
+    val headers: Map<String, String> = emptyMap(),
 )
 
 data class ChannelDetails(

@@ -42,6 +42,8 @@ data class PlayItem(
     /** Key in the playback history (file path, page URL); defaults to [id]. */
     val historyKey: String? = null,
     val subtitles: List<SubtitleTrack> = emptyList(),
+    /** Request headers the source needs for its stream URLs (cookies, referer, user agent). */
+    val headers: Map<String, String> = emptyMap(),
 ) {
     val resumeKey: String get() = historyKey ?: id
 }

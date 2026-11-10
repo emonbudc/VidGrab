@@ -14,6 +14,7 @@ class BrowserSessionTest {
         assertTrue(BrowserSession.isGoogleHost("https://youtu.be/x"))
         assertTrue(BrowserSession.isGoogleHost("https://accounts.google.com/signin"))
         assertTrue(BrowserSession.isGoogleHost("https://youtubei.googleapis.com/youtubei/v1/player"))
+        assertTrue(BrowserSession.isGoogleHost("https://rr1---sn-abc.googlevideo.com/videoplayback"))
         assertFalse(BrowserSession.isGoogleHost("https://notyoutube.com/watch?v=x"))
         assertFalse(BrowserSession.isGoogleHost("https://youtube.com.example.com/watch?v=x"))
         assertFalse(BrowserSession.isGoogleHost("https://example.com/?next=youtube.com"))

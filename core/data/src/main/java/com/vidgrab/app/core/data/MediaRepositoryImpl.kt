@@ -79,6 +79,7 @@ internal class MediaRepositoryImpl(
             related = emptyList(),
             commentsUrl = null,
             subtitles = subtitles,
+            headers = headers,
         )
     }
 

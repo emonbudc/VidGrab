@@ -98,7 +98,7 @@ class VideoViewModel(
         }
         player.play(
             listOf(PlayItem(id = "web:" + item.url, uri = uri!!, title = item.title, artist = item.uploader, artwork = item.thumbnail, isVideo = !audioOnly,
-                audioUri = audio, startPositionMs = at, subtitles = d.subtitles)),
+                audioUri = audio, startPositionMs = at, subtitles = d.subtitles, headers = d.headers)),
             audioOnly = audioOnly,
         )
     }

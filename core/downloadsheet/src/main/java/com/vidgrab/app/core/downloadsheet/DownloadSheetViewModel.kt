@@ -142,7 +142,7 @@ class DownloadSheetViewModel(
                         val d = media.details(target.url)
                         SheetUi(
                             loading = false, title = d.item.title, thumbnail = d.item.thumbnail, durationSec = d.item.durationSec,
-                            pageUrl = d.item.url, options = d.options, isLive = d.item.isLive,
+                            pageUrl = d.item.url, options = d.options, headers = d.headers, isLive = d.item.isLive,
                             error = if (d.item.isLive) "Live streams can't be downloaded until they end." else null,
                             cuttable = !d.item.isLive && d.item.durationSec > 1,
                             subtitles = d.subtitles,

@@ -13,6 +13,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
@@ -68,11 +69,25 @@ class MediaEngine private constructor(private val context: Context) {
         .setConnectTimeoutMs(15_000)
         .setReadTimeoutMs(15_000)
     // The signed-in browser session only applies to Google/YouTube URLs; every other source stays anonymous.
-    private val dataSourceFactory = ResolvingDataSource.Factory(DefaultDataSource.Factory(context, httpDataSourceFactory)) { spec ->
+    private val baseDataSourceFactory = ResolvingDataSource.Factory(DefaultDataSource.Factory(context, httpDataSourceFactory)) { spec ->
         val session = BrowserSession.headers(spec.uri.toString())
         if (session.isEmpty()) spec else spec.withRequestHeaders(session)
     }
-    private val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
+
+    /** Adds the current video's own headers (yt-dlp's cookies/user agent) on top of the browser session. */
+    private fun dataSourceFactory(headers: Map<String, String>): DataSource.Factory {
+        if (headers.isEmpty()) return baseDataSourceFactory
+        val userAgent = headers.entries.firstOrNull { it.key.equals("User-Agent", true) }?.value ?: USER_AGENT
+        val httpFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent(userAgent)
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15_000)
+            .setReadTimeoutMs(15_000)
+        return ResolvingDataSource.Factory(DefaultDataSource.Factory(context, httpFactory)) { spec ->
+            val merged = BrowserSession.withSession(spec.uri.toString(), headers)
+            if (merged.isEmpty()) spec else spec.withRequestHeaders(merged)
+        }
+    }
 
     private var player: ExoPlayer? = null
     private var currentItem: PlayItem? = null
@@ -337,14 +352,18 @@ class MediaEngine private constructor(private val context: Context) {
     }
 
     private fun buildSource(item: PlayItem, subtitle: SubtitleTrack?): MediaSource {
+        val sourceFactory = dataSourceFactory(item.headers)
         val mainUri = if (audioOnly) item.audioUri?.takeIf { it.isNotBlank() } ?: item.uri else item.uri
         val mainItem = mediaItem(mainUri, subtitle)
         val separateAudio = if (!audioOnly) item.audioUri?.takeIf { it.isNotBlank() } else null
         if (separateAudio != null && !isAdaptive(mainUri) && !isRtsp(mainUri)) {
-            return MergingMediaSource(progressive(mainItem), progressive(mediaItem(separateAudio, null)))
+            return MergingMediaSource(
+                progressive(mainItem, sourceFactory),
+                progressive(mediaItem(separateAudio, null), sourceFactory),
+            )
         }
         if (isRtsp(mainUri)) return RtspMediaSource.Factory().createMediaSource(mainItem)
-        return mediaSourceFactory.createMediaSource(mainItem)
+        return DefaultMediaSourceFactory(sourceFactory).createMediaSource(mainItem)
     }
 
     private fun mediaItem(uriString: String, subtitle: SubtitleTrack?): ExoMediaItem {
@@ -363,8 +382,8 @@ class MediaEngine private constructor(private val context: Context) {
         return builder.build()
     }
 
-    private fun progressive(item: ExoMediaItem): MediaSource =
-        ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(item)
+    private fun progressive(item: ExoMediaItem, factory: DataSource.Factory): MediaSource =
+        ProgressiveMediaSource.Factory(factory).createMediaSource(item)
 
     private fun inferMime(uri: Uri): String? {
         val path = uri.path.orEmpty().lowercase()
