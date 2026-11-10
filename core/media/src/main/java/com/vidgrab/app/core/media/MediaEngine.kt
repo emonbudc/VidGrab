@@ -10,6 +10,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
+import androidx.media3.common.text.Cue
+import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -79,6 +81,20 @@ class MediaEngine private constructor(private val context: Context) {
 
     val currentTimeMs: Long get() = _snapshot.value.timeMs.coerceAtLeast(0)
     val currentLengthMs: Long get() = _snapshot.value.lengthMs.coerceAtLeast(0)
+
+    /** Some caption files place cues at the left edge (ASS/WebVTT positioning); force every cue to the center. */
+    private val centerSubtitlesListener = object : Player.Listener {
+        override fun onCues(cueGroup: CueGroup) {
+            val centered = cueGroup.cues.map { cue ->
+                cue.buildUpon()
+                    .setPosition(Cue.DIMEN_UNSET)
+                    .setPositionAnchor(Cue.TYPE_UNSET)
+                    .setTextAlignment(null)
+                    .build()
+            }
+            views.forEach { it.subtitleView?.setCues(centered) }
+        }
+    }
 
     private val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -248,7 +264,11 @@ class MediaEngine private constructor(private val context: Context) {
 
     private fun activate(view: PlayerView) {
         view.player = null
-        view.player = ensurePlayer()
+        val p = ensurePlayer()
+        view.player = p
+        // PlayerView adds its cue listener in setPlayer; keep ours last so it can override cue positions.
+        p.removeListener(centerSubtitlesListener)
+        p.addListener(centerSubtitlesListener)
     }
 
     fun selectSubtitle(track: SubtitleTrack?): Boolean {
