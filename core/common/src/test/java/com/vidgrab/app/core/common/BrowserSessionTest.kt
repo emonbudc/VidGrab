@@ -2,6 +2,7 @@ package com.vidgrab.app.core.common
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -97,6 +98,74 @@ class BrowserSessionTest {
         BrowserSession.install { error("cookie store unavailable") }
         try {
             assertEquals(emptyMap<String, String>(), BrowserSession.headers("https://www.youtube.com/watch?v=x"))
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
+    fun authHeadersAddSapisidHashForSignedInYouTube() {
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=abc") }
+        try {
+            val headers = BrowserSession.authHeaders("https://www.youtube.com/youtubei/v1/browse")
+            assertEquals("https://www.youtube.com", headers["Origin"])
+            val authorization = headers["Authorization"] ?: error("missing Authorization")
+            val match = Regex("""SAPISIDHASH (\d+)_([0-9a-f]{40})""").matchEntire(authorization)
+            assertNotNull(match)
+            val timestamp = match!!.groupValues[1].toLong()
+            assertEquals(
+                BrowserSession.sapisidHash(timestamp, "abc", "https://www.youtube.com"),
+                authorization.removePrefix("SAPISIDHASH "),
+            )
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
+    fun authHeadersNeedARealAccountAndOnlyGoToYouTubeApis() {
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=short; SAPISID=abc") }
+        try {
+            assertEquals(emptyMap<String, String>(), BrowserSession.authHeaders("https://www.youtube.com/youtubei/v1/browse"))
+        } finally {
+            BrowserSession.install(null)
+        }
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=abc") }
+        try {
+            assertEquals(emptyMap<String, String>(), BrowserSession.authHeaders("https://www.instagram.com/"))
+            assertEquals(emptyMap<String, String>(), BrowserSession.authHeaders("https://m.youtube.com/"))
+            assertEquals(emptyMap<String, String>(), BrowserSession.authHeaders("https://rr1.googlevideo.com/videoplayback"))
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
+    fun authHeadersAlsoAcceptTheSecurePapisidCookie() {
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; __Secure-3PAPISID=abc") }
+        try {
+            assertTrue(BrowserSession.authHeaders("https://youtubei.googleapis.com/youtubei/v1/player").containsKey("Authorization"))
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
+    fun sapisidHashMatchesGoogleFormat() {
+        assertEquals(
+            "1234567890_ecab8b81ae1305ed18cdd3833fa9ebedcb13c976",
+            BrowserSession.sapisidHash(1234567890, "abc", "https://www.youtube.com"),
+        )
+    }
+
+    @Test
+    fun sessionKeyChangesWhenTheAccountChanges() {
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=one") }
+        try {
+            val first = BrowserSession.sessionKey("https://www.youtube.com/watch?v=x")
+            BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=two") }
+            val second = BrowserSession.sessionKey("https://www.youtube.com/watch?v=x")
+            assertTrue(first != second)
         } finally {
             BrowserSession.install(null)
         }

@@ -2,6 +2,7 @@ package com.vidgrab.app.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vidgrab.app.core.common.BrowserSession
 import com.vidgrab.app.core.data.PlaybackHistoryRepository
 import com.vidgrab.app.core.data.RecommendationRepository
 import com.vidgrab.app.core.data.SearchHistoryRepository
@@ -59,6 +60,14 @@ class HomeViewModel(
                 if (!_feed.value.loading && !_feed.value.refreshing) {
                     loadFeed(refresh = _feed.value.items.isNotEmpty())
                 }
+            }
+        }
+        viewModelScope.launch {
+            BrowserSession.generation.drop(1).collect {
+                if (_category.value != HomeCategory.ALL) return@collect
+                feedLoadedAt = 0L
+                feedServed.clear()
+                loadFeed(refresh = _feed.value.items.isNotEmpty())
             }
         }
     }

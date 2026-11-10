@@ -1,6 +1,7 @@
 package com.vidgrab.app.core.data
 
 import com.vidgrab.app.core.common.Urls
+import com.vidgrab.app.core.extractor.AccountFeed
 import com.vidgrab.app.core.model.ItemKind
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.model.Page
@@ -43,6 +44,7 @@ internal class RecommendationRepositoryImpl(
     private val media: MediaRepository,
     private val searches: SearchHistoryRepository,
     private val playback: PlaybackHistoryRepository,
+    private val accountFeed: AccountFeed? = null,
     private val now: () -> Long = System::currentTimeMillis,
 ) : RecommendationRepository {
 
@@ -72,6 +74,17 @@ internal class RecommendationRepositoryImpl(
     )
 
     override suspend fun feed(page: Any?, topic: RecommendationTopic?, exclude: Set<String>): Page<MediaItem> {
+        if (topic == null && accountFeed != null && (page == null || accountFeed.owns(page))) {
+            if (accountFeed.isAvailable) {
+                val accountPage = runCatching { accountFeed.home(page) }.getOrNull()
+                if (accountPage != null &&
+                    (accountPage.items.isNotEmpty() || page != null || accountPage.nextPage != null)
+                ) {
+                    return accountPage.copy(items = accountPage.items.filterNot { it.url in exclude })
+                }
+            }
+            if (page != null) return Page(emptyList(), null)
+        }
         if (page is FallbackCursor) return fallback(page.next, page.topic, page.exclude)
         val cursor = (page as? Cursor) ?: newCursor(topic, exclude)
         if (cursor.sources.isEmpty()) return fallback(null, topic, exclude)

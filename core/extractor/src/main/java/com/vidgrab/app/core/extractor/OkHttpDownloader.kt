@@ -42,6 +42,7 @@ class OkHttpDownloader(private val client: OkHttpClient) : Downloader() {
         session.forEach { (name, value) ->
             if (!name.equals("Cookie", true) && name.lowercase() !in present) builder.header(name, value)
         }
+        BrowserSession.authHeaders(request.url()).forEach { (name, value) -> builder.header(name, value) }
         client.newCall(builder.build()).execute().use { response ->
             if (response.code == 429) throw ReCaptchaException("reCaptcha Challenge requested", request.url())
             val responseBody = response.body.string()

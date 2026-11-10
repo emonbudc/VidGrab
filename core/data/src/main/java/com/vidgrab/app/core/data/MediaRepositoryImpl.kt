@@ -33,9 +33,15 @@ internal class MediaRepositoryImpl(
 
     override suspend fun details(url: String, forceRefresh: Boolean): VideoDetails {
         val now = System.currentTimeMillis()
-        if (!forceRefresh) detailsCache.get(url)?.let { (at, d) -> if (now - at < CACHE_MS) return d }
+        val cacheKey = "$url#${BrowserSession.sessionKey(url)}"
+        if (!forceRefresh) detailsCache.get(cacheKey)?.let { (at, d) -> if (now - at < CACHE_MS) return d }
         val details = try {
-            extractor.details(url)
+            val extracted = extractor.details(url)
+            if (universal != null && BrowserSession.isYouTubeHost(url) && !extracted.hasPlayableStream()) {
+                universal.extract(url, BrowserSession.headers(url))?.toVideoDetails(url) ?: extracted
+            } else {
+                extracted
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
@@ -45,8 +51,12 @@ internal class MediaRepositoryImpl(
             universal.extract(url, BrowserSession.headers(url))?.toVideoDetails(url) ?: throw error
         }
         return details.copy(related = details.related.distinctBy { i -> i.url })
-            .also { detailsCache.put(url, now to it) }
+            .also { detailsCache.put(cacheKey, now to it) }
     }
+
+    private fun VideoDetails.hasPlayableStream(): Boolean =
+        playbackUrl != null || hlsUrl != null || dashUrl != null || audioPlaybackUrl != null ||
+            options.any { it.url.isNotBlank() }
 
     private fun Page<MediaItem>.distinct() = copy(items = items.distinctBy { it.url })
 

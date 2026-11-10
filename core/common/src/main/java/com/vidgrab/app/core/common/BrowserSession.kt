@@ -1,5 +1,11 @@
 package com.vidgrab.app.core.common
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import java.security.MessageDigest
+
 /**
  * The signed-in in-app browser session, reused for native requests.
  *
@@ -15,15 +21,26 @@ object BrowserSession {
 
     /** Cookies that mean a Google account is signed in. Other cookies are not forwarded. */
     private val AUTH_COOKIES = setOf(
-        "SID", "HSID", "SSID", "APISID", "SAPISID",
+        "SID", "HSID", "SSID", "APISID", "SAPISID", "__Secure-1PAPISID", "__Secure-3PAPISID",
         "__Secure-1PSID", "__Secure-3PSID", "LOGIN_INFO",
     )
+
+    private const val YOUTUBE_ORIGIN = "https://www.youtube.com"
 
     @Volatile
     private var provider: Provider? = null
 
+    private val _generation = MutableStateFlow(0)
+
+    /** Increments when the signed-in account changes, so screens showing account data can reload. */
+    val generation: StateFlow<Int> = _generation.asStateFlow()
+
     fun install(provider: Provider?) {
         this.provider = provider
+    }
+
+    fun notifySessionChanged() {
+        _generation.update { it + 1 }
     }
 
     /** Session headers for [url]; empty for hosts VidGrab has no sign-in for. */
@@ -47,6 +64,58 @@ object BrowserSession {
         val host = Urls.host(url)?.lowercase() ?: return false
         return host == "youtube.com" || host.endsWith(".youtube.com") ||
             host == "youtu.be" || host.endsWith(".youtu.be")
+    }
+
+    fun isYouTubeApiHost(url: String): Boolean {
+        val host = Urls.host(url)?.lowercase() ?: return false
+        // The hash is bound to one origin, so only send it to the origin it was built for.
+        return host == "youtube.com" || host == "www.youtube.com" ||
+            host == "youtubei.googleapis.com"
+    }
+
+    /**
+     * YouTube's account authorization header. NewPipe already sends the session cookies, but YouTube only
+     * treats restricted videos and the account home feed as signed in when the request also carries a
+     * SAPISIDHASH for the session's SAPISID cookie.
+     */
+    fun authHeaders(url: String): Map<String, String> {
+        if (!isYouTubeApiHost(url)) return emptyMap()
+        val cookie = headers(url).entries.firstOrNull { it.key.equals("Cookie", true) }?.value ?: return emptyMap()
+        val cookies = parseCookieHeader(cookie)
+        if ((cookies["LOGIN_INFO"]?.length ?: 0) <= 10) return emptyMap()
+        val sapisid = cookies["SAPISID"] ?: cookies["__Secure-3PAPISID"] ?: return emptyMap()
+        if (sapisid.isBlank()) return emptyMap()
+        val timestamp = System.currentTimeMillis() / 1000
+        return linkedMapOf(
+            "Origin" to YOUTUBE_ORIGIN,
+            "Authorization" to "SAPISIDHASH ${sapisidHash(timestamp, sapisid, YOUTUBE_ORIGIN)}",
+        )
+    }
+
+    internal fun sapisidHash(timestamp: Long, sapisid: String, origin: String): String =
+        "${timestamp}_${sha1("$timestamp $sapisid $origin")}"
+
+    /** Non-reversible marker for the current sign-in, so cached signed-out results are not reused. */
+    fun sessionKey(url: String): String {
+        val cookie = headers(url).entries.firstOrNull { it.key.equals("Cookie", true) }?.value
+            ?: return "anon"
+        val cookies = parseCookieHeader(cookie)
+        val identity = listOf("LOGIN_INFO", "SAPISID", "__Secure-3PAPISID", "SID")
+            .mapNotNull { cookies[it] }
+            .joinToString("|")
+        return if (identity.isEmpty()) "anon" else sha1(identity).take(12)
+    }
+
+    private fun sha1(value: String): String {
+        val digest = MessageDigest.getInstance("SHA-1").digest(value.toByteArray(Charsets.UTF_8))
+        val out = CharArray(digest.size * 2)
+        val digits = "0123456789abcdef"
+        digest.forEachIndexed { index, byte ->
+            val valueInt = byte.toInt() and 0xff
+            out[index * 2] = digits[valueInt ushr 4]
+            out[index * 2 + 1] = digits[valueInt and 0x0f]
+        }
+        return String(out)
     }
 
     /**

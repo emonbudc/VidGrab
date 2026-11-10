@@ -37,9 +37,12 @@ import com.vidgrab.app.navigation.AppNavHost
 import com.vidgrab.app.player.FloatingPlayerActivity
 import com.vidgrab.app.core.navigation.VideoRoute
 import androidx.navigation.NavDestination.Companion.hasRoute
+import com.vidgrab.app.feature.browser.SiteSessions
 import com.vidgrab.app.navigation.UrlRouter
 import com.vidgrab.app.ui.AppTheme
 import com.vidgrab.app.ui.isDark
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
@@ -84,6 +87,9 @@ class MainActivity : ComponentActivity() {
                 // screens' own handlers, so it only runs when none of them does), Android has no back gesture left to
                 // animate with its shrinking "back to home" card.
                 androidx.activity.compose.BackHandler { moveTaskToBack(true) }
+                LaunchedEffect(Unit) {
+                    withContext(Dispatchers.IO) { SiteSessions.refresh() }
+                }
                 AppNavHost(nav)
                 UpdatePrompt()
             }

@@ -2,6 +2,7 @@ package com.vidgrab.app.feature.video
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vidgrab.app.core.common.BrowserSession
 import com.vidgrab.app.core.common.LoadState
 import com.vidgrab.app.core.common.loadCatching
 import com.vidgrab.app.core.data.SavedVideosRepository
@@ -18,6 +19,7 @@ import com.vidgrab.app.core.model.VideoDetails
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -40,18 +42,52 @@ class VideoViewModel(
     val savedFlow: StateFlow<Boolean> = pageUrl.flatMapLatest { u -> if (u == null) flowOf(false) else savedVideos.isSaved(u) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    init {
+        viewModelScope.launch {
+            BrowserSession.generation.drop(1).collect {
+                if (url == null) return@collect
+                val state = _details.value
+                val loaded = (state as? LoadState.Success)?.data
+                val playingThis = loaded != null && player.state.value.current?.id == "web:" + loaded.item.url
+                val idle = player.state.value.current == null
+                val missing = state is LoadState.Error || loaded == null || !loaded.hasPlayableStream()
+                if (missing && (playingThis || idle)) {
+                    reload(force = true, resumeAt = player.currentPositionMs.takeIf { it > 0 })
+                }
+            }
+        }
+    }
+
+    private fun VideoDetails.hasPlayableStream(): Boolean =
+        playbackUrl != null || hlsUrl != null || dashUrl != null || audioPlaybackUrl != null ||
+            options.any { it.url.isNotBlank() }
+
     fun load(url: String, force: Boolean = false) {
-        if (this.url == url && !force && _details.value !is LoadState.Error) return
+        val current = _details.value
+        val loaded = (current as? LoadState.Success)?.data
+        if (this.url == url && !force && current !is LoadState.Error &&
+            (loaded == null || loaded.hasPlayableStream())
+        ) return
         this.url = url
+        reload(force, resumeAt = null)
+    }
+
+    private fun reload(force: Boolean, resumeAt: Long?) {
+        val target = url ?: return
         _details.value = LoadState.Loading
         viewModelScope.launch {
-            val r = loadCatching { media.details(url, force) }
+            val r = loadCatching { media.details(target, force) }
             _details.value = r
             if (r is LoadState.Success) {
                 // The video's own URL, not the link it was opened from (youtu.be/…?si=…), so it matches what was saved.
                 pageUrl.value = r.data.item.url
-                // Coming back from the mini player: this video is already playing (maybe in listen mode); keep it going.
-                if (force || player.state.value.current?.id != "web:" + r.data.item.url) play(r.data, audioOnly = false)
+                val playing = player.state.value.current?.id == "web:" + r.data.item.url
+                if (resumeAt != null && playing) {
+                    play(r.data, audioOnly = player.state.value.audioOnly, at = resumeAt)
+                } else if (force || !playing) {
+                    // Coming back from the mini player: this video is already playing (maybe in listen mode); keep it going.
+                    play(r.data, audioOnly = false)
+                }
             }
         }
     }

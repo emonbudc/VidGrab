@@ -8,6 +8,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.schabi.newpipe.extractor.downloader.Request
@@ -67,5 +68,28 @@ class OkHttpDownloaderSessionTest {
         )
 
         assertEquals("explicit=1", lastRequest.get().header("Cookie"))
+    }
+
+    @Test
+    fun addsSapisidHashToSignedInYouTubeApiRequests() {
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=abc") }
+
+        OkHttpDownloader(client).execute(
+            Request.newBuilder().get("https://www.youtube.com/youtubei/v1/player").build(),
+        )
+
+        assertNotNull(lastRequest.get().header("Authorization"))
+        assertEquals("https://www.youtube.com", lastRequest.get().header("Origin"))
+    }
+
+    @Test
+    fun mediaRequestsDoNotGetTheYouTubeApiAuthorization() {
+        BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=abc") }
+
+        OkHttpDownloader(client).execute(
+            Request.newBuilder().get("https://rr1---sn-abc.googlevideo.com/videoplayback?itag=18").build(),
+        )
+
+        assertNull(lastRequest.get().header("Authorization"))
     }
 }

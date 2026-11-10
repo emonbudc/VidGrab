@@ -1,6 +1,7 @@
 package com.vidgrab.app.feature.browser
 
 import android.webkit.CookieManager
+import com.vidgrab.app.core.common.BrowserSession
 import com.vidgrab.app.core.common.LoginSite
 import com.vidgrab.app.core.common.LoginSites
 import com.vidgrab.app.core.common.isSignedIn as signedIn
@@ -18,12 +19,20 @@ object SiteSessions {
     private val _states = MutableStateFlow<Map<String, Boolean>>(emptyMap())
     val states: StateFlow<Map<String, Boolean>> = _states.asStateFlow()
 
+    private val lastAccount = mutableMapOf<String, String?>()
+
     fun refresh() {
         LoginSites.all.forEach(::refresh)
     }
 
     fun refresh(site: LoginSite) {
-        _states.update { it + (site.id to isSignedIn(site)) }
+        val cookies = cookieString(site)
+        val signedIn = signedIn(site, cookies)
+        val account = parseCookieHeader(cookies)[site.signedInCookie]
+        val hadPrevious = lastAccount.containsKey(site.id)
+        val previous = lastAccount.put(site.id, account)
+        _states.update { it + (site.id to signedIn) }
+        if (previous != account && (hadPrevious || account != null)) BrowserSession.notifySessionChanged()
     }
 
     fun isSignedIn(site: LoginSite): Boolean = signedIn(site, cookieString(site))

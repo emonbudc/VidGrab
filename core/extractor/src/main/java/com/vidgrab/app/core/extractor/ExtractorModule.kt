@@ -15,6 +15,7 @@ val extractorModule = module {
     }
     single { NewPipeMediaExtractor(get(), Locale.getDefault().language.ifBlank { "en" }) }
     single<MediaExtractor> { get<NewPipeMediaExtractor>() }
+    single<AccountFeed> { YouTubeAccountFeed(get(), Locale.getDefault().language.ifBlank { "en" }) }
     single { WebMediaFinder(get()) }
     single { HlsClient(get()) }
     single { StreamResolver(get(), get()) }
