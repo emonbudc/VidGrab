@@ -47,10 +47,12 @@ import com.vidgrab.app.core.model.DownloadStatus
 import com.vidgrab.app.core.model.ItemKind
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.navigation.*
+import com.vidgrab.app.feature.browser.AccountsScreen
 import com.vidgrab.app.feature.browser.BookmarksScreen
 import com.vidgrab.app.feature.browser.BROWSER_HOME
 import com.vidgrab.app.feature.browser.BrowserScreen
 import com.vidgrab.app.feature.browser.HistoryScreen
+import com.vidgrab.app.feature.browser.LoginScreen
 import com.vidgrab.app.feature.browser.SitesScreen
 import com.vidgrab.app.feature.home.HomeActions
 import com.vidgrab.app.player.GalleryPlayerActivity
@@ -216,6 +218,7 @@ fun AppNavHost(nav: NavHostController) {
                         statusSaver = { nav.navigate(StatusSaverRoute) },
                         vault = { nav.navigate(VaultRoute) },
                         sites = { nav.navigate(SitesRoute) },
+                        accounts = { nav.navigate(AccountsRoute) },
                         about = { nav.navigate(AboutRoute) },
                     ),
                 )
@@ -269,6 +272,8 @@ fun AppNavHost(nav: NavHostController) {
                     onOpenHistory = { nav.navigate(BrowserHistoryRoute) },
                     onOpenBookmarks = { nav.navigate(BookmarksRoute) },
                     onOpenSites = { nav.navigate(SitesRoute) },
+                    onOpenAccounts = { nav.navigate(AccountsRoute) },
+                    onLogin = { siteId, switchAccount -> nav.navigate(SiteLoginRoute(siteId, switchAccount)) },
                 )
             }
             composable<BrowserTabRoute>(
@@ -288,7 +293,19 @@ fun AppNavHost(nav: NavHostController) {
                     onOpenHistory = { nav.navigate(BrowserHistoryRoute) },
                     onOpenBookmarks = { nav.navigate(BookmarksRoute) },
                     onOpenSites = { nav.navigate(SitesRoute) },
+                    onOpenAccounts = { nav.navigate(AccountsRoute) },
+                    onLogin = { siteId, switchAccount -> nav.navigate(SiteLoginRoute(siteId, switchAccount)) },
                 )
+            }
+            composable<AccountsRoute> {
+                AccountsScreen(
+                    onBack = nav::popBackStack,
+                    onLogin = { siteId, switchAccount -> nav.navigate(SiteLoginRoute(siteId, switchAccount)) },
+                )
+            }
+            composable<SiteLoginRoute> { entry ->
+                val route = entry.toRoute<SiteLoginRoute>()
+                LoginScreen(route.siteId, route.switchAccount, onClose = nav::popBackStack)
             }
             composable<SitesRoute> { SitesScreen(nav::popBackStack, onOpen = ::openUrl, onHistory = { nav.navigate(BrowserHistoryRoute) }) }
             composable<BrowserHistoryRoute> { HistoryScreen(nav::popBackStack, onOpen = ::openUrl) }

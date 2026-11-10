@@ -45,6 +45,7 @@ class SettingsActions(
     val statusSaver: () -> Unit,
     val vault: () -> Unit,
     val sites: () -> Unit,
+    val accounts: () -> Unit,
     val about: () -> Unit,
 )
 
@@ -95,6 +96,8 @@ fun SettingsScreen(actions: SettingsActions) {
                 NavRow(QtIcons.Palette, "Theme", trailing = when (s.themeMode) {
                     ThemeMode.SYSTEM -> "System"; ThemeMode.LIGHT -> "Light"; ThemeMode.DARK -> "Dark"
                 }, onClick = actions.theme)
+                RowDivider()
+                NavRow(QtIcons.Person, "Accounts", "YouTube and site sign-ins", onClick = actions.accounts)
                 RowDivider()
                 NavRow(QtIcons.Language, "Site settings", "Add, remove and arrange saved sites", onClick = actions.sites)
             }

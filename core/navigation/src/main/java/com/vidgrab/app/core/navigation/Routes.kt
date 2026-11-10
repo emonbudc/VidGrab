@@ -24,6 +24,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object SitesRoute
 @Serializable data object BrowserHistoryRoute
 @Serializable data object BookmarksRoute
+@Serializable data object AccountsRoute
+@Serializable data class SiteLoginRoute(val siteId: String, val switchAccount: Boolean = false)
 
 // Library / player
 @Serializable data object DownloadingRoute

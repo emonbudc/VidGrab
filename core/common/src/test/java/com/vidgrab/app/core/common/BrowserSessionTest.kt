@@ -38,6 +38,26 @@ class BrowserSessionTest {
     }
 
     @Test
+    fun providerAlsoRunsForSupportedLoginSites() {
+        var calls = 0
+        BrowserSession.install {
+            calls++
+            mapOf("Cookie" to "sessionid=x")
+        }
+        try {
+            assertEquals(emptyMap<String, String>(), BrowserSession.headers("https://example.com/video"))
+            assertEquals(0, calls)
+            assertEquals(
+                mapOf("Cookie" to "sessionid=x"),
+                BrowserSession.headers("https://www.instagram.com/reel/x"),
+            )
+            assertEquals(1, calls)
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
     fun youtubeHostsAreNarrowerThanGoogleHosts() {
         assertTrue(BrowserSession.isYouTubeHost("https://youtu.be/x"))
         assertTrue(BrowserSession.isYouTubeHost("https://m.youtube.com/watch?v=x"))

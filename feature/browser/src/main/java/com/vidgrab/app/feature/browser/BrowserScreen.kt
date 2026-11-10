@@ -27,6 +27,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import com.vidgrab.app.core.common.Format
+import com.vidgrab.app.core.common.LoginSites
 import com.vidgrab.app.core.designsystem.PillButton
 import androidx.compose.foundation.background
 import com.vidgrab.app.core.designsystem.pressable
@@ -206,6 +207,8 @@ fun BrowserScreen(
     onOpenHistory: () -> Unit,
     onOpenBookmarks: () -> Unit,
     onOpenSites: () -> Unit = {},
+    onOpenAccounts: () -> Unit = {},
+    onLogin: (siteId: String, switchAccount: Boolean) -> Unit = { _, _ -> },
     /** Invisible and muted (behind the share sheet): no sound, no history. */
     silent: Boolean = false,
     /** Separates browser states that open the same URL (each share gets a fresh one). */
@@ -220,6 +223,10 @@ fun BrowserScreen(
     val saved by vm.bookmarked.collectAsStateWithLifecycle()
     val sites by vm.sites.collectAsStateWithLifecycle()
     val history by vm.history.collectAsStateWithLifecycle()
+    val loginStates by SiteSessions.states.collectAsStateWithLifecycle()
+    val currentSite = remember(ui.url) { LoginSites.forUrl(ui.url) }
+    LaunchedEffect(currentSite) { currentSite?.let(SiteSessions::refresh) }
+    androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) { SiteSessions.refresh() }
     val context = LocalContext.current
     val koinPlayer = koinInject<com.vidgrab.app.core.media.PlayerController>()
     val keyboard = LocalSoftwareKeyboardController.current
@@ -364,6 +371,16 @@ fun BrowserScreen(
                             DropdownMenuItem(text = { Text("Add shortcut") }, leadingIcon = { Icon(QtIcons.Add, null) },
                                 onClick = { menu = false; onOpenSites() })
                         }
+                        currentSite?.takeUnless { home }?.let { site ->
+                            val signedIn = loginStates[site.id] == true
+                            DropdownMenuItem(
+                                text = { Text(if (signedIn) "Switch ${site.name} account" else "Sign in to ${site.name}") },
+                                leadingIcon = { Icon(loginIcon(site), null) },
+                                onClick = { menu = false; onLogin(site.id, signedIn) },
+                            )
+                        }
+                        DropdownMenuItem(text = { Text("Accounts") }, leadingIcon = { Icon(QtIcons.Person, null) },
+                            onClick = { menu = false; onOpenAccounts() })
                         DropdownMenuItem(text = { Text("Saved pages") }, leadingIcon = { Icon(QtIcons.Collections, null) },
                             onClick = { menu = false; onOpenBookmarks() })
                         DropdownMenuItem(text = { Text("History") }, leadingIcon = { Icon(QtIcons.History, null) },

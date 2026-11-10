@@ -1,10 +1,11 @@
 package com.vidgrab.app.core.common
 
 /**
- * The signed-in in-app browser session, reused for native YouTube requests.
+ * The signed-in in-app browser session, reused for native requests.
  *
  * Passwords never pass through here: the Android app installs a provider that reads WebView's cookie store.
- * [headers] only ever returns data for Google/YouTube hosts, so the session cannot leak to other sites.
+ * [headers] only ever returns data for the host the cookies belong to (Google/YouTube and the sites in
+ * [LoginSites]), so the session cannot leak to other sites.
  */
 object BrowserSession {
     fun interface Provider {
@@ -25,11 +26,13 @@ object BrowserSession {
         this.provider = provider
     }
 
-    /** Session headers for [url]; empty for every non-Google host. */
+    /** Session headers for [url]; empty for hosts VidGrab has no sign-in for. */
     fun headers(url: String): Map<String, String> {
-        if (!isGoogleHost(url)) return emptyMap()
+        if (!isSessionHost(url)) return emptyMap()
         return runCatching { provider?.headers(url).orEmpty() }.getOrDefault(emptyMap())
     }
+
+    fun isSessionHost(url: String): Boolean = isGoogleHost(url) || LoginSites.forUrl(url) != null
 
     fun isGoogleHost(url: String): Boolean {
         val host = Urls.host(url)?.lowercase() ?: return false
