@@ -1,0 +1,59 @@
+package com.vidgrab.app.core.common
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class BrowserSessionTest {
+    @Test
+    fun sessionOnlyGoesToGoogleHosts() {
+        assertTrue(BrowserSession.isGoogleHost("https://www.youtube.com/watch?v=x"))
+        assertTrue(BrowserSession.isGoogleHost("https://m.youtube.com/watch?v=x"))
+        assertTrue(BrowserSession.isGoogleHost("https://youtu.be/x"))
+        assertTrue(BrowserSession.isGoogleHost("https://accounts.google.com/signin"))
+        assertTrue(BrowserSession.isGoogleHost("https://youtubei.googleapis.com/youtubei/v1/player"))
+        assertFalse(BrowserSession.isGoogleHost("https://notyoutube.com/watch?v=x"))
+        assertFalse(BrowserSession.isGoogleHost("https://youtube.com.example.com/watch?v=x"))
+        assertFalse(BrowserSession.isGoogleHost("https://example.com/?next=youtube.com"))
+    }
+
+    @Test
+    fun providerIsNotCalledForOtherSites() {
+        var calls = 0
+        BrowserSession.install {
+            calls++
+            mapOf("Cookie" to "SID=x")
+        }
+        try {
+            assertEquals(emptyMap<String, String>(), BrowserSession.headers("https://example.com/video"))
+            assertEquals(0, calls)
+            assertEquals(mapOf("Cookie" to "SID=x"), BrowserSession.headers("https://www.youtube.com/watch?v=x"))
+            assertEquals(1, calls)
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+
+    @Test
+    fun youtubeCookiesWinAndSignInCookieIsRequired() {
+        val header = BrowserSession.cookieHeader(
+            "PREF=a; SID=youtube; SAPISID=yt-sapisid",
+            "SID=google; HSID=h; __Secure-1PSID=s",
+        )
+        assertEquals("PREF=a; SID=youtube; SAPISID=yt-sapisid; HSID=h; __Secure-1PSID=s", header)
+        assertNull(BrowserSession.cookieHeader("PREF=a; VISITOR_INFO1_LIVE=b"))
+        assertNull(BrowserSession.cookieHeader(null))
+    }
+
+    @Test
+    fun aFailingProviderDoesNotBreakExtraction() {
+        BrowserSession.install { error("cookie store unavailable") }
+        try {
+            assertEquals(emptyMap<String, String>(), BrowserSession.headers("https://www.youtube.com/watch?v=x"))
+        } finally {
+            BrowserSession.install(null)
+        }
+    }
+}

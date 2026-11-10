@@ -34,6 +34,7 @@ class VidGrabApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+        WebViewSession.install()
         startKoin {
             androidContext(this@VidGrabApplication)
             modules(analyticsModule, updateModule, dataModule, downloadModule, mediaModule, downloadSheetModule, ytDlpModule)

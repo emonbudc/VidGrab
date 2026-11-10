@@ -1,5 +1,6 @@
 package com.vidgrab.app.core.extractor
 
+import com.vidgrab.app.core.common.BrowserSession
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.downloader.Downloader
@@ -19,6 +20,12 @@ class OkHttpDownloader(private val client: OkHttpClient) : Downloader() {
         request.headers().forEach { (name, values) ->
             builder.removeHeader(name)
             values.forEach { builder.addHeader(name, it) }
+        }
+        // A signed-in in-app browser makes YouTube treat extraction as that account. Never override an
+        // explicit header from the extractor, and BrowserSession only answers for Google/YouTube hosts.
+        val present = request.headers().keys.map { it.lowercase() }.toSet()
+        BrowserSession.headers(request.url()).forEach { (name, value) ->
+            if (name.lowercase() !in present) builder.header(name, value)
         }
         client.newCall(builder.build()).execute().use { response ->
             if (response.code == 429) throw ReCaptchaException("reCaptcha Challenge requested", request.url())
