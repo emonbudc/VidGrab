@@ -21,6 +21,8 @@ interface MediaRepository {
     suspend fun search(query: String, filter: SearchFilter, page: Any? = null): Page<MediaItem>
     suspend fun discover(page: Any? = null): Page<MediaItem>
     suspend fun details(url: String, forceRefresh: Boolean = false): VideoDetails
+    /** Account-personalized related videos; null when signed out or unsupported. */
+    suspend fun related(url: String): List<MediaItem>? = null
     suspend fun comments(url: String, page: Any? = null): Page<Comment>
     suspend fun channel(url: String, page: Any? = null): ChannelDetails
     suspend fun playlist(url: String, page: Any? = null): PlaylistDetails

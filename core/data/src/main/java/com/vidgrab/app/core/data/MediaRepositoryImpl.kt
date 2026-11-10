@@ -14,8 +14,6 @@ import com.vidgrab.app.core.model.SearchFilter
 import com.vidgrab.app.core.model.StreamProtocol
 import com.vidgrab.app.core.model.VideoDetails
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 
 internal class MediaRepositoryImpl(
     private val extractor: MediaExtractor,
@@ -56,24 +54,10 @@ internal class MediaRepositoryImpl(
     override fun canExtract(url: String) = extractor.canHandle(url)
     override fun linkKind(url: String) = extractor.linkKind(url)
 
-    override suspend fun details(url: String, forceRefresh: Boolean): VideoDetails = coroutineScope {
+    override suspend fun details(url: String, forceRefresh: Boolean): VideoDetails {
         val now = System.currentTimeMillis()
         val cacheKey = "$url#${BrowserSession.sessionKey(url)}"
-        if (!forceRefresh) detailsCache.get(cacheKey)?.let { (at, d) -> if (now - at < CACHE_MS) return@coroutineScope d }
-        val feed = accountFeed
-        val accountRelated = if (feed != null && feed.isAvailable && BrowserSession.isYouTubeHost(url)) {
-            async {
-                try {
-                    feed.related(url)
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (_: Throwable) {
-                    null
-                }
-            }
-        } else {
-            null
-        }
+        if (!forceRefresh) detailsCache.get(cacheKey)?.let { (at, d) -> if (now - at < CACHE_MS) return d }
         val details = try {
             val extracted = extractor.details(url)
             if (universal != null && BrowserSession.isYouTubeHost(url) && !extracted.hasPlayableStream()) {
@@ -89,9 +73,14 @@ internal class MediaRepositoryImpl(
             if (universal == null || !BrowserSession.isYouTubeHost(url)) throw error
             universal.extract(url, BrowserSession.headers(url))?.toVideoDetails(url) ?: throw error
         }
-        val related = accountRelated?.await()?.takeIf { it.isNotEmpty() } ?: details.related
-        details.copy(related = related.distinctBy { i -> i.url })
+        return details.copy(related = details.related.distinctBy { i -> i.url })
             .also { detailsCache.put(cacheKey, now to it) }
+    }
+
+    override suspend fun related(url: String): List<MediaItem>? {
+        val feed = accountFeed ?: return null
+        if (!feed.isAvailable || !BrowserSession.isYouTubeHost(url)) return null
+        return feed.related(url)?.takeIf { it.isNotEmpty() }
     }
 
     private fun VideoDetails.hasPlayableStream(): Boolean =

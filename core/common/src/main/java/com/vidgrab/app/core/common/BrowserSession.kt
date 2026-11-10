@@ -82,9 +82,6 @@ object BrowserSession {
         val timestamp = System.currentTimeMillis() / 1000
         return linkedMapOf(
             "Origin" to origin,
-            "X-Origin" to origin,
-            "X-Goog-AuthUser" to "0",
-            "X-Youtube-Bootstrap-Logged-In" to "true",
             "Authorization" to "SAPISIDHASH ${sapisidHash(timestamp, sapisid, origin)}",
         )
     }

@@ -108,10 +108,8 @@ class BrowserSessionTest {
         BrowserSession.install { mapOf("Cookie" to "LOGIN_INFO=abcdefghijkl; SAPISID=abc") }
         try {
             val headers = BrowserSession.authHeaders("https://www.youtube.com/youtubei/v1/browse")
+            assertEquals(setOf("Origin", "Authorization"), headers.keys)
             assertEquals("https://www.youtube.com", headers["Origin"])
-            assertEquals("https://www.youtube.com", headers["X-Origin"])
-            assertEquals("0", headers["X-Goog-AuthUser"])
-            assertEquals("true", headers["X-Youtube-Bootstrap-Logged-In"])
             val authorization = headers["Authorization"] ?: error("missing Authorization")
             val match = Regex("""SAPISIDHASH (\d+)_([0-9a-f]{40})""").matchEntire(authorization)
             assertNotNull(match)

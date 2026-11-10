@@ -16,6 +16,7 @@ import com.vidgrab.app.core.model.ItemKind
 import com.vidgrab.app.core.model.MediaItem
 import com.vidgrab.app.core.model.PlaylistDetails
 import com.vidgrab.app.core.model.VideoDetails
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -88,7 +89,24 @@ class VideoViewModel(
                     // Coming back from the mini player: this video is already playing (maybe in listen mode); keep it going.
                     play(r.data, audioOnly = false)
                 }
+                loadRelated(target)
             }
+        }
+    }
+
+    /** Replaces the anonymous related list once the signed-in account's recommendations arrive. */
+    private fun loadRelated(target: String) {
+        viewModelScope.launch {
+            val related = try {
+                media.related(target)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+                null
+            }
+            if (related.isNullOrEmpty() || url != target) return@launch
+            val data = (_details.value as? LoadState.Success)?.data ?: return@launch
+            _details.value = LoadState.Success(data.copy(related = related.distinctBy { i -> i.url }))
         }
     }
 
