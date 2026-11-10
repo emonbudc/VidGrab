@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +56,8 @@ import com.vidgrab.app.core.designsystem.QtIconButton
 import com.vidgrab.app.core.designsystem.pressable
 import com.vidgrab.app.core.model.DownloadOption
 import com.vidgrab.app.core.model.FormatKind
+import com.vidgrab.app.core.model.SubtitleTrack
+import com.vidgrab.app.core.model.pickSubtitle
 import com.vidgrab.app.core.ui.CornerLabel
 import com.vidgrab.app.core.ui.ErrorBox
 import com.vidgrab.app.core.ui.LoadingBox
@@ -89,6 +93,10 @@ fun DownloadSheetHost(
     var showAll by remember(t) { mutableStateOf(false) }
     // Optional cut (YouTube): the part of the video to download, in ms; null = all of it.
     var cut by remember(t) { mutableStateOf<LongRange?>(null) }
+    var subtitleChoice by remember(t, ui.subtitles) {
+        mutableStateOf(if (prefs.downloadSubtitles) pickSubtitle(ui.subtitles, prefs.subtitleLanguage) else null)
+    }
+    var subtitleMenu by remember { mutableStateOf(false) }
     val durationMs = ui.durationSec * 1000
     var deepSearching by remember(t) { mutableStateOf(t is SheetTarget.Page && t.browserFirst && onDeepSearch != null) }
     val notFound = !ui.loading && ui.options.isEmpty() && ui.error != null && !ui.isLive && t is SheetTarget.Page
@@ -103,11 +111,12 @@ fun DownloadSheetHost(
     }
     // Android 10 and older need storage permission before saving into Downloads.
     var pending by remember { mutableStateOf<DownloadOption?>(null) }
+    var pendingSubtitle by remember { mutableStateOf<SubtitleTrack?>(null) }
     val storageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         val o = pending ?: return@rememberLauncherForActivityResult
         pending = null
         if (result.values.all { it }) {
-            vm.download(o, cut)
+            vm.download(o, cut, pendingSubtitle)
             Toast.makeText(context, "Added to downloads", Toast.LENGTH_SHORT).show()
             controller.dismiss()
             onDownloadStarted()
@@ -117,10 +126,11 @@ fun DownloadSheetHost(
     val downloadNow = start@{ o: DownloadOption ->
         if (!Permissions.granted(context, Permissions.storageWrite)) {
             pending = o
+            pendingSubtitle = subtitleChoice
             storageLauncher.launch(Permissions.storageWrite)
             return@start
         }
-        vm.download(o, cut)
+        vm.download(o, cut, subtitleChoice)
         Toast.makeText(context, "Added to downloads", Toast.LENGTH_SHORT).show()
         controller.dismiss()
         onDownloadStarted()
@@ -181,6 +191,41 @@ fun DownloadSheetHost(
                             cut = if (cut == null) 0L..durationMs else null
                         }) else null, cutting = cut != null)
                         cut?.let { c -> CutPanel(c, durationMs, onChange = { cut = it }, onClose = { cut = null }) }
+                        if (cut == null && !ui.items && ui.options.isNotEmpty() &&
+                            selected != null && selected.kind == FormatKind.VIDEO && !selected.extractAudio
+                        ) {
+                            Box(Modifier.fillMaxWidth()) {
+                                Row(
+                                    Modifier.fillMaxWidth().clickable(enabled = ui.subtitles.isNotEmpty()) { subtitleMenu = true }
+                                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(QtIcons.ClosedCaption, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                                    Text("Subtitles", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(start = 12.dp))
+                                    Text(
+                                        subtitleChoice?.label ?: if (ui.subtitles.isEmpty()) "None" else "Off",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    if (ui.subtitles.isNotEmpty()) Icon(
+                                        QtIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
+                                DropdownMenu(expanded = subtitleMenu && ui.subtitles.isNotEmpty(), onDismissRequest = { subtitleMenu = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text("Off") },
+                                        onClick = { subtitleChoice = null; subtitleMenu = false },
+                                    )
+                                    ui.subtitles.forEach { track ->
+                                        DropdownMenuItem(
+                                            text = { Text(track.label) },
+                                            onClick = { subtitleChoice = track; subtitleMenu = false },
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                     when {
                         ui.loading -> SheetSkeleton(null)

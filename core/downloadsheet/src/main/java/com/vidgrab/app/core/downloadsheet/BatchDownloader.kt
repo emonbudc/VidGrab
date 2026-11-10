@@ -8,6 +8,9 @@ import com.vidgrab.app.core.model.DownloadOption
 import com.vidgrab.app.core.model.DownloadRequest
 import com.vidgrab.app.core.model.FormatKind
 import com.vidgrab.app.core.model.MediaItem
+import com.vidgrab.app.core.model.SubtitleTrack
+import com.vidgrab.app.core.model.pickSubtitle
+import com.vidgrab.app.core.data.SettingsRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +38,7 @@ class BatchDownloader(
     private val media: MediaRepository,
     private val downloads: DownloadManager,
     private val analytics: Analytics,
+    private val settings: SettingsRepository,
 ) {
     data class State(val total: Int = 0, val added: Int = 0, val failed: Int = 0) {
         val running get() = added + failed < total
@@ -77,7 +81,14 @@ class BatchDownloader(
         val d = media.details(job.item.url)
         if (d.item.isLive) return false
         val option = pick(d.options, job.quality) ?: return false
-        downloads.enqueue(option.toRequest(d.item.title.ifBlank { job.item.title }, d.item.url, d.item.thumbnail ?: job.item.thumbnail, d.item.durationSec))
+        val prefs = settings.current()
+        val subtitle = if (prefs.downloadSubtitles && option.kind == FormatKind.VIDEO && !option.extractAudio) {
+            pickSubtitle(d.subtitles, prefs.subtitleLanguage)
+        } else null
+        downloads.enqueue(option.toRequest(
+            d.item.title.ifBlank { job.item.title }, d.item.url, d.item.thumbnail ?: job.item.thumbnail, d.item.durationSec,
+            subtitle = subtitle,
+        ))
         return true
     }
 
@@ -107,6 +118,7 @@ fun DownloadOption.toRequest(
     thumbnail: String?,
     durationSec: Long,
     headers: Map<String, String> = emptyMap(),
+    subtitle: SubtitleTrack? = null,
 ) = DownloadRequest(
     title = title.ifBlank { "video" },
     url = url,
@@ -129,4 +141,5 @@ fun DownloadOption.toRequest(
     headers = headers,
     protocol = protocol,
     extractAudio = extractAudio,
+    subtitle = subtitle,
 )

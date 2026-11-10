@@ -10,7 +10,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -130,12 +129,13 @@ fun VideoPlayerBox(
     var controlsVisible by remember { mutableStateOf(true) }
     var lastInteraction by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var sheetOpen by remember { mutableStateOf(false) }
+    var captionsOpen by remember { mutableStateOf(false) }
     var scrubbing by remember { mutableStateOf(false) }
     var sleepAt by remember { mutableLongStateOf(0L) }
     val feedback = remember { GestureFeedback() }
     fun touch() { lastInteraction = System.currentTimeMillis() }
-    LaunchedEffect(controlsVisible, lastInteraction, state.isPlaying, sheetOpen, scrubbing) {
-        if (controlsVisible && state.isPlaying && !sheetOpen && !scrubbing) {
+    LaunchedEffect(controlsVisible, lastInteraction, state.isPlaying, sheetOpen, captionsOpen, scrubbing) {
+        if (controlsVisible && state.isPlaying && !sheetOpen && !captionsOpen && !scrubbing) {
             delay(3000)
             controlsVisible = false
         }
@@ -235,9 +235,7 @@ fun VideoPlayerBox(
                     } else Spacer(Modifier.weight(1f))
                     if (autoplay != null) AutoplaySwitch(autoplay) { onAutoplayChange(it); touch() }
                     if (onPip != null) TopIcon(QtIcons.PictureInPicture, "Picture-in-picture", onPip)
-                    TopIcon(QtIcons.ClosedCaption, "Captions") {
-                        Toast.makeText(context, "Captions aren't available for this video", Toast.LENGTH_SHORT).show(); touch()
-                    }
+                    TopIcon(QtIcons.ClosedCaption, "Captions") { captionsOpen = true; touch() }
                     TopIcon(QtIcons.Settings, "Settings") { sheetOpen = true }
                 }
                 Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(if (fullscreen) 72.dp else 44.dp),
@@ -288,6 +286,12 @@ fun VideoPlayerBox(
         state = state, controller = controller, quality = quality, onPip = onPip, extra = options,
         sleepAt = sleepAt, onSleep = { sleepAt = it },
         onDismiss = { sheetOpen = false; touch() },
+    )
+    if (captionsOpen) SubtitlePickerSheet(
+        tracks = state.subtitles,
+        selected = state.selectedSubtitle,
+        onSelect = { controller.selectSubtitle(it); captionsOpen = false; touch() },
+        onDismiss = { captionsOpen = false; touch() },
     )
 }
 

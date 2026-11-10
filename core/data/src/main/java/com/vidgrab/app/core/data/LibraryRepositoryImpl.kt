@@ -11,6 +11,7 @@ import com.vidgrab.app.core.database.DownloadDao
 import com.vidgrab.app.core.database.asEntity
 import com.vidgrab.app.core.database.asModel
 import com.vidgrab.app.core.model.DownloadStatus
+import com.vidgrab.app.core.model.sidecarSubtitles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -58,7 +59,10 @@ internal class LibraryRepositoryImpl(
         // Remember what was deleted so it can be downloaded again later.
         history.insertAll(entities.filter { it.status == DownloadStatus.COMPLETED }.map { it.toHistory(now) })
         entities.forEach { e ->
-            File(e.filePath).delete()
+            val file = File(e.filePath)
+            sidecarFiles(file).forEach { it.delete() }
+            e.subtitlePath?.let { File(it).delete() }
+            file.delete()
             File(e.filePath + ".part").delete()
             File(e.filePath + ".audio.part").delete()
             File(e.filePath + ".part.idx").delete()
@@ -100,7 +104,8 @@ internal class LibraryRepositoryImpl(
                 }
                 val to = uniqueTarget(destDir, from.name)
                 if (moveFile(from, to)) {
-                    dao.update(e.copy(inVault = false, filePath = to.absolutePath))
+                    val subtitlePath = moveSidecars(from, to, e.subtitlePath)
+                    dao.update(e.copy(inVault = false, filePath = to.absolutePath, subtitlePath = subtitlePath))
                     MediaScannerConnection.scanFile(context, arrayOf(to.absolutePath), arrayOf(e.mimeType), null)
                 }
                 return@forEach
@@ -109,7 +114,8 @@ internal class LibraryRepositoryImpl(
             if (e.status != DownloadStatus.COMPLETED || !from.exists()) return@forEach
             val to = uniqueTarget(destDir, from.name)
             if (!moveFile(from, to)) return@forEach
-            dao.update(e.copy(inVault = true, filePath = to.absolutePath))
+            val subtitlePath = moveSidecars(from, to, e.subtitlePath)
+            dao.update(e.copy(inVault = true, filePath = to.absolutePath, subtitlePath = subtitlePath))
             // Drops the old public entry from MediaStore so other galleries stop listing it.
             MediaScannerConnection.scanFile(context, arrayOf(from.absolutePath), arrayOf(e.mimeType), null)
         }
@@ -123,7 +129,8 @@ internal class LibraryRepositoryImpl(
             if (!from.exists() || from.parentFile?.absolutePath == dir.absolutePath) return@forEach
             val to = uniqueTarget(dir, from.name)
             if (!moveFile(from, to)) return@forEach
-            dao.update(e.copy(filePath = to.absolutePath))
+            val subtitlePath = moveSidecars(from, to, e.subtitlePath)
+            dao.update(e.copy(filePath = to.absolutePath, subtitlePath = subtitlePath))
             MediaScannerConnection.scanFile(context, arrayOf(from.absolutePath), arrayOf(e.mimeType), null)
         }
     }
@@ -147,6 +154,27 @@ internal class LibraryRepositoryImpl(
         return f
     }
 
+    private fun sidecarFiles(video: File): List<File> {
+        val parent = video.parentFile ?: return emptyList()
+        val base = video.nameWithoutExtension
+        return parent.listFiles().orEmpty().filter {
+            it.isFile && it.name.startsWith("$base.") && it.extension.lowercase() in SIDECAR_EXTENSIONS
+        }
+    }
+
+    /** Moves captions beside the video (renaming their base) and returns the updated local subtitle path. */
+    private fun moveSidecars(from: File, to: File, subtitlePath: String?): String? {
+        val destDir = to.parentFile ?: return subtitlePath
+        val newBase = to.nameWithoutExtension
+        var updated = subtitlePath
+        sidecarFiles(from).forEach { sidecar ->
+            val suffix = sidecar.name.removePrefix(from.nameWithoutExtension)
+            val dest = uniqueTarget(destDir, newBase + suffix)
+            if (moveFile(sidecar, dest) && sidecar.absolutePath == subtitlePath) updated = dest.absolutePath
+        }
+        return updated
+    }
+
     /** Rename, or copy + delete across file systems. */
     private fun moveFile(from: File, to: File): Boolean {
         if (from.renameTo(to)) return true
@@ -167,7 +195,8 @@ internal class LibraryRepositoryImpl(
         val target = File(old.parentFile, if (ext.isBlank()) safe else "$safe.$ext")
         if (target.exists() && target != old) return@withContext false
         if (old.exists() && !old.renameTo(target)) return@withContext false
-        dao.update(e.copy(title = safe, filePath = target.absolutePath))
+        val subtitlePath = moveSidecars(old, target, e.subtitlePath)
+        dao.update(e.copy(title = safe, filePath = target.absolutePath, subtitlePath = subtitlePath))
         true
     }
 
@@ -196,6 +225,7 @@ internal class LibraryRepositoryImpl(
                     (r.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: -1000) / 1000
                 } finally { r.release() }
             }.getOrDefault(-1)
+            val subtitle = if (mime.startsWith("video/")) sidecarSubtitles(f).firstOrNull() else null
             dao.insert(
                 com.vidgrab.app.core.database.DownloadEntity(
                     title = title, pageUrl = null, sourceHost = null, thumbnail = null, url = Uri.fromFile(f).toString(), audioUrl = null,
@@ -203,6 +233,8 @@ internal class LibraryRepositoryImpl(
                     totalBytes = f.length(), downloadedBytes = f.length(), audioTotalBytes = -1, audioDownloadedBytes = 0,
                     status = com.vidgrab.app.core.model.DownloadStatus.COMPLETED, error = null, durationSec = duration,
                     createdAt = f.lastModified(), completedAt = f.lastModified(), inVault = false, deletedAt = 0, lastPlayedPositionMs = 0,
+                    subtitlePath = subtitle?.url?.let { Uri.parse(it).path }, subtitleMime = subtitle?.mimeType,
+                    subtitleLanguage = subtitle?.language, subtitleLabel = subtitle?.label, subtitleAuto = false,
                 ),
             )
         }
@@ -216,6 +248,7 @@ internal class LibraryRepositoryImpl(
 
     companion object {
         private val MEDIA_EXT = setOf("mp4", "m4a", "mp3", "webm", "mkv", "mov", "3gp", "aac", "opus", "ogg", "wav", "ts", "jpg", "jpeg", "png")
+        private val SIDECAR_EXTENSIONS = setOf("vtt", "srt", "ass", "ssa", "ttml")
         const val TRASH_DAYS = 30L
     }
 }

@@ -1,6 +1,7 @@
 package com.vidgrab.app.core.extractor
 
 import com.vidgrab.app.core.model.DownloadOption
+import com.vidgrab.app.core.model.SubtitleTrack
 
 /** Everything needed to download a video from an arbitrary web page. */
 data class ExtractedPage(
@@ -9,6 +10,7 @@ data class ExtractedPage(
     val durationSec: Double?,
     val options: List<DownloadOption>,
     val headers: Map<String, String>,
+    val subtitles: List<SubtitleTrack> = emptyList(),
 )
 
 /**

@@ -5,6 +5,8 @@ import android.net.Uri
 import com.vidgrab.app.core.data.PlaybackHistoryRepository
 import com.vidgrab.app.core.data.SettingsRepository
 import com.vidgrab.app.core.model.AppSettings
+import com.vidgrab.app.core.model.SubtitleTrack
+import com.vidgrab.app.core.model.pickSubtitle
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +41,7 @@ data class PlayItem(
     val startPositionMs: Long = 0,
     /** Key in the playback history (file path, page URL); defaults to [id]. */
     val historyKey: String? = null,
+    val subtitles: List<SubtitleTrack> = emptyList(),
 ) {
     val resumeKey: String get() = historyKey ?: id
 }
@@ -61,6 +64,8 @@ data class PlaybackState(
     val error: String? = null,
     val videoWidth: Int = 0,
     val videoHeight: Int = 0,
+    val subtitles: List<SubtitleTrack> = emptyList(),
+    val selectedSubtitle: SubtitleTrack? = null,
 )
 
 /** The app-wide playback queue and history around the single [MediaEngine]. */
@@ -87,6 +92,7 @@ class PlayerController(
     private var repeatMode = RepeatMode.OFF
     private var shuffle = false
     private var audioOnly = false
+    private var subtitlesOff = false
     private var pauseAtEndOfItems = false
     private var endedHandled = false
     private var wasPlaying = false
@@ -149,6 +155,11 @@ class PlayerController(
         index = at
         this.audioOnly = audioOnly || !items[at].isVideo
         val item = items[at]
+        val sameItem = _state.value.current?.id == item.id
+        if (!sameItem) subtitlesOff = false
+        val previous = _state.value.selectedSubtitle.takeIf { sameItem && !subtitlesOff }
+        val subtitle = previous?.takeIf { selected -> item.subtitles.any { it.url == selected.url } }
+            ?: if (!subtitlesOff && prefs.autoShowSubtitles) pickSubtitle(item.subtitles, prefs.subtitleLanguage) else null
         endedHandled = false
         _state.value = PlaybackState(
             current = item,
@@ -158,10 +169,12 @@ class PlayerController(
             audioOnly = this.audioOnly,
             repeatMode = repeatMode,
             shuffle = shuffle,
+            subtitles = item.subtitles,
+            selectedSubtitle = subtitle,
         )
         publishInfo()
         PlaybackService.ensureStarted(context)
-        engine.play(item, startPosition(item), prefs.playbackSpeed, this.audioOnly)
+        engine.play(item, startPosition(item), prefs.playbackSpeed, this.audioOnly, subtitle)
         markOpened(item)
     }
 
@@ -221,7 +234,7 @@ class PlayerController(
         val item = queue.getOrNull(index) ?: return
         val at = engine.currentTimeMs
         _state.update { it.copy(error = null, ended = false) }
-        engine.play(item, at, _state.value.speed, audioOnly)
+        engine.play(item, at, _state.value.speed, audioOnly, if (subtitlesOff) null else _state.value.selectedSubtitle)
     }
 
     fun setSpeed(speed: Float) {
@@ -260,7 +273,17 @@ class PlayerController(
 
     /** Adds a subtitle file (SRT, VTT, SSA…) to the current item. */
     fun addSubtitle(uri: Uri, mimeType: String) {
-        engine.addSubtitle(uri, mimeType)
+        val track = SubtitleTrack("und", "Selected file", uri.toString(), mimeType)
+        val tracks = (_state.value.subtitles + track).distinctBy { it.url }
+        subtitlesOff = false
+        _state.update { it.copy(subtitles = tracks, selectedSubtitle = track) }
+        engine.selectSubtitle(track)
+    }
+
+    fun selectSubtitle(track: SubtitleTrack?) {
+        subtitlesOff = track == null
+        _state.update { it.copy(selectedSubtitle = track) }
+        engine.selectSubtitle(track)
     }
 
     data class AudioTrack(val label: String, val id: Int, val selected: Boolean)
@@ -320,17 +343,19 @@ class PlayerController(
             record(previous, if (finished) 0 else _state.value.positionMs, _state.value.durationMs)
         }
         index = target
+        subtitlesOff = false
         endedHandled = false
+        val subtitle = if (prefs.autoShowSubtitles) pickSubtitle(next.subtitles, prefs.subtitleLanguage) else null
         _state.update {
             it.copy(
                 current = next, index = target, isPlaying = false, isBuffering = false, ended = false,
                 positionMs = 0, durationMs = 0, bufferedMs = 0, error = null,
-                videoWidth = 0, videoHeight = 0,
+                videoWidth = 0, videoHeight = 0, subtitles = next.subtitles, selectedSubtitle = subtitle,
             )
         }
         publishInfo()
         PlaybackService.ensureStarted(context)
-        engine.play(next, startPosition(next), _state.value.speed, audioOnly)
+        engine.play(next, startPosition(next), _state.value.speed, audioOnly, subtitle)
         markOpened(next)
     }
 

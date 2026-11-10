@@ -334,8 +334,12 @@ fun GalleryPlayerScreen(mediaId: Long, onBack: () -> Unit) {
         when (shownSheet) {
             Sheet.SPEED -> SpeedSheet(state.speed, { controller.setSpeed(it) }, ::closeSheets, sheetBack)
             Sheet.SUBTITLE -> SubtitleSheet(
-                onSelect = { closeSheets(); subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/*", "application/octet-stream")) },
+                tracks = state.subtitles,
+                selected = state.selectedSubtitle,
+                onSelect = { controller.selectSubtitle(it) },
+                onSelectFile = { closeSheets(); subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/*", "application/octet-stream")) },
                 onDismiss = ::closeSheets,
+                onBack = sheetBack,
             )
             Sheet.AUDIO_TRACK -> AudioTrackSheet(controller, ::closeSheets, sheetBack)
             Sheet.INFO -> if (current != null) InfoSheet(current, state.durationMs, ::closeSheets, sheetBack)

@@ -45,6 +45,8 @@ data class DownloadTask(
     /** A cut of the video: only [clipStartMs] to [clipEndMs] is downloaded. 0 / 0 = the whole video. */
     val clipStartMs: Long = 0,
     val clipEndMs: Long = 0,
+    /** Caption track downloaded beside the video, if any. */
+    val subtitle: SubtitleTrack? = null,
 ) {
     val isClip get() = clipEndMs > clipStartMs
     val progress: Float
@@ -74,6 +76,8 @@ data class DownloadRequest(
     /** Download only this part of the video (both 0 = all of it). */
     val clipStartMs: Long = 0,
     val clipEndMs: Long = 0,
+    /** Caption track to save beside the video; null = none. */
+    val subtitle: SubtitleTrack? = null,
 )
 
 /** A download the user deleted permanently; kept so it can be downloaded again. */

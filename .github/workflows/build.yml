@@ -72,6 +72,7 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           ./gradlew :app:assembleRelease --stacktrace \
+            -Pabis=arm64-v8a \
             -PappVersionCode=${{ github.run_number }} \
             -PappVersionName=1.0.${{ github.run_number }}
 
@@ -83,15 +84,13 @@ jobs:
           [ -n "$apksigner" ] || { echo "::error::apksigner not found in $ANDROID_HOME/build-tools"; exit 1; }
           mkdir -p dist
           version=${{ github.run_number }}
-          for abi in arm64-v8a armeabi-v7a universal; do
-            src="$dir/app-$abi-release.apk"
-            [ -f "$src" ] || { echo "::error::$src not found"; exit 1; }
-            "$apksigner" verify --verbose "$src" >/dev/null || { echo "::error::$src signature verification failed"; exit 1; }
-            if [ "$abi" = universal ]; then out="VidGrab-v1.0.$version.apk"
-            else out="VidGrab-v1.0.$version-$abi.apk"; fi
-            cp "$src" "dist/$out"
-            (cd dist && sha256sum "$out" > "$out.sha256")
-          done
+          abi=arm64-v8a
+          src="$dir/app-$abi-release.apk"
+          [ -f "$src" ] || { echo "::error::$src not found"; exit 1; }
+          "$apksigner" verify --verbose "$src" >/dev/null || { echo "::error::$src signature verification failed"; exit 1; }
+          out="VidGrab-v1.0.$version-$abi.apk"
+          cp "$src" "dist/$out"
+          (cd dist && sha256sum "$out" > "$out.sha256")
           ls -la dist
 
       - name: Upload APK artifacts
@@ -106,6 +105,8 @@ jobs:
           prev=$(git describe --tags --abbrev=0 2>/dev/null || true)
           if [ -n "$prev" ]; then range="$prev..HEAD"; else range="HEAD~1..HEAD"; fi
           {
+            echo "This release contains the **arm64-v8a** APK only."
+            echo
             echo "## What's improved"
             echo
             git log --no-merges --pretty='- %s' "$range"

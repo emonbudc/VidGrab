@@ -18,6 +18,12 @@ val localProps = Properties().apply {
 }
 fun secret(name: String): String? = System.getenv(name) ?: localProps.getProperty(name)
 
+// CI can build a single ABI with -Pabis=arm64-v8a; local builds keep both phone ABIs and a universal APK.
+val onlyAbis = (project.findProperty("abis") as String?)
+    ?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.toSet()
+    ?.takeIf { it.isNotEmpty() }
+val phoneAbis = onlyAbis ?: setOf("arm64-v8a", "armeabi-v7a")
+
 android {
     namespace = "com.vidgrab.app"
 
@@ -45,7 +51,7 @@ android {
         buildConfigField("String", "UPDATE_API_URL", "\"$updateUrl\"")
         buildConfigField("boolean", "UPDATE_URL_OVERRIDDEN", "${project.hasProperty("updateApiUrl")}")
         // Phones only (the bundled Python is per-ABI); keeps the APK small.
-        ndk { abiFilters += setOf("arm64-v8a", "armeabi-v7a") }
+        ndk { abiFilters += phoneAbis }
     }
 
     buildTypes {
@@ -75,8 +81,8 @@ android {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "armeabi-v7a")
-            isUniversalApk = true
+            include(*phoneAbis.toTypedArray())
+            isUniversalApk = onlyAbis == null
         }
     }
 

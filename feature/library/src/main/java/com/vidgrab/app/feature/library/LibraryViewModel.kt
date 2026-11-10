@@ -11,6 +11,7 @@ import com.vidgrab.app.core.media.PlayerController
 import com.vidgrab.app.core.model.ContentType
 import com.vidgrab.app.core.model.DownloadStatus
 import com.vidgrab.app.core.model.DownloadTask
+import com.vidgrab.app.core.model.sidecarSubtitles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -117,7 +118,7 @@ class LibraryViewModel(
                     task.copy(
                         id = 0, filePath = out.absolutePath, mimeType = "audio/mp4", type = ContentType.AUDIO, quality = "M4A",
                         totalBytes = out.length(), downloadedBytes = out.length(), createdAt = System.currentTimeMillis(),
-                        completedAt = System.currentTimeMillis(), audioUrl = null, lastPlayedPositionMs = 0,
+                        completedAt = System.currentTimeMillis(), audioUrl = null, lastPlayedPositionMs = 0, subtitle = null,
                     ),
                 )
             }.isSuccess
@@ -126,13 +127,17 @@ class LibraryViewModel(
     }
 }
 
-fun DownloadTask.toPlayItem() = PlayItem(
-    id = "dl:$id",
-    uri = Uri.fromFile(File(filePath)).toString(),
-    title = title,
-    artist = sourceHost.orEmpty(),
-    artwork = thumbnail,
-    isVideo = type == ContentType.VIDEO,
-    startPositionMs = lastPlayedPositionMs,
-    historyKey = filePath,
-)
+fun DownloadTask.toPlayItem(): PlayItem {
+    val local = if (filePath.isNotBlank()) sidecarSubtitles(File(filePath)) else emptyList()
+    return PlayItem(
+        id = "dl:$id",
+        uri = Uri.fromFile(File(filePath)).toString(),
+        title = title,
+        artist = sourceHost.orEmpty(),
+        artwork = thumbnail,
+        isVideo = type == ContentType.VIDEO,
+        startPositionMs = lastPlayedPositionMs,
+        historyKey = filePath,
+        subtitles = (listOfNotNull(subtitle) + local).distinctBy { it.url },
+    )
+}

@@ -13,7 +13,7 @@ import org.koin.dsl.module
         DownloadEntity::class, SiteEntity::class, HistoryEntity::class, BookmarkEntity::class, SearchQueryEntity::class,
         DeletedHistoryEntity::class, PlayHistoryEntity::class, SavedVideoEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class VidGrabDatabase : RoomDatabase() {
@@ -86,10 +86,22 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+/** v8: a caption track saved beside the video. */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE downloads ADD COLUMN subtitleUrl TEXT")
+        db.execSQL("ALTER TABLE downloads ADD COLUMN subtitleMime TEXT")
+        db.execSQL("ALTER TABLE downloads ADD COLUMN subtitlePath TEXT")
+        db.execSQL("ALTER TABLE downloads ADD COLUMN subtitleLanguage TEXT")
+        db.execSQL("ALTER TABLE downloads ADD COLUMN subtitleLabel TEXT")
+        db.execSQL("ALTER TABLE downloads ADD COLUMN subtitleAuto INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 val databaseModule = module {
     single {
         Room.databaseBuilder(androidContext(), VidGrabDatabase::class.java, "vidgrab.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
             .fallbackToDestructiveMigrationOnDowngrade(true)
             .build()
     }

@@ -11,6 +11,7 @@ import com.vidgrab.app.core.extractor.WebMediaFinder
 import com.vidgrab.app.core.model.DownloadOption
 import com.vidgrab.app.core.model.DownloadRequest
 import com.vidgrab.app.core.model.FormatKind
+import com.vidgrab.app.core.model.SubtitleTrack
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +36,8 @@ data class SheetUi(
     val items: Boolean = false,
     /** A part of the video can be downloaded instead of all of it (YouTube videos). */
     val cuttable: Boolean = false,
+    /** Caption tracks the site provides. */
+    val subtitles: List<SubtitleTrack> = emptyList(),
 )
 
 class DownloadSheetViewModel(
@@ -105,6 +108,7 @@ class DownloadSheetViewModel(
                     var report = r.report
                     var title = _ui.value.title
                     var thumb = _ui.value.thumbnail
+                    var subtitles: List<SubtitleTrack> = emptyList()
                     if (options.isEmpty()) {
                         // Site-specific engine (1800+ sites) with the page's session.
                         val page = universal.extract(target.pageUrl, target.headers)
@@ -112,12 +116,14 @@ class DownloadSheetViewModel(
                         if (page != null && page.options.isNotEmpty()) {
                             options = page.options
                             headers = target.headers + page.headers
+                            subtitles = page.subtitles
                             if (title.isBlank() || title == "video") title = page.title
                             thumb = thumb ?: page.thumbnail
                         }
                     }
                     _ui.value = _ui.value.copy(
                         loading = false, options = options, headers = headers, report = report, title = title, thumbnail = thumb,
+                        subtitles = subtitles,
                         error = if (options.isEmpty()) "Couldn't get this video. It may be protected (DRM) or still loading — let it play a few seconds and try again." else null,
                     )
                 }
@@ -138,6 +144,7 @@ class DownloadSheetViewModel(
                             pageUrl = d.item.url, options = d.options, isLive = d.item.isLive,
                             error = if (d.item.isLive) "Live streams can't be downloaded until they end." else null,
                             cuttable = !d.item.isLive && d.item.durationSec > 1,
+                            subtitles = d.subtitles,
                         )
                         }
                     } catch (e: Throwable) {
@@ -158,7 +165,7 @@ class DownloadSheetViewModel(
             timing("facebook (${fb?.options?.size ?: -1} options)")
             if (fb != null && fb.options.isNotEmpty()) return SheetUi(
                 loading = false, title = fb.title, thumbnail = fb.thumbnail, pageUrl = url, options = fb.options, headers = fb.headers,
-                durationSec = fb.durationSec?.toLong() ?: -1,
+                durationSec = fb.durationSec?.toLong() ?: -1, subtitles = fb.subtitles,
             )
         }
         val page = web.find(url)
@@ -176,7 +183,7 @@ class DownloadSheetViewModel(
         val report = r.report + "yt-dlp → " + (x?.let { "${it.options.size} formats" } ?: "no result")
         if (x != null && x.options.isNotEmpty()) return SheetUi(
             loading = false, title = x.title, thumbnail = x.thumbnail, pageUrl = url, options = x.options, headers = x.headers,
-            durationSec = x.durationSec?.toLong() ?: -1, report = report,
+            durationSec = x.durationSec?.toLong() ?: -1, report = report, subtitles = x.subtitles,
         )
         return SheetUi(
             loading = false, title = page?.title.orEmpty(), thumbnail = page?.thumbnail, pageUrl = url, report = report,
@@ -207,7 +214,7 @@ class DownloadSheetViewModel(
     }
 
     /** [clip]: only this part of the video (ms), or null for all of it. */
-    fun download(option: DownloadOption, clip: LongRange? = null) {
+    fun download(option: DownloadOption, clip: LongRange? = null, subtitle: SubtitleTrack? = null) {
         val s = _ui.value
         analytics.event(
             com.vidgrab.app.core.analytics.Events.DOWNLOAD_STARTED,
@@ -215,7 +222,8 @@ class DownloadSheetViewModel(
         )
         // Not viewModelScope: the share sheet's activity finishes the moment a format is tapped, which would
         // cancel the request before it's saved.
-        val request = option.toRequest(s.title, s.pageUrl, s.thumbnail, s.durationSec, s.headers)
+        val selected = subtitle.takeIf { clip == null && !option.extractAudio && option.kind == FormatKind.VIDEO }
+        val request = option.toRequest(s.title, s.pageUrl, s.thumbnail, s.durationSec, s.headers, selected)
         downloads.submit(if (clip == null) request else clipRequest(request, option, clip, s.durationSec))
     }
 }
@@ -251,5 +259,6 @@ internal fun clipRequest(request: DownloadRequest, option: DownloadOption, clip:
         clipStartMs = clip.first, clipEndMs = clip.last,
         durationSec = ((clip.last - clip.first) / 1000).coerceAtLeast(1),
         sizeBytes = scaled(option.sizeBytes), audioSizeBytes = scaled(option.audioSizeBytes),
+        subtitle = null,
     )
 }

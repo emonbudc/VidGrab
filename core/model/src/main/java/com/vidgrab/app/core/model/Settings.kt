@@ -68,6 +68,12 @@ data class AppSettings(
     val autoPip: Boolean = true,
     /** Online videos: play the next suggested video when one ends (the player's autoplay switch). */
     val autoplayNext: Boolean = true,
+    /** Preferred caption language tag; blank follows the device language. */
+    val subtitleLanguage: String = "",
+    /** Save the preferred caption track beside downloaded videos. */
+    val downloadSubtitles: Boolean = true,
+    /** Turn subtitles on when a video has them. */
+    val autoShowSubtitles: Boolean = true,
     /** Crash reports + anonymous usage stats (official builds only). */
     val analyticsEnabled: Boolean = true,
 )

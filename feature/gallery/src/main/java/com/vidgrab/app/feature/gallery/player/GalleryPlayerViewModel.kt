@@ -17,6 +17,7 @@ import com.vidgrab.app.core.media.PlayerController
 import com.vidgrab.app.core.media.RepeatMode
 import com.vidgrab.app.core.media.MediaEqualizer
 import com.vidgrab.app.core.model.GalleryMedia
+import com.vidgrab.app.core.model.sidecarSubtitles
 import com.vidgrab.app.feature.gallery.GallerySections
 import com.vidgrab.app.feature.gallery.uri
 import kotlinx.coroutines.Dispatchers
@@ -225,6 +226,7 @@ class GalleryPlayerViewModel(
     private fun GalleryMedia.toPlayItem() = PlayItem(
         id = "gallery:$id", uri = uri.toString(), title = name.substringBeforeLast('.'), artist = artist, isVideo = !isAudio,
         historyKey = path.ifBlank { null },
+        subtitles = if (path.isNotBlank()) sidecarSubtitles(File(path)) else emptyList(),
     )
 
     private fun VideoEndMode.toPlayMode() = PlayMode.valueOf(name)

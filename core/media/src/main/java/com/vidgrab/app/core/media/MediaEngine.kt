@@ -20,6 +20,7 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
+import com.vidgrab.app.core.model.SubtitleTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -67,7 +68,7 @@ class MediaEngine private constructor(private val context: Context) {
 
     private var player: ExoPlayer? = null
     private var currentItem: PlayItem? = null
-    private var subtitle: ExoMediaItem.SubtitleConfiguration? = null
+    private var selectedSubtitle: SubtitleTrack? = null
     private var audioOnly = false
     private val views = mutableListOf<PlayerView>()
     private var volume = 1f
@@ -150,8 +151,8 @@ class MediaEngine private constructor(private val context: Context) {
         }
     }
 
-    fun play(item: PlayItem, startMs: Long, speed: Float, audioOnly: Boolean) {
-        subtitle = null
+    fun play(item: PlayItem, startMs: Long, speed: Float, audioOnly: Boolean, subtitle: SubtitleTrack? = null) {
+        selectedSubtitle = subtitle
         load(item, startMs, speed, audioOnly)
     }
 
@@ -160,7 +161,7 @@ class MediaEngine private constructor(private val context: Context) {
         this.audioOnly = audioOnly
         currentItem = item
         _snapshot.value = MediaSnapshot(speed = speed, timeMs = startMs.coerceAtLeast(0))
-        val source = runCatching { buildSource(item, subtitle) }.getOrElse { error ->
+        val source = runCatching { buildSource(item, selectedSubtitle) }.getOrElse { error ->
             _snapshot.value = MediaSnapshot(error = error.message ?: "The video can't be played.")
             return
         }
@@ -195,7 +196,7 @@ class MediaEngine private constructor(private val context: Context) {
         player?.stop()
         player?.clearMediaItems()
         currentItem = null
-        subtitle = null
+        selectedSubtitle = null
         _snapshot.value = MediaSnapshot()
     }
 
@@ -250,19 +251,15 @@ class MediaEngine private constructor(private val context: Context) {
         view.player = ensurePlayer()
     }
 
-    fun addSubtitle(uri: Uri, mimeType: String): Boolean {
+    fun selectSubtitle(track: SubtitleTrack?): Boolean {
         val item = currentItem ?: return false
-        val config = runCatching {
-            ExoMediaItem.SubtitleConfiguration.Builder(uri)
-                .setMimeType(subtitleMime(mimeType))
-                .setLanguage("und")
-                .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                .build()
-        }.getOrNull() ?: return false
-        subtitle = config
+        selectedSubtitle = track
         load(item, currentTimeMs, _snapshot.value.speed, audioOnly)
         return true
     }
+
+    fun addSubtitle(uri: Uri, mimeType: String): Boolean =
+        selectSubtitle(SubtitleTrack("und", "Selected file", uri.toString(), mimeType))
 
     fun audioTracks(): List<AudioTrackInfo> {
         val p = player ?: return emptyList()
@@ -300,7 +297,7 @@ class MediaEngine private constructor(private val context: Context) {
         runCatching { player?.release() }
         player = null
         currentItem = null
-        subtitle = null
+        selectedSubtitle = null
         _snapshot.value = MediaSnapshot()
     }
 
@@ -313,7 +310,7 @@ class MediaEngine private constructor(private val context: Context) {
         return p
     }
 
-    private fun buildSource(item: PlayItem, subtitle: ExoMediaItem.SubtitleConfiguration?): MediaSource {
+    private fun buildSource(item: PlayItem, subtitle: SubtitleTrack?): MediaSource {
         val mainUri = if (audioOnly) item.audioUri?.takeIf { it.isNotBlank() } ?: item.uri else item.uri
         val mainItem = mediaItem(mainUri, subtitle)
         val separateAudio = if (!audioOnly) item.audioUri?.takeIf { it.isNotBlank() } else null
@@ -324,11 +321,19 @@ class MediaEngine private constructor(private val context: Context) {
         return mediaSourceFactory.createMediaSource(mainItem)
     }
 
-    private fun mediaItem(uriString: String, subtitle: ExoMediaItem.SubtitleConfiguration?): ExoMediaItem {
+    private fun mediaItem(uriString: String, subtitle: SubtitleTrack?): ExoMediaItem {
         val uri = Uri.parse(uriString)
         val builder = ExoMediaItem.Builder().setUri(uri)
         inferMime(uri)?.let(builder::setMimeType)
-        subtitle?.let { builder.setSubtitleConfigurations(listOf(it)) }
+        subtitle?.let { track ->
+            val config = ExoMediaItem.SubtitleConfiguration.Builder(Uri.parse(track.url))
+                .setMimeType(subtitleMime(track.mimeType))
+                .setLanguage(track.language.ifBlank { "und" })
+                .setLabel(track.label)
+                .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                .build()
+            builder.setSubtitleConfigurations(listOf(config))
+        }
         return builder.build()
     }
 
@@ -351,9 +356,10 @@ class MediaEngine private constructor(private val context: Context) {
 
     private fun isRtsp(uri: String): Boolean = Uri.parse(uri).scheme.equals("rtsp", true)
 
-    private fun subtitleMime(mimeType: String): String = when (mimeType) {
-        "text/vtt" -> MimeTypes.TEXT_VTT
+    private fun subtitleMime(mimeType: String): String = when (mimeType.lowercase()) {
+        "text/vtt", "text/webvtt" -> MimeTypes.TEXT_VTT
         "text/x-ssa", "text/x-ass" -> MimeTypes.TEXT_SSA
+        "application/ttml+xml", "application/xml", "text/xml" -> MimeTypes.APPLICATION_TTML
         else -> MimeTypes.APPLICATION_SUBRIP
     }
 

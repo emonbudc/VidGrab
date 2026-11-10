@@ -64,6 +64,9 @@ class SettingsDataSource(private val context: Context) {
         val backgroundPlay = booleanPreferencesKey("background_play")
         val autoPip = booleanPreferencesKey("auto_pip")
         val autoplayNext = booleanPreferencesKey("autoplay_next")
+        val subtitleLanguage = stringPreferencesKey("subtitle_language")
+        val downloadSubtitles = booleanPreferencesKey("download_subtitles")
+        val autoShowSubtitles = booleanPreferencesKey("auto_show_subtitles")
         val defaultToggles = booleanPreferencesKey("default_toggles_enabled")
     }
 
@@ -125,6 +128,9 @@ class SettingsDataSource(private val context: Context) {
             p[K.backgroundPlay] = s.backgroundPlay
             p[K.autoPip] = s.autoPip
             p[K.autoplayNext] = s.autoplayNext
+            p[K.subtitleLanguage] = s.subtitleLanguage
+            p[K.downloadSubtitles] = s.downloadSubtitles
+            p[K.autoShowSubtitles] = s.autoShowSubtitles
         }
     }
 
@@ -163,6 +169,9 @@ class SettingsDataSource(private val context: Context) {
         backgroundPlay = p[K.backgroundPlay] ?: true,
         autoPip = p[K.autoPip] ?: true,
         autoplayNext = p[K.autoplayNext] ?: true,
+        subtitleLanguage = p[K.subtitleLanguage] ?: "",
+        downloadSubtitles = p[K.downloadSubtitles] ?: true,
+        autoShowSubtitles = p[K.autoShowSubtitles] ?: true,
     )
 }
 
