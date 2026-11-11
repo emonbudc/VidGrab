@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-10T11:09:08.696Z",
+  "generatedAt": "2026-11-11T10:55:04.660Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
-    "installs": 32,
-    "installUsers": 32,
-    "videoDownloads": 47,
-    "videoDownloadUsers": 11,
-    "activeUsers28d": 32,
-    "sessions28d": 42,
+    "installs": 45,
+    "installUsers": 45,
+    "videoDownloads": 78,
+    "videoDownloadUsers": 18,
+    "activeUsers28d": 45,
+    "sessions28d": 84,
     "crashFreeUsersRate": 1,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-10-28",
-        "count": 0
-      },
       {
         "date": "2026-10-29",
         "count": 0
@@ -66,7 +62,11 @@
       },
       {
         "date": "2026-11-10",
-        "count": 44
+        "count": 51
+      },
+      {
+        "date": "2026-11-11",
+        "count": 24
       }
     ]
   },
@@ -75,8 +75,8 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 43,
-      "totalSessions": 94,
+      "totalUsers": 54,
+      "totalSessions": 161,
       "events": 0,
       "impactedUsers": 0,
       "impactedSessions": 0,
@@ -94,10 +94,10 @@
   },
   "traffic": null,
   "github": {
-    "releaseCount": 6,
-    "apkDownloads": 75,
-    "assetDownloads": 92,
-    "latestTag": "v1.0.57",
-    "latestDownloads": 18
+    "releaseCount": 8,
+    "apkDownloads": 101,
+    "assetDownloads": 131,
+    "latestTag": "v1.1.0",
+    "latestDownloads": 17
   }
 }
