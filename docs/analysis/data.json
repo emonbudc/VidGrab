@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-11T10:55:04.660Z",
+  "generatedAt": "2026-11-12T11:04:19.017Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
-    "installs": 45,
-    "installUsers": 45,
-    "videoDownloads": 78,
-    "videoDownloadUsers": 18,
-    "activeUsers28d": 45,
-    "sessions28d": 84,
-    "crashFreeUsersRate": 1,
+    "installs": 52,
+    "installUsers": 52,
+    "videoDownloads": 133,
+    "videoDownloadUsers": 23,
+    "activeUsers28d": 52,
+    "sessions28d": 122,
+    "crashFreeUsersRate": 0.9807692307692307,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-10-29",
-        "count": 0
-      },
       {
         "date": "2026-10-30",
         "count": 0
@@ -62,11 +58,15 @@
       },
       {
         "date": "2026-11-10",
-        "count": 51
+        "count": 52
       },
       {
         "date": "2026-11-11",
-        "count": 24
+        "count": 68
+      },
+      {
+        "date": "2026-11-12",
+        "count": 10
       }
     ]
   },
@@ -75,29 +75,49 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 54,
-      "totalSessions": 161,
-      "events": 0,
-      "impactedUsers": 0,
-      "impactedSessions": 0,
-      "crashFreeUsersPercent": 100,
-      "crashFreeSessionsPercent": 100
+      "totalUsers": 58,
+      "totalSessions": 210,
+      "events": 1,
+      "impactedUsers": 1,
+      "impactedSessions": 1,
+      "crashFreeUsersPercent": 98.27586,
+      "crashFreeSessionsPercent": 99.5238
     },
-    "issueCount": 0,
-    "openIssues": 0,
-    "fatalIssues": 0,
+    "issueCount": 1,
+    "openIssues": 1,
+    "fatalIssues": 1,
     "nonFatalIssues": 0,
     "anrIssues": 0,
-    "eventCount": 0,
-    "affectedUsers": 0,
-    "issues": []
+    "eventCount": 1,
+    "affectedUsers": 1,
+    "issues": [
+      {
+        "id": "7c9e924402adec1fd95700ce9ff4fa74",
+        "title": "androidx.compose.runtime.ComposerKt.composeRuntimeError",
+        "subtitle": "og0 - Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (pending composition has not been applied). Please report to Google or use https://goo.gle/compose-feedback",
+        "errorType": "FATAL",
+        "state": "OPEN",
+        "events": 1,
+        "users": 1,
+        "sessions": 1,
+        "firstSeen": null,
+        "lastSeen": null,
+        "version": "1.1.0",
+        "firstVersion": "1.1.0",
+        "signals": [
+          "SIGNAL_FRESH"
+        ],
+        "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AF4650301FD00013B74AD2ADCA90953_2285343756800938714",
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/7c9e924402adec1fd95700ce9ff4fa74?&time=1793876664000:1794481464000"
+      }
+    ]
   },
   "traffic": null,
   "github": {
     "releaseCount": 8,
-    "apkDownloads": 101,
-    "assetDownloads": 131,
+    "apkDownloads": 104,
+    "assetDownloads": 134,
     "latestTag": "v1.1.0",
-    "latestDownloads": 17
+    "latestDownloads": 20
   }
 }
