@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-11-14T11:03:21.570Z",
+  "propertyId": "properties/563305504",
+  "activeUsers30m": 0,
+  "downloads30m": 0,
+  "installs30m": 0,
+  "crashlytics": {
+    "pending": false,
+    "intervalDays": 7,
+    "summaryDays": 90,
+    "summary": {
+      "totalUsers": 65,
+      "totalSessions": 296,
+      "events": 2,
+      "impactedUsers": 1,
+      "impactedSessions": 2,
+      "crashFreeUsersPercent": 98.46154,
+      "crashFreeSessionsPercent": 99.324326
+    },
+    "issueCount": 2,
+    "openIssues": 2,
+    "fatalIssues": 1,
+    "nonFatalIssues": 0,
+    "anrIssues": 1,
+    "eventCount": 2,
+    "affectedUsers": 2,
+    "issues": [
+      {
+        "id": "39837828544a03a6f2ef47bbcdfe21dc",
+        "title": "com.vidgrab.app.core.model.SubtitlesKt.sidecarSubtitles",
+        "subtitle": "ANR triggered by slow operations in main thread",
+        "errorType": "ANR",
+        "state": "OPEN",
+        "events": 1,
+        "users": 1,
+        "sessions": 1,
+        "firstSeen": null,
+        "lastSeen": null,
+        "version": "1.1.0",
+        "firstVersion": "1.1.0",
+        "signals": [
+          "SIGNAL_FRESH"
+        ],
+        "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AF6D7BE01C5000153CE9B2474121A0E_2286032747505201638",
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/39837828544a03a6f2ef47bbcdfe21dc?&time=1794049403000:1794654203000"
+      },
+      {
+        "id": "7c9e924402adec1fd95700ce9ff4fa74",
+        "title": "androidx.compose.runtime.ComposerKt.composeRuntimeError",
+        "subtitle": "og0 - Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (pending composition has not been applied). Please report to Google or use https://goo.gle/compose-feedback",
+        "errorType": "FATAL",
+        "state": "OPEN",
+        "events": 1,
+        "users": 1,
+        "sessions": 1,
+        "firstSeen": null,
+        "lastSeen": null,
+        "version": "1.1.0",
+        "firstVersion": "1.1.0",
+        "signals": [
+          "SIGNAL_FRESH"
+        ],
+        "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AF4650301FD00013B74AD2ADCA90953_2285343756800938714",
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/7c9e924402adec1fd95700ce9ff4fa74?&time=1794049403000:1794654203000"
+      }
+    ]
+  },
+  "pending": false
+}
