@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-15T10:50:45.348Z",
+  "generatedAt": "2026-11-16T11:14:20.607Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
-    "installs": 61,
-    "installUsers": 61,
-    "videoDownloads": 416,
-    "videoDownloadUsers": 27,
-    "activeUsers28d": 62,
-    "sessions28d": 200,
-    "crashFreeUsersRate": 0.9838709677419355,
+    "installs": 66,
+    "installUsers": 66,
+    "videoDownloads": 497,
+    "videoDownloadUsers": 29,
+    "activeUsers28d": 67,
+    "sessions28d": 224,
+    "crashFreeUsersRate": 0.9850746268656716,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-11-02",
-        "count": 0
-      },
       {
         "date": "2026-11-03",
         "count": 0
@@ -66,7 +62,11 @@
       },
       {
         "date": "2026-11-15",
-        "count": 2
+        "count": 15
+      },
+      {
+        "date": "2026-11-16",
+        "count": 68
       }
     ]
   },
@@ -75,13 +75,13 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 66,
-      "totalSessions": 335,
+      "totalUsers": 70,
+      "totalSessions": 366,
       "events": 2,
       "impactedUsers": 1,
       "impactedSessions": 2,
-      "crashFreeUsersPercent": 98.48485,
-      "crashFreeSessionsPercent": 99.402985
+      "crashFreeUsersPercent": 98.57143,
+      "crashFreeSessionsPercent": 99.45355
     },
     "issueCount": 2,
     "openIssues": 2,
@@ -108,7 +108,7 @@
           "SIGNAL_FRESH"
         ],
         "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AF6D7BE01C5000153CE9B2474121A0E_2286032747505201638",
-        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/39837828544a03a6f2ef47bbcdfe21dc?&time=1794135048000:1794739848000"
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/39837828544a03a6f2ef47bbcdfe21dc?&time=1794222863000:1794827663000"
       },
       {
         "id": "7c9e924402adec1fd95700ce9ff4fa74",
@@ -127,16 +127,16 @@
           "SIGNAL_FRESH"
         ],
         "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AF4650301FD00013B74AD2ADCA90953_2285343756800938714",
-        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/7c9e924402adec1fd95700ce9ff4fa74?&time=1794135048000:1794739848000"
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/7c9e924402adec1fd95700ce9ff4fa74?&time=1794222863000:1794827663000"
       }
     ]
   },
   "traffic": null,
   "github": {
     "releaseCount": 8,
-    "apkDownloads": 116,
-    "assetDownloads": 146,
+    "apkDownloads": 118,
+    "assetDownloads": 148,
     "latestTag": "v1.1.0",
-    "latestDownloads": 32
+    "latestDownloads": 34
   }
 }
