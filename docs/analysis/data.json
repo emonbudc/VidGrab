@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-19T11:37:30.373Z",
+  "generatedAt": "2026-11-20T11:36:27.463Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
-    "installs": 70,
-    "installUsers": 70,
-    "videoDownloads": 540,
+    "installs": 71,
+    "installUsers": 71,
+    "videoDownloads": 549,
     "videoDownloadUsers": 32,
-    "activeUsers28d": 71,
-    "sessions28d": 270,
-    "crashFreeUsersRate": 0.9859154929577465,
+    "activeUsers28d": 72,
+    "sessions28d": 286,
+    "crashFreeUsersRate": 0.9861111111111112,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-11-06",
-        "count": 0
-      },
       {
         "date": "2026-11-07",
         "count": 0
@@ -62,11 +58,15 @@
       },
       {
         "date": "2026-11-18",
-        "count": 15
+        "count": 16
       },
       {
         "date": "2026-11-19",
-        "count": 4
+        "count": 9
+      },
+      {
+        "date": "2026-11-20",
+        "count": 3
       }
     ]
   },
@@ -76,40 +76,21 @@
     "summaryDays": 90,
     "summary": {
       "totalUsers": 73,
-      "totalSessions": 448,
+      "totalSessions": 469,
       "events": 3,
       "impactedUsers": 2,
       "impactedSessions": 3,
       "crashFreeUsersPercent": 97.26027,
-      "crashFreeSessionsPercent": 99.33036
+      "crashFreeSessionsPercent": 99.360344
     },
-    "issueCount": 2,
-    "openIssues": 2,
+    "issueCount": 1,
+    "openIssues": 1,
     "fatalIssues": 0,
     "nonFatalIssues": 0,
-    "anrIssues": 2,
-    "eventCount": 2,
-    "affectedUsers": 2,
+    "anrIssues": 1,
+    "eventCount": 1,
+    "affectedUsers": 1,
     "issues": [
-      {
-        "id": "39837828544a03a6f2ef47bbcdfe21dc",
-        "title": "com.vidgrab.app.core.model.SubtitlesKt.sidecarSubtitles",
-        "subtitle": "ANR triggered by slow operations in main thread",
-        "errorType": "ANR",
-        "state": "OPEN",
-        "events": 1,
-        "users": 1,
-        "sessions": 1,
-        "firstSeen": null,
-        "lastSeen": null,
-        "version": "1.1.0",
-        "firstVersion": "1.1.0",
-        "signals": [
-          "SIGNAL_FRESH"
-        ],
-        "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AF6D7BE01C5000153CE9B2474121A0E_2286032747505201638",
-        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/39837828544a03a6f2ef47bbcdfe21dc?&time=1794483454000:1795088254000"
-      },
       {
         "id": "4d05f9e74e77520b418eac3a355108f1",
         "title": "Native method - android.os.MessageQueue.nativePollOnce",
@@ -127,7 +108,7 @@
           "SIGNAL_FRESH"
         ],
         "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AFC5178022000012CA4E6CAE7E98CD1_2287580351044374255",
-        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794483454000:1795088254000"
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794569791000:1795174591000"
       }
     ]
   },
