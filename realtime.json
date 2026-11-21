@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-11-21T11:53:42.063Z",
+  "propertyId": "properties/563305504",
+  "activeUsers30m": 0,
+  "downloads30m": 0,
+  "installs30m": 0,
+  "crashlytics": {
+    "pending": false,
+    "intervalDays": 7,
+    "summaryDays": 90,
+    "summary": {
+      "totalUsers": 74,
+      "totalSessions": 503,
+      "events": 3,
+      "impactedUsers": 2,
+      "impactedSessions": 3,
+      "crashFreeUsersPercent": 97.2973,
+      "crashFreeSessionsPercent": 99.40358
+    },
+    "issueCount": 1,
+    "openIssues": 1,
+    "fatalIssues": 0,
+    "nonFatalIssues": 0,
+    "anrIssues": 1,
+    "eventCount": 1,
+    "affectedUsers": 1,
+    "issues": [
+      {
+        "id": "4d05f9e74e77520b418eac3a355108f1",
+        "title": "Native method - android.os.MessageQueue.nativePollOnce",
+        "subtitle": "Root cause for this ANR is unknown",
+        "errorType": "ANR",
+        "state": "OPEN",
+        "events": 1,
+        "users": 1,
+        "sessions": 1,
+        "firstSeen": null,
+        "lastSeen": null,
+        "version": "1.0.51",
+        "firstVersion": "1.0.51",
+        "signals": [
+          "SIGNAL_FRESH"
+        ],
+        "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AFC5178022000012CA4E6CAE7E98CD1_2287580351044374255",
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794657223000:1795262023000"
+      }
+    ]
+  },
+  "pending": false
+}
