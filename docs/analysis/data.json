@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-21T10:58:55.372Z",
+  "generatedAt": "2026-11-22T11:21:06.625Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
-    "installs": 71,
-    "installUsers": 71,
-    "videoDownloads": 581,
+    "installs": 72,
+    "installUsers": 72,
+    "videoDownloads": 583,
     "videoDownloadUsers": 32,
-    "activeUsers28d": 72,
-    "sessions28d": 300,
-    "crashFreeUsersRate": 0.9861111111111112,
+    "activeUsers28d": 73,
+    "sessions28d": 307,
+    "crashFreeUsersRate": 0.9863013698630136,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-11-08",
-        "count": 0
-      },
       {
         "date": "2026-11-09",
         "count": 6
@@ -66,7 +62,11 @@
       },
       {
         "date": "2026-11-21",
-        "count": 1
+        "count": 3
+      },
+      {
+        "date": "2026-11-22",
+        "count": 0
       }
     ]
   },
@@ -75,13 +75,13 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 74,
-      "totalSessions": 503,
+      "totalUsers": 75,
+      "totalSessions": 522,
       "events": 3,
       "impactedUsers": 2,
       "impactedSessions": 3,
-      "crashFreeUsersPercent": 97.2973,
-      "crashFreeSessionsPercent": 99.40358
+      "crashFreeUsersPercent": 97.333336,
+      "crashFreeSessionsPercent": 99.425285
     },
     "issueCount": 1,
     "openIssues": 1,
@@ -108,7 +108,7 @@
           "SIGNAL_FRESH"
         ],
         "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AFC5178022000012CA4E6CAE7E98CD1_2287580351044374255",
-        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794653938000:1795258738000"
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794741669000:1795346469000"
       }
     ]
   },
