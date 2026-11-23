@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-22T11:21:06.625Z",
+  "generatedAt": "2026-11-23T12:34:40.853Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
     "installs": 72,
     "installUsers": 72,
-    "videoDownloads": 583,
+    "videoDownloads": 590,
     "videoDownloadUsers": 32,
-    "activeUsers28d": 73,
-    "sessions28d": 307,
-    "crashFreeUsersRate": 0.9863013698630136,
+    "activeUsers28d": 74,
+    "sessions28d": 319,
+    "crashFreeUsersRate": 0.9864864864864865,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-11-09",
-        "count": 6
-      },
       {
         "date": "2026-11-10",
         "count": 52
@@ -66,7 +62,11 @@
       },
       {
         "date": "2026-11-22",
-        "count": 0
+        "count": 5
+      },
+      {
+        "date": "2026-11-23",
+        "count": 2
       }
     ]
   },
@@ -75,13 +75,13 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 75,
-      "totalSessions": 522,
+      "totalUsers": 76,
+      "totalSessions": 537,
       "events": 3,
       "impactedUsers": 2,
       "impactedSessions": 3,
-      "crashFreeUsersPercent": 97.333336,
-      "crashFreeSessionsPercent": 99.425285
+      "crashFreeUsersPercent": 97.368416,
+      "crashFreeSessionsPercent": 99.441345
     },
     "issueCount": 1,
     "openIssues": 1,
@@ -108,7 +108,7 @@
           "SIGNAL_FRESH"
         ],
         "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AFC5178022000012CA4E6CAE7E98CD1_2287580351044374255",
-        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794741669000:1795346469000"
+        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794832483000:1795437283000"
       }
     ]
   },
