@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-23T12:34:40.853Z",
+  "generatedAt": "2026-11-24T13:40:19.981Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
     "installs": 72,
     "installUsers": 72,
-    "videoDownloads": 590,
+    "videoDownloads": 608,
     "videoDownloadUsers": 32,
     "activeUsers28d": 74,
-    "sessions28d": 319,
+    "sessions28d": 334,
     "crashFreeUsersRate": 0.9864864864864865,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-11-10",
-        "count": 52
-      },
       {
         "date": "2026-11-11",
         "count": 68
@@ -66,7 +62,11 @@
       },
       {
         "date": "2026-11-23",
-        "count": 2
+        "count": 20
+      },
+      {
+        "date": "2026-11-24",
+        "count": 0
       }
     ]
   },
@@ -75,42 +75,22 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 76,
-      "totalSessions": 537,
+      "totalUsers": 77,
+      "totalSessions": 546,
       "events": 3,
       "impactedUsers": 2,
       "impactedSessions": 3,
-      "crashFreeUsersPercent": 97.368416,
-      "crashFreeSessionsPercent": 99.441345
+      "crashFreeUsersPercent": 97.402596,
+      "crashFreeSessionsPercent": 99.45055
     },
-    "issueCount": 1,
-    "openIssues": 1,
+    "issueCount": 0,
+    "openIssues": 0,
     "fatalIssues": 0,
     "nonFatalIssues": 0,
-    "anrIssues": 1,
-    "eventCount": 1,
-    "affectedUsers": 1,
-    "issues": [
-      {
-        "id": "4d05f9e74e77520b418eac3a355108f1",
-        "title": "Native method - android.os.MessageQueue.nativePollOnce",
-        "subtitle": "Root cause for this ANR is unknown",
-        "errorType": "ANR",
-        "state": "OPEN",
-        "events": 1,
-        "users": 1,
-        "sessions": 1,
-        "firstSeen": null,
-        "lastSeen": null,
-        "version": "1.0.51",
-        "firstVersion": "1.0.51",
-        "signals": [
-          "SIGNAL_FRESH"
-        ],
-        "sampleEvent": "projects/857559958905/apps/1:857559958905:android:e670e3294be504e9b95ba8/events/6AFC5178022000012CA4E6CAE7E98CD1_2287580351044374255",
-        "uri": "https://console.firebase.google.com/v1/appid/project/vidgrab-app-prod/crashlytics/app/1:857559958905:android:e670e3294be504e9b95ba8/issues/4d05f9e74e77520b418eac3a355108f1?&time=1794832483000:1795437283000"
-      }
-    ]
+    "anrIssues": 0,
+    "eventCount": 0,
+    "affectedUsers": 0,
+    "issues": []
   },
   "traffic": null,
   "github": {
