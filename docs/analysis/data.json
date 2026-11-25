@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-24T13:40:19.981Z",
+  "generatedAt": "2026-11-25T12:51:37.226Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
     "installs": 72,
     "installUsers": 72,
-    "videoDownloads": 608,
-    "videoDownloadUsers": 32,
+    "videoDownloads": 624,
+    "videoDownloadUsers": 33,
     "activeUsers28d": 74,
-    "sessions28d": 334,
+    "sessions28d": 342,
     "crashFreeUsersRate": 0.9864864864864865,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-11-11",
-        "count": 68
-      },
       {
         "date": "2026-11-12",
         "count": 15
@@ -62,11 +58,15 @@
       },
       {
         "date": "2026-11-23",
-        "count": 20
+        "count": 26
       },
       {
         "date": "2026-11-24",
-        "count": 0
+        "count": 7
+      },
+      {
+        "date": "2026-11-25",
+        "count": 3
       }
     ]
   },
@@ -75,13 +75,13 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 77,
-      "totalSessions": 546,
+      "totalUsers": 78,
+      "totalSessions": 566,
       "events": 3,
       "impactedUsers": 2,
       "impactedSessions": 3,
-      "crashFreeUsersPercent": 97.402596,
-      "crashFreeSessionsPercent": 99.45055
+      "crashFreeUsersPercent": 97.4359,
+      "crashFreeSessionsPercent": 99.46996
     },
     "issueCount": 0,
     "openIssues": 0,
@@ -95,9 +95,9 @@
   "traffic": null,
   "github": {
     "releaseCount": 8,
-    "apkDownloads": 122,
-    "assetDownloads": 153,
+    "apkDownloads": 123,
+    "assetDownloads": 154,
     "latestTag": "v1.1.0",
-    "latestDownloads": 38
+    "latestDownloads": 39
   }
 }
