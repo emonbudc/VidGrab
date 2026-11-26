@@ -1,21 +1,17 @@
 {
-  "generatedAt": "2026-11-25T12:51:37.226Z",
+  "generatedAt": "2026-11-26T12:29:37.728Z",
   "propertyId": "properties/563305504",
   "firebase": {
     "pending": false,
     "installs": 72,
     "installUsers": 72,
-    "videoDownloads": 624,
+    "videoDownloads": 632,
     "videoDownloadUsers": 33,
     "activeUsers28d": 74,
-    "sessions28d": 342,
+    "sessions28d": 351,
     "crashFreeUsersRate": 0.9864864864864865,
     "bytes": null,
     "videosByDay": [
-      {
-        "date": "2026-11-12",
-        "count": 15
-      },
       {
         "date": "2026-11-13",
         "count": 257
@@ -66,7 +62,11 @@
       },
       {
         "date": "2026-11-25",
-        "count": 3
+        "count": 10
+      },
+      {
+        "date": "2026-11-26",
+        "count": 1
       }
     ]
   },
@@ -75,13 +75,13 @@
     "intervalDays": 7,
     "summaryDays": 90,
     "summary": {
-      "totalUsers": 78,
-      "totalSessions": 566,
+      "totalUsers": 79,
+      "totalSessions": 585,
       "events": 3,
       "impactedUsers": 2,
       "impactedSessions": 3,
-      "crashFreeUsersPercent": 97.4359,
-      "crashFreeSessionsPercent": 99.46996
+      "crashFreeUsersPercent": 97.46835,
+      "crashFreeSessionsPercent": 99.48718
     },
     "issueCount": 0,
     "openIssues": 0,
