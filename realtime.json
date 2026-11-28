@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-11-28T13:58:08.192Z",
+  "propertyId": "properties/563305504",
+  "activeUsers30m": 0,
+  "downloads30m": 0,
+  "installs30m": 0,
+  "crashlytics": {
+    "pending": false,
+    "intervalDays": 7,
+    "summaryDays": 90,
+    "summary": {
+      "totalUsers": 79,
+      "totalSessions": 620,
+      "events": 3,
+      "impactedUsers": 2,
+      "impactedSessions": 3,
+      "crashFreeUsersPercent": 97.46835,
+      "crashFreeSessionsPercent": 99.51613
+    },
+    "issueCount": 0,
+    "openIssues": 0,
+    "fatalIssues": 0,
+    "nonFatalIssues": 0,
+    "anrIssues": 0,
+    "eventCount": 0,
+    "affectedUsers": 0,
+    "issues": []
+  },
+  "pending": false
+}
